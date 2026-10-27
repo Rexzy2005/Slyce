@@ -4,6 +4,9 @@ const optionalUrl = z.preprocess(value => value === '' ? undefined : value, z.ur
 const address = z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^0x[0-9a-fA-F]{40}$/, 'Expected an EVM address').refine(value => !/^0x0{40}$/.test(value), 'Zero address is not a deployment').optional());
 export const publicConfigSchema = z.object({
   appUrl: optionalUrl,
+  backendUrl: optionalUrl,
+  supabaseUrl: optionalUrl,
+  supabaseAnonKey: optionalText,
   network: z.preprocess(value => value === '' ? undefined : value, z.enum(['celo', 'celo-sepolia']).optional()),
   rpcUrl: optionalUrl,
   walletConnectProjectId: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^[a-fA-F0-9]{32}$/, 'Expected a Reown project ID').optional()),

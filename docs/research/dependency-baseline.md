@@ -1,7 +1,7 @@
 # Frontend Dependency Baseline
 
 Status: Partially Verified
-Last verified: 2026-10-07
+Last verified: 2026-10-27
 Relevant versions: Exact pins below, reverified for Phase 1 on 2026-10-07; MiniPay and Celo are runtime/network integrations, not npm version locks.
 Official sources:
 - [Published npm package metadata](https://registry.npmjs.org/) — version-specific publisher records linked in the tables.
@@ -98,6 +98,19 @@ The classic `withSerwist` integration is tied to Webpack. Do not use it with a d
 | `@gooddollar/web3sdk-v2` **0.4.47** | [Metadata](https://registry.npmjs.org/@gooddollar%2fweb3sdk-v2/0.4.47); broad native/legacy dependencies, ethers 5.7.2, wagmi 2.x peers and another wallet stack. | Not needed for this proposed web-only headless integration; do not mix in the legacy ethers/useDapp setup. | 2026-10-07 |
 
 GoodDollar's [token integration guide](https://docs.gooddollar.org/for-developers/developer-guides/how-to-integrate-the-gusd-token) describes ERC-677 `transferAndCall` and the receiver callback requirement. This supports investigating the repository's one-transaction design, but does not verify undeployed SliceShop/SliceTournament ABIs or receiver behavior. Token addresses/decimals must be verified per environment before contract work; this baseline intentionally does not approve addresses.
+
+## Official GoodDollar documentation recheck — 2026-10-27
+
+The current official [Identity (Viem/Wagmi)](https://docs.gooddollar.org/for-developers/apis-and-sdks/sybil-resistance/identity-viem-wagmi) page confirms:
+
+- the documented package is `@goodsdks/citizen-sdk`
+- identity environments expose production, staging, and development contracts for Celo and Fuse
+- `generateFVLink(popupMode?, callbackUrl?, chainId?)` is the documented face-verification handoff
+- identity status can be queried through whitelist/expiry methods
+
+The current official [Claim UBI (Viem/Wagmi)](https://docs.gooddollar.org/for-developers/apis-and-sdks/ubi/claim-ubi-viem-wagmi) page still contains older `@goodsdks/identity-sdk/*` imports and documents `checkEntitlement()` as `bigint`, which conflicts with the published `@goodsdks/citizen-sdk` 1.2.7 root exports and inspected result types. The integration must therefore normalize the installed package's actual types behind an adapter; stale examples must not be copied.
+
+The official [MiniPay wallet connection guidance](https://docs.minipay.xyz/getting-started/wallet-connection.html) confirms automatic provider connection and prohibits message signing merely for site access or authentication. It does not confirm that an explicit GoodDollar face-verification signature flow is supported in MiniPay. SDK installation, external verification calls, and claims remain blocked until provider signing policy, mobile callback behavior, supported environment, and real-device acceptance are confirmed.
 
 ## Unresolved conflicts and approval gates
 

@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: slyce-backend
+    runtime: node
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @slyce/backend build
+    startCommand: pnpm --filter @slyce/backend start
+    healthCheckPath: /healthz

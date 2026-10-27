@@ -1,0 +1,578 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlayerStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum WalletStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum WalletVerificationStatus {
+  UNVERIFIED
+  VERIFIED
+  DISPUTED
+}
+
+enum GoodDollarVerificationState {
+  UNKNOWN
+  VERIFIED
+  UNVERIFIED
+  UNAVAILABLE
+}
+
+enum GameSessionStatus {
+  CREATED
+  STARTED
+  SUBMITTED
+  VERIFIED
+  REJECTED
+  EXPIRED
+  ABANDONED
+}
+
+enum ScoreStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  INVALIDATED
+}
+
+enum ChallengeStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  PAUSED
+  ARCHIVED
+}
+
+enum ChallengeParticipationStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+  DISQUALIFIED
+  EXPIRED
+}
+
+enum BountyStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  PAUSED
+  CLOSED
+  ARCHIVED
+}
+
+enum BountyParticipationStatus {
+  ACTIVE
+  SUBMITTED
+  APPROVED
+  REJECTED
+  DISQUALIFIED
+  EXPIRED
+}
+
+enum SubmissionReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RewardSourceType {
+  CHALLENGE
+  BOUNTY
+}
+
+enum RewardStatus {
+  ELIGIBLE
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  DISTRIBUTION_PENDING
+  DISTRIBUTION_FAILED
+  DISTRIBUTED
+  COMPLETED
+}
+
+enum RewardApprovalStatus {
+  APPROVED
+  REJECTED
+}
+
+enum DistributionStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  FAILED
+}
+
+enum AdminRole {
+  OPERATOR
+  REVIEWER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  PUBLISH
+  UNPUBLISH
+  PAUSE
+  ARCHIVE
+  APPROVE
+  REJECT
+  DISTRIBUTE
+  RESTRICT
+  PERMISSION_CHANGE
+  SETTINGS_CHANGE
+}
+
+enum IdempotencyStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model Player {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  displayName             String?                  @db.VarChar(80)
+  status                  PlayerStatus             @default(ACTIVE)
+  restrictionReason       String?                  @db.VarChar(500)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  wallets                 Wallet[]
+  goodDollarVerification  GoodDollarVerification?
+  gameSessions            GameSession[]
+  scores                  ScoreRecord[]
+  challengeParticipations ChallengeParticipation[]
+  bountyParticipations    BountyParticipation[]
+  rewards                 Reward[]
+  idempotencyKeys         IdempotencyKey[]
+
+  @@index([status, createdAt])
+}
+
+model Wallet {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  playerId                String                   @db.Uuid
+  address                 String                   @db.VarChar(42)
+  chainId                 Int
+  status                  WalletStatus             @default(ACTIVE)
+  verificationStatus      WalletVerificationStatus @default(UNVERIFIED)
+  verifiedAt              DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  player                  Player                   @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  goodDollarVerifications GoodDollarVerification[]
+
+  @@unique([chainId, address])
+  @@index([playerId, status])
+}
+
+model WalletAuthChallenge {
+  id         String    @id @default(uuid()) @db.Uuid
+  address    String    @db.VarChar(42)
+  chainId    Int
+  nonce      String    @unique @db.VarChar(128)
+  origin     String    @db.VarChar(255)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([address, expiresAt])
+  @@index([expiresAt])
+}
+
+model GoodDollarVerification {
+  id                    String                      @id @default(uuid()) @db.Uuid
+  playerId              String                      @unique @db.Uuid
+  walletId              String?                     @db.Uuid
+  state                 GoodDollarVerificationState @default(UNKNOWN)
+  rootIdentityReference String?                     @db.VarChar(255)
+  lastSuccessfulCheckAt DateTime?
+  lastAttemptedCheckAt  DateTime?
+  unavailableReason     String?                     @db.VarChar(500)
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
+  player                Player                      @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  wallet                Wallet?                     @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([state, lastAttemptedCheckAt])
+  @@index([walletId])
+}
+
+model GoodDollarVerificationRecord {
+  id                    String                      @id @default(uuid()) @db.Uuid
+  address               String                      @db.VarChar(42)
+  environment           String                      @db.VarChar(20)
+  state                 GoodDollarVerificationState @default(UNKNOWN)
+  rootIdentityReference String?                     @db.VarChar(42)
+  lastAuthenticatedAt   DateTime?
+  lastSuccessfulCheckAt DateTime?
+  lastAttemptedCheckAt  DateTime?
+  unavailableReason     String?                     @db.VarChar(500)
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
+
+  @@unique([address, environment])
+  @@index([environment, state])
+  @@index([rootIdentityReference, environment])
+}
+
+model GameSession {
+  id              String            @id @default(uuid()) @db.Uuid
+  playerId        String            @db.Uuid
+  gameMode        String            @db.VarChar(40)
+  status          GameSessionStatus @default(CREATED)
+  rulesVersion    String            @db.VarChar(80)
+  seed            String            @db.VarChar(128)
+  startedAt       DateTime?
+  submittedAt     DateTime?
+  endedAt         DateTime?
+  expiresAt       DateTime
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  player          Player            @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  score           ScoreRecord?
+  challengeEvents ChallengeEvent[]
+
+  @@index([playerId, createdAt])
+  @@index([status, expiresAt])
+  @@index([gameMode, createdAt])
+}
+
+model ScoreRecord {
+  id                 String             @id @default(uuid()) @db.Uuid
+  sessionId          String             @unique @db.Uuid
+  playerId           String             @db.Uuid
+  score              Int
+  status             ScoreStatus        @default(PENDING)
+  rulesVersion       String             @db.VarChar(80)
+  inputDigest        String             @db.VarChar(128)
+  replayInputs       Json?
+  breakdown          Json?
+  rejectionReason    String?            @db.VarChar(500)
+  verifiedAt         DateTime?
+  invalidatedAt      DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  session            GameSession        @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  player             Player             @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  leaderboardEntries LeaderboardEntry[]
+
+  @@index([playerId, status, score])
+  @@index([status, createdAt])
+  @@index([rulesVersion])
+}
+
+model LeaderboardSnapshot {
+  id          String             @id @default(uuid()) @db.Uuid
+  scope       String             @db.VarChar(40)
+  gameMode    String             @default("") @db.VarChar(40)
+  periodStart DateTime
+  periodEnd   DateTime
+  generatedAt DateTime           @default(now())
+  entries     LeaderboardEntry[]
+
+  @@unique([scope, gameMode, periodStart, periodEnd])
+  @@index([scope, gameMode, periodStart, periodEnd])
+}
+
+model LeaderboardEntry {
+  id           String              @id @default(uuid()) @db.Uuid
+  snapshotId   String              @db.Uuid
+  scoreId      String              @db.Uuid
+  rank         Int
+  score        Int
+  tieBreakerAt DateTime
+  snapshot     LeaderboardSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  scoreRecord  ScoreRecord         @relation(fields: [scoreId], references: [id], onDelete: Restrict)
+
+  @@unique([snapshotId, rank])
+  @@unique([snapshotId, scoreId])
+  @@index([snapshotId, score])
+}
+
+model Challenge {
+  id             String                   @id @default(uuid()) @db.Uuid
+  slug           String                   @unique @db.VarChar(100)
+  title          String                   @db.VarChar(160)
+  description    String                   @db.VarChar(2000)
+  status         ChallengeStatus          @default(DRAFT)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  publishedAt    DateTime?
+  archivedAt     DateTime?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  versions       ChallengeVersion[]
+  participations ChallengeParticipation[]
+  rewards        Reward[]
+
+  @@index([status, startsAt, endsAt])
+}
+
+model ChallengeVersion {
+  id             String                   @id @default(uuid()) @db.Uuid
+  challengeId    String                   @db.Uuid
+  version        Int
+  status         ChallengeStatus          @default(DRAFT)
+  rulesVersion   String                   @db.VarChar(80)
+  rewardAsset    String                   @db.VarChar(80)
+  rewardAmount   Decimal                  @db.Decimal(78, 0)
+  createdAt      DateTime                 @default(now())
+  publishedAt    DateTime?
+  challenge      Challenge                @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  rules          ChallengeRule[]
+  participations ChallengeParticipation[]
+
+  @@unique([challengeId, version])
+  @@index([challengeId, status])
+}
+
+model ChallengeRule {
+  id            String           @id @default(uuid()) @db.Uuid
+  versionId     String           @db.Uuid
+  position      Int
+  eventType     String           @db.VarChar(80)
+  operator      String           @db.VarChar(40)
+  counter       String?          @db.VarChar(80)
+  threshold     Decimal?         @db.Decimal(78, 0)
+  configuration Json
+  version       ChallengeVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([versionId, position])
+  @@index([eventType, operator])
+}
+
+model ChallengeParticipation {
+  id            String                       @id @default(uuid()) @db.Uuid
+  playerId      String                       @db.Uuid
+  challengeId   String                       @db.Uuid
+  versionId     String                       @db.Uuid
+  attemptNumber Int                          @default(1)
+  status        ChallengeParticipationStatus @default(ACTIVE)
+  progress      Json
+  enrolledAt    DateTime                     @default(now())
+  completedAt   DateTime?
+  updatedAt     DateTime                     @updatedAt
+  player        Player                       @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  challenge     Challenge                    @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  version       ChallengeVersion             @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  rewards       Reward[]
+
+  @@unique([playerId, versionId, attemptNumber])
+  @@index([playerId, status])
+  @@index([challengeId, status])
+}
+
+model Bounty {
+  id              String                @id @default(uuid()) @db.Uuid
+  slug            String                @unique @db.VarChar(100)
+  title           String                @db.VarChar(160)
+  description     String                @db.VarChar(2000)
+  status          BountyStatus          @default(DRAFT)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  publishedAt     DateTime?
+  closedAt        DateTime?
+  archivedAt      DateTime?
+  maxParticipants Int?
+  rewardAsset     String                @db.VarChar(80)
+  rewardAmount    Decimal               @db.Decimal(78, 0)
+  leaderboardMode String?               @db.VarChar(40)
+  requirements    Json
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  versions        BountyVersion[]
+  participations  BountyParticipation[]
+  rewards         Reward[]
+
+  @@index([status, startsAt, endsAt])
+}
+
+model BountyVersion {
+  id             String                @id @default(uuid()) @db.Uuid
+  bountyId       String                @db.Uuid
+  version        Int
+  requirements   Json
+  createdAt      DateTime              @default(now())
+  publishedAt    DateTime?
+  bounty         Bounty                @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  participations BountyParticipation[]
+
+  @@unique([bountyId, version])
+}
+
+model BountyParticipation {
+  id          String                    @id @default(uuid()) @db.Uuid
+  playerId    String                    @db.Uuid
+  bountyId    String                    @db.Uuid
+  versionId   String                    @db.Uuid
+  status      BountyParticipationStatus @default(ACTIVE)
+  joinedAt    DateTime                  @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime                  @updatedAt
+  player      Player                    @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  bounty      Bounty                    @relation(fields: [bountyId], references: [id], onDelete: Restrict)
+  version     BountyVersion             @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  submissions BountySubmission[]
+  rewards     Reward[]
+
+  @@unique([playerId, versionId])
+  @@index([bountyId, status])
+  @@index([playerId, status])
+}
+
+model BountySubmission {
+  id              String                 @id @default(uuid()) @db.Uuid
+  participationId String                 @db.Uuid
+  status          SubmissionReviewStatus @default(PENDING)
+  evidence        Json
+  reviewNotes     String?                @db.VarChar(2000)
+  reviewedById    String?                @db.Uuid
+  submittedAt     DateTime               @default(now())
+  reviewedAt      DateTime?
+  participation   BountyParticipation    @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  reviewedBy      AdminAccount?          @relation("reviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([participationId, status])
+  @@index([reviewedById, reviewedAt])
+}
+
+model Reward {
+  id                       String                  @id @default(uuid()) @db.Uuid
+  playerId                 String                  @db.Uuid
+  sourceType               RewardSourceType
+  challengeId              String?                 @db.Uuid
+  challengeParticipationId String?                 @db.Uuid
+  bountyId                 String?                 @db.Uuid
+  bountyParticipationId    String?                 @db.Uuid
+  asset                    String                  @db.VarChar(80)
+  amount                   Decimal                 @db.Decimal(78, 0)
+  status                   RewardStatus            @default(ELIGIBLE)
+  eligibilityEvidence      Json
+  rejectionReason          String?                 @db.VarChar(1000)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  eligibleAt               DateTime                @default(now())
+  player                   Player                  @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  challenge                Challenge?              @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  challengeParticipation   ChallengeParticipation? @relation(fields: [challengeParticipationId], references: [id], onDelete: Restrict)
+  bounty                   Bounty?                 @relation(fields: [bountyId], references: [id], onDelete: Restrict)
+  bountyParticipation      BountyParticipation?    @relation(fields: [bountyParticipationId], references: [id], onDelete: Restrict)
+  approvals                RewardApproval[]
+  distributions            RewardDistribution[]
+
+  @@index([playerId, status])
+  @@index([status, createdAt])
+  @@index([sourceType, challengeId, bountyId])
+}
+
+model RewardApproval {
+  id        String               @id @default(uuid()) @db.Uuid
+  rewardId  String               @db.Uuid
+  adminId   String               @db.Uuid
+  status    RewardApprovalStatus
+  reason    String?              @db.VarChar(1000)
+  createdAt DateTime             @default(now())
+  reward    Reward               @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  admin     AdminAccount         @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([rewardId, createdAt])
+  @@index([adminId, createdAt])
+}
+
+model RewardDistribution {
+  id                   String             @id @default(uuid()) @db.Uuid
+  rewardId             String             @db.Uuid
+  attemptedById        String             @db.Uuid
+  status               DistributionStatus @default(PENDING)
+  evidence             Json?
+  transactionReference String?            @db.VarChar(255)
+  failureReason        String?            @db.VarChar(1000)
+  attemptedAt          DateTime           @default(now())
+  confirmedAt          DateTime?
+  reward               Reward             @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  attemptedBy          AdminAccount       @relation(fields: [attemptedById], references: [id], onDelete: Restrict)
+
+  @@index([rewardId, attemptedAt])
+  @@index([status, attemptedAt])
+}
+
+model AdminAccount {
+  id                  String               @id @default(uuid()) @db.Uuid
+  externalSubject     String               @unique @db.VarChar(255)
+  email               String?              @db.VarChar(320)
+  displayName         String?              @db.VarChar(160)
+  role                AdminRole            @default(REVIEWER)
+  active              Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  reviewedSubmissions BountySubmission[]   @relation("reviewedBy")
+  rewardApprovals     RewardApproval[]
+  distributions       RewardDistribution[]
+  auditLogs           AuditLog[]
+  idempotencyKeys     IdempotencyKey[]
+
+  @@index([active, role])
+}
+
+model AuditLog {
+  id         String       @id @default(uuid()) @db.Uuid
+  adminId    String       @db.Uuid
+  action     AuditAction
+  entityType String       @db.VarChar(80)
+  entityId   String       @db.VarChar(80)
+  before     Json?
+  after      Json?
+  reason     String?      @db.VarChar(1000)
+  createdAt  DateTime     @default(now())
+  admin      AdminAccount @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([adminId, createdAt])
+}
+
+model ChallengeEvent {
+  id         String      @id @default(uuid()) @db.Uuid
+  sessionId  String      @db.Uuid
+  eventType  String      @db.VarChar(80)
+  occurredAt DateTime
+  sequence   Int
+  payload    Json
+  createdAt  DateTime    @default(now())
+  session    GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, sequence])
+  @@index([eventType, occurredAt])
+}
+
+model IdempotencyKey {
+  id          String            @id @default(uuid()) @db.Uuid
+  key         String            @db.VarChar(255)
+  playerId    String?           @db.Uuid
+  adminId     String?           @db.Uuid
+  operation   String            @db.VarChar(100)
+  status      IdempotencyStatus @default(IN_PROGRESS)
+  response    Json?
+  createdAt   DateTime          @default(now())
+  completedAt DateTime?
+  player      Player?           @relation(fields: [playerId], references: [id], onDelete: Restrict)
+  admin       AdminAccount?     @relation(fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@unique([key, operation])
+  @@index([playerId, operation])
+  @@index([adminId, operation])
+}

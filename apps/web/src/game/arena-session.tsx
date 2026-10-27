@@ -5,6 +5,7 @@ import { useShopItems } from '../features/shop';
 import { readEquippedBlade } from '../features/catalog';
 import { GameHost } from './game-host';
 import { PayToPlay } from './pay-to-play';
+import { VerifiedMode } from './verified-mode';
 const payGate = (start: () => void) => <PayToPlay onPaid={start} />;
 /**
  * Signed-in arena: each round is paid on-chain (SlyceArcade) before it starts, and an equipped blade
@@ -12,7 +13,7 @@ const payGate = (start: () => void) => <PayToPlay onPaid={start} />;
  */
 export function ArenaSession() {
   const wallet = useWallet();
-  return wallet.status === 'unavailable' ? <GameHost /> : <PaidHost />;
+  return <>{wallet.status === 'unavailable' ? <GameHost /> : <PaidHost />}<VerifiedMode /></>;
 }
 function PaidHost() {
   const { items } = useShopItems();

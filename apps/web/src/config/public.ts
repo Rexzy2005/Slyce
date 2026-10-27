@@ -1,7 +1,16 @@
 import { parsePublicConfig } from './schema';
 // Explicit reads are required for Next's build-time public environment replacement.
+const resolvedAppUrl = process.env.NEXT_PUBLIC_APP_URL
+  || (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL.replace(/^https?:\/\//, '')}` : undefined)
+  || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL.replace(/^https?:\/\//, '')}` : undefined)
+  || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/^https?:\/\//, '')}` : undefined)
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.replace(/^https?:\/\//, '')}` : undefined);
+
 export const publicConfig = parsePublicConfig({
-  appUrl: process.env.NEXT_PUBLIC_APP_URL,
+  appUrl: resolvedAppUrl,
+  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL,
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   network: process.env.NEXT_PUBLIC_NETWORK,
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL,
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,

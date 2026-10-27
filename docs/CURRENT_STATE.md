@@ -1,6 +1,20 @@
 # Slyce Current State
 
-Updated: 2026-10-15. Target: GoodDollar Season 5. Web + installable PWA on Vercel (ADR-0004, ADR-0005). Repo/packages renamed to Slyce.
+Updated: 2026-10-27. Target: GoodDollar Season 5. Web + installable PWA on Vercel with an independently runnable backend foundation (ADR-0004, ADR-0005). Repo/packages renamed to Slyce.
+
+## Backend foundation
+
+- P1 is implemented and verified in `backend/`: Node 24 TypeScript service, validated environment configuration, structured JSON logging, centralized HTTP errors, `/healthz`, `/readyz`, tests, and Render deployment configuration.
+- P2 database foundation is implemented and verified against the authorized development Supabase database: the initial migration is applied and `prisma migrate status` reports the schema up to date.
+- P3 security foundation is implemented: CORS allowlisting, request-size limits, fixed-window rate limiting, safe security errors, Supabase Auth bearer verification, administrator email allowlisting, and server-side role/ownership authorization primitives.
+- P4 API contract and session foundation is verified: versioned `/api/v1` route groups, Zod request validation, stable error envelopes, cursor/limit pagination, idempotency-key validation, protected `GET /api/v1/session`, and principal mapping to Prisma `Player`/`AdminAccount` records.
+- P5 admin dashboard foundation is verified: a responsive, branded `/admin` operations console with Supabase email-link access, backend session verification, protected empty states, and no fabricated metrics. Domain management screens remain intentionally disabled until their backend phases are implemented.
+- P6 player-record foundation is implemented: authenticated `/api/v1/players/me`, administrator `/api/v1/admin/players`, Prisma-backed player/wallet/GoodDollar-state reads, and typed service boundaries. GoodDollar external verification and wallet-association mutations remain gated by unresolved official integration and ownership verification requirements.
+- GoodDollar standard-web verification now parses the official return parameters, removes them from the URL, re-checks status through the pinned Citizen SDK, and records an independent Celo Identity observation through the backend. The backend persists minimal wallet/environment/root/timestamp metadata and the admin dashboard counts unique verified root identities. MiniPay is intentionally out of scope.
+- P7 gameplay foundation is in progress: gameplay session and score contracts, input-digest support, ownership/expiry/bounds validation, Prisma session persistence, idempotent pending-score storage, an explicit verifier interface, and deterministic ranking/pagination helpers exist as an isolated service boundary. No authoritative score route or leaderboard persistence is enabled because the current Phaser runtime is practice-only.
+- P7 now also has a Prisma-backed public verified-leaderboard route for period filtering, deterministic ranking, display names, and pagination. It returns only scores already promoted to `VERIFIED`; the current practice runtime still cannot produce such records.
+- P7 now includes an approved deterministic `verified-fruit-slice-v1` replay simulator, digest checking, pending-score verification/promotion service, persisted replay inputs, authenticated create/finish gameplay routes, and a standard Celo wallet challenge session. The player-facing verified mode is connected separately from practice mode; MiniPay remains out of scope.
+- Domain feature endpoints remain unimplemented; authoritative gameplay verification and official GoodDollar integration gates remain open.
 
 ## Implemented and verified
 

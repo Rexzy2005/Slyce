@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
 import type { ClaimSDK, IdentitySDK } from '@goodsdks/citizen-sdk';
 import { publicConfig } from '../config/public';
@@ -10,7 +10,7 @@ import { useWallet } from '../web3/context';
 import { formatTokenAmount } from '../web3/units';
 import { classifyTransactionError } from '../web3/transactions';
 import { formatRemaining, useNow } from '../features/tournament';
-import { goodDollarAvailability } from './service';
+import { goodDollarAvailability, readGoodDollarCallback, recordGoodDollarVerification } from './service';
 type View =
   | { status: 'loading' }
   | { status: 'not_whitelisted' }
@@ -38,6 +38,10 @@ function Claimer({ env }: { env: 'production' | 'staging' | 'development' }) {
   const [action, setAction] = useState<Action>({ status: 'idle' });
   const [stats, setStats] = useState<{ claimers: bigint; amount: bigint } | null>(null);
   const now = useNow();
+  const callback = useMemo(
+    () => typeof window === 'undefined' ? { status: 'none' as const } : readGoodDollarCallback(window.location.search),
+    [],
+  );
   // The SDK is loaded only on this page and always uses the app's own clients.
   useEffect(() => {
     if (!publicClient || !walletClient || !account.address) return;
@@ -60,10 +64,34 @@ function Claimer({ env }: { env: 'production' | 'staging' | 'development' }) {
       setView(result.status === 'can_claim' ? { status: 'can_claim', entitlement: result.entitlement }
         : result.status === 'already_claimed' ? { status: 'already_claimed', next: result.nextClaimTime }
         : { status: 'not_whitelisted' });
+      if (account.address) {
+        try {
+          await recordGoodDollarVerification(publicConfig.backendUrl, account.address);
+        } catch {
+          setAction({ status: 'failed', message: 'GoodDollar status was confirmed, but Slyce could not update its verification record.' });
+        }
+      }
       sdk.claim.getDailyStats().then(setStats, () => setStats(null));
     } catch { setView({ status: 'error', message: 'Your claim status could not be loaded.' }); }
   }, [sdk]);
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    if (!sdk) return;
+    void refresh().then(() => {
+      if (callback.status === 'verified') setAction({ status: 'idle' });
+    });
+  }, [callback.status, refresh, sdk]);
+  useEffect(() => {
+    if (callback.status === 'none') return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('isVerified');
+    url.searchParams.delete('reason');
+    window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
+    if (callback.status === 'failed') {
+      setAction({ status: 'failed', message: callback.reason || 'GoodDollar verification was not completed.' });
+    } else {
+      setAction({ status: 'working', label: 'Confirming your GoodDollar verification…' });
+    }
+  }, [callback]);
   async function verify() {
     if (!sdk) return;
     setAction({ status: 'working', label: 'Sign the verification request in your wallet…' });
@@ -102,7 +130,9 @@ function Claimer({ env }: { env: 'production' | 'staging' | 'development' }) {
     {view.status === 'loading' && <p className="loading-state" role="status">Checking your GoodDollar status…</p>}
     {view.status === 'error' && <EmptyState icon="leaf" title="Something went wrong"><p>{view.message}</p><button className="text-button" onClick={() => void refresh()}>Try again</button></EmptyState>}
     {view.status === 'not_whitelisted' && <EmptyState icon="shield" title="Verify once, claim every day" action={<button className="button" disabled={busy} onClick={() => void verify()}>Verify my identity</button>}>
-      <p>GoodDollar gives free daily G$ to verified unique humans. You'll sign a message, then complete a quick face check on GoodDollar's site and come back here.</p></EmptyState>}
+      <p>GoodDollar gives free daily G$ to verified unique humans.</p>
+      <p>Verification opens GoodDollar's official face-verification flow and checks your status again when you return.</p>
+    </EmptyState>}
     {view.status === 'can_claim' && <EmptyState icon="leaf" title={formatTokenAmount(view.entitlement, gdDecimals) + ' G$ is ready'} action={<button className="button" disabled={busy} onClick={() => void claim()}>Claim daily G$</button>}>
       <p>Your daily GoodDollar UBI is waiting. Use it in the market or for tournament entries.</p></EmptyState>}
     {view.status === 'already_claimed' && <EmptyState icon="clock" title="You've claimed today"><p>{view.next ? 'Next claim in ' + formatRemaining(Math.floor(view.next.getTime() / 1000) - now) + '.' : 'Come back tomorrow for more G$.'}</p></EmptyState>}

@@ -1,4 +1,87 @@
-# Active Execution Plan — Frontend Foundation and Integration Readiness
+# Active Execution Plan — Frontend and Backend Integration Readiness
+
+## Backend foundation (2026-10-27)
+
+P1 is verified. Added an independently runnable `@slyce/backend` workspace package under `backend/` using Node 24 and the built-in Node HTTP server. The built-in server was selected because the repository audit found no existing backend framework and the P1 phase did not authorize a new dependency; this keeps the service independently deployable and avoids changing application behavior.
+
+Implemented:
+
+- validated `NODE_ENV`, `HOST`, and `PORT` configuration
+- structured JSON logging without secrets
+- centralized JSON error responses
+- `GET /healthz` liveness endpoint
+- `GET /readyz` returning an explicit not-ready response until P2 database integration
+- backend build and test scripts
+- two backend tests covering configuration rejection and HTTP routes
+- `render.yaml` and `backend/README.md` deployment instructions
+
+Verification on 2026-10-27: backend build passed, two backend tests passed, live `/healthz` smoke test returned HTTP 200, workspace typecheck passed, and `git diff --check` passed. No database or production migration was run.
+
+Next gate: P2 database and Prisma. Add Prisma only after reviewing the Supabase connection requirements and designing the initial schema; do not expose feature endpoints against the current foundation.
+
+## Database and Prisma foundation (2026-10-27)
+
+P2 is implemented but not fully verified because no authorized development Supabase credentials are available. Prisma 7.10.1 is pinned, using the official Prisma 7 configuration pattern: `DATABASE_URL` for runtime access and `DIRECT_URL` for CLI/migrations. The schema is in `backend/prisma/schema.prisma`; the initial migration was generated from an empty schema and reviewed structurally. Global leaderboard snapshots use an empty-string mode sentinel so PostgreSQL uniqueness constraints remain effective. `backend/src/database.ts` provides the server-only Prisma client boundary without opening a connection during startup. The reusable official findings are recorded in `docs/research/prisma-supabase.md`.
+
+Verified: Prisma schema validation, Prisma Client generation, backend TypeScript build, three backend tests, and migration SQL generation. Not verified: connectivity, `migrate dev`, `migrate deploy`, schema recreation against PostgreSQL, or readiness against a live database. P2 was verified on 2026-10-27 against the authorized development Supabase database: Prisma connected, the initial migration was applied, and `prisma migrate status` reported the database schema up to date.
+
+## Authentication and security foundation (2026-10-27)
+
+P3 security groundwork is implemented. Backend configuration now validates CORS origins, request-size limits, and rate-limit settings. The HTTP boundary applies an origin allowlist, handles preflight requests, rejects oversized requests, and applies a fixed-window client limiter. `backend/src/security.ts` defines explicit authenticated principals, bearer-token extraction, verifier-based authentication, administrator role checks, and player ownership checks. No request treats a wallet address as proof of authentication.
+
+ADR-0006 now records the accepted administrator boundary: Supabase Auth bearer tokens are verified server-side and administrator access requires a normalized email in `ADMIN_EMAILS`. The existing Reown/AppKit player UX remains unchanged, but player token/session mapping and player-record association remain pending because wallet connection alone is not backend authentication. Protected feature endpoints remain absent until their handlers and persistence rules are implemented.
+
+Supabase Auth configuration is represented by `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `ADMIN_EMAILS`; no service-role key is required for token verification.
+
+## API contract foundation (2026-10-27)
+
+P4 contract infrastructure is implemented in `backend/src/api/`. Versioned `/api/v1` route groups, stable success/error envelope schemas, server-side Zod validation, cursor/limit pagination conventions, idempotency-key validation, and public/player/administrator route inventory are now defined. `docs/API_CONTRACTS.md` documents the wire conventions and preserves the provisional frontend boundary.
+
+No feature handler was enabled and no fabricated data is returned. Authentication and database verification remain prerequisites for the first protected service route.
+
+Verification on 2026-10-27: backend build and six backend tests passed, workspace typecheck passed, and `git diff --check` passed.
+
+The P4 gate is now complete. Supabase bearer verification is wired into the HTTP boundary, `GET /api/v1/session` is protected, and verified player/admin principals are persisted through the Prisma principal-store boundary. Verification on 2026-10-27: backend build and 10 tests passed, workspace typecheck passed, and `git diff --check` passed. P5 admin dashboard foundation is next.
+
+## Admin dashboard foundation (P5)
+
+Added a responsive `/admin` operations console using Slyce’s existing Night Market tokens, typography, lucide icons, and local shadcn-style composable surfaces. The admin gate sends a Supabase email-link sign-in request, verifies the resulting bearer session through the backend `/api/v1/session` route, and denies accounts not mapped to an administrator principal by the server-side `ADMIN_EMAILS` allowlist. Dashboard metrics and operational queues remain explicit empty states; no fake data is shown. Web typecheck and production Next.js/Serwist build passed on 2026-10-27. P6 player records and GoodDollar verification integration is next; browser/device acceptance remains unverified.
+
+## Player records foundation (P6)
+
+Added typed player profile and administrator player-list contracts, cursor pagination, Prisma-backed player/wallet/GoodDollar-state repository mapping, and protected `GET /api/v1/players/me` and `GET /api/v1/admin/players` routes. GoodDollar state is exposed only as persisted data; no external verification claim or invented fallback is made. Wallet association mutations remain unavailable until ownership verification is approved.
+
+Verification on 2026-10-27: backend build and 11 tests passed, and `git diff --check` passed. GoodDollar SDK execution and device/MiniPay verification remain blocked by the documented research gates.
+
+## Gameplay foundation (P7, in progress)
+
+Added the first safe P7 slice without treating local practice scores as authoritative:
+
+- versioned gameplay session, score-submission, and result schemas
+- server-side bounds for game mode, rules version, input digest, score, and breakdown values
+- ownership, lifecycle, expiry, and rules-version checks for gameplay submissions
+- SHA-256 input-digest helper and seeded session descriptor boundary
+- Prisma-backed session persistence and idempotent score submission storage
+- score records remain `PENDING` until an authoritative verifier promotes them
+- explicit deterministic verifier interface; no practice-runtime implementation is connected
+- deterministic leaderboard ranking and pagination helpers using score, submission time, then score ID
+- focused service tests covering session creation, invalid score rejection, and pending submission state
+
+Verification on 2026-10-27: backend build and 15 tests passed, and `git diff --check` passed.
+
+P7 is not complete. The current Phaser runtime remains practice-only, so no gameplay routes, leaderboard snapshots, or reward eligibility have been enabled. The next gate is approval and implementation of the deterministic rules/replay verifier behind the new interface.
+
+P7 progress update: added a Prisma-backed verified-leaderboard repository and public `GET /api/v1/leaderboards` route. It filters by verification state, invalidation state, game mode, and UTC period, then applies deterministic ranking and offset pagination. The route remains read-only and returns no practice scores; authoritative verifier implementation is still required before verified rows can be created.
+
+P7 verifier update: approved and implemented the separate `verified-fruit-slice-v1` ruleset. It uses a seeded 30-second target schedule, normalized pointer-segment collisions, three lives, the existing fruit/combo values, and deterministic bombs. Replay inputs are persisted with pending scores; digest, replay, and claimed-score verification can promote a pending score transactionally or reject it. The current practice client remains intentionally unconnected.
+
+P7 route update: added authenticated `POST /api/v1/gameplay/rounds` and idempotent `POST /api/v1/gameplay/rounds/:roundId/finish`. Only the approved verified ruleset can create sessions; finish submissions are replay-verified before returning `VERIFIED`. The web app still uses Reown wallet sign-in while the backend requires Supabase bearer authentication, so no identity bridge was invented.
+
+P7 authentication/client update: added a separate standard Celo wallet challenge session with five-minute single-use nonce, request-Origin binding, signature verification, persisted wallet/player association, and short-lived HMAC session tokens. The web arena now exposes a separate verified mode that signs the challenge, records normalized replay inputs, and submits the server-checked score. Practice mode is unchanged.
+
+## GoodDollar verification status
+
+The official GoodDollar Identity, UBI, and token documentation was rechecked on 2026-10-27. The standard Celo web flow parses the documented return parameters, removes them from the URL, and re-checks status through the pinned SDK. The backend independently reads the configured Identity contract, persists minimal wallet/environment/root/timestamp observations, and the admin dashboard counts unique verified roots. MiniPay is intentionally out of scope; the backend record is an on-chain observation rather than a replacement for wallet authentication.
 
 Mobile header and borderless surface update (2026-10-15): mobile logo stays left, hamburger is right, and wallet control lives inside the right-hand slide menu. Desktop wallet remains in the header. The drawer releases its native modal before the standard wallet picker opens, avoiding a body-portal trapped behind the dialog. Unavailable-wallet explanations remain inside the drawer. Card borders were removed across landing/lobby/shared panels; color surfaces preserve separation and keyboard focus outlines remain. No dependencies or browser use. Verification: strict TypeScript, all 11 targeted drawer/wallet/balance tests and git diff checks pass. Real-device layout and wallet portal interaction remain unverified.
 
