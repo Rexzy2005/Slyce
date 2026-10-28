@@ -50,3 +50,10 @@ it('tab bar marks the current destination', () => {
   expect(screen.getByRole('link', { name: 'Play' }).getAttribute('aria-current')).toBeNull();
   expect(screen.getAllByRole('link')).toHaveLength(5);
 });
+it('keeps a signed-in player on a loading screen while their session is restored', async () => {
+  const { sessionStatus } = await import('../../src/web3/connected-state');
+  expect(sessionStatus({ status: 'disconnected' }, true)).toBe('connecting');
+  expect(sessionStatus({ status: 'reconnecting' }, false)).toBe('connecting');
+  expect(sessionStatus({ status: 'connected' }, true)).toBe('connected');
+  expect(sessionStatus({ status: 'disconnected' }, false)).toBe('disconnected');
+});

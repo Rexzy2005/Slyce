@@ -19,7 +19,10 @@ type AppKitAdapter = NonNullable<Parameters<typeof createAppKit>[0]['adapters']>
 function isAppKitAdapter(adapter: object): adapter is AppKitAdapter {
   return 'namespace' in adapter && adapter.namespace === 'eip155' && 'adapterType' in adapter && typeof adapter.adapterType === 'string';
 }
+let wallets: WagmiAdapter | undefined;
+/** Module-level so remounts (Strict Mode, layout changes) never create a second AppKit or wagmi config. */
 function createWallets() {
+  if (wallets) return wallets;
   if (!publicConfig.network || !publicConfig.rpcUrl || !publicConfig.walletConnectProjectId || !publicConfig.appUrl) throw new Error('Wallet configuration is incomplete');
   const network = publicConfig.network === 'celo' ? celo : celoSepolia;
   const origin = publicConfig.appUrl;
@@ -31,6 +34,7 @@ function createWallets() {
     features: { email: true, emailShowWallets: true, socials: false, analytics: false, swaps: false, onramp: false, connectMethodsOrder: ['email', 'wallet'] },
     allowUnsupportedChain: false, themeMode: 'dark', themeVariables: { '--w3m-accent': tokens.mango, '--w3m-font-family': 'Rajdhani, system-ui, sans-serif' },
   });
+  wallets = adapter;
   return adapter;
 }
 export default function AppKitProvider({ children }: { children: ReactNode }) {

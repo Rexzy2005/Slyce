@@ -1,5 +1,5 @@
 'use client';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAccount, useBalance, useReadContracts } from 'wagmi';
 import { parseEther } from 'viem';
 import { erc20Abi } from 'viem';
@@ -10,8 +10,26 @@ import { formatTokenAmount } from './units';
 import { useOnlineStatus } from './online-status';
 /** Below this, a new wallet likely can't pay Celo network fees for a few transactions. */
 const lowGas = parseEther('0.005');
+/** Upper bound for wagmi to restore a saved session on page load before we show "signed out". */
+const restoreTimeoutMs = 4000;
+/**
+ * wagmi reports "disconnected" for a moment on page load before it starts restoring the saved session.
+ * Treat that window as connecting so the sign-in gate never flashes or bounces a signed-in player.
+ */
+export function sessionStatus(account: { status: 'connected' | 'connecting' | 'reconnecting' | 'disconnected' }, restoring: boolean): 'connected' | 'connecting' | 'disconnected' {
+  if (account.status === 'connected') return 'connected';
+  if (account.status === 'connecting' || account.status === 'reconnecting' || restoring) return 'connecting';
+  return 'disconnected';
+}
 export function ConnectedState({ children }: { children: ReactNode }) {
   const account = useAccount();
+  const [restoring, setRestoring] = useState(true);
+  const sawReconnect = useRef(false);
+  useEffect(() => {
+    if (account.status === 'reconnecting' || account.status === 'connecting') sawReconnect.current = true;
+    else if (account.status === 'connected' || sawReconnect.current) setRestoring(false);
+  }, [account.status]);
+  useEffect(() => { const timer = setTimeout(() => setRestoring(false), restoreTimeoutMs); return () => clearTimeout(timer); }, []);
   const online = useOnlineStatus();
   const chain = publicConfig.network ? chainFor(publicConfig.network) : undefined;
   const token = contractsFor(publicConfig).gd;
@@ -32,7 +50,7 @@ export function ConnectedState({ children }: { children: ReactNode }) {
     : typeof raw === 'bigint' && typeof decimals === 'number' ? { status: 'ready', formatted: formatTokenAmount(raw, decimals), raw }
     : { status: 'loading' };
   const value: WalletState = {
-    status: account.isConnected ? 'connected' : account.isConnecting || account.isReconnecting ? 'connecting' : 'disconnected',
+    status: sessionStatus(account, restoring),
     ...(account.address ? { address: account.address } : {}), wrongNetwork, balance: balanceState,
     gas: native.data === undefined ? 'unknown' : native.data.value < lowGas ? 'low' : 'ok',
     refreshBalance: () => { void balance.refetch(); void native.refetch(); },
