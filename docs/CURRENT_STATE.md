@@ -9,6 +9,7 @@ Updated: 2026-10-28. Target: GoodDollar Season 5. Web + installable PWA on Verce
 - P3 security foundation is implemented: CORS allowlisting, request-size limits, fixed-window rate limiting, safe security errors, Supabase Auth bearer verification, administrator email allowlisting, and server-side role/ownership authorization primitives.
 - P4 API contract and session foundation is verified: versioned `/api/v1` route groups, Zod request validation, stable error envelopes, cursor/limit pagination, idempotency-key validation, protected `GET /api/v1/session`, and principal mapping to Prisma `Player`/`AdminAccount` records.
 - P5 admin dashboard foundation is verified: a responsive, branded `/admin` operations console with Supabase email-link access, backend session verification, protected empty states, and no fabricated metrics. Domain management screens remain intentionally disabled until their backend phases are implemented.
+- Administrator email-link access uses an accessible in-product modal with validation, pending/error/success states, focus containment, responsive styling, and origin-derived redirect URLs; no browser prompt or alert remains.
 - P6 player-record foundation is implemented: authenticated `/api/v1/players/me`, administrator `/api/v1/admin/players`, Prisma-backed player/wallet/GoodDollar-state reads, and typed service boundaries. GoodDollar external verification and wallet-association mutations remain gated by unresolved official integration and ownership verification requirements.
 - GoodDollar standard-web verification now parses the official return parameters, removes them from the URL, re-checks status through the pinned Citizen SDK, and records an independent Celo Identity observation through the backend. The backend persists minimal wallet/environment/root/timestamp metadata and the admin dashboard counts unique verified root identities. MiniPay is intentionally out of scope.
 - P7 includes an approved deterministic `verified-fruit-slice-v1` replay simulator, digest checking, persisted replay inputs, authenticated create/finish routes, pending-score verification/promotion, a standard Celo wallet challenge session, and a public verified-score leaderboard. The player-facing verified mode is separate from local practice mode.
@@ -19,6 +20,7 @@ Updated: 2026-10-28. Target: GoodDollar Season 5. Web + installable PWA on Verce
 - P12 automated quality assurance is complete: structured validation errors, streamed request-size enforcement, authorization and redaction tests, cross-player bounty isolation, atomic/recoverable score verification, retry-safe score results, and concurrency regression coverage are implemented and verified.
 - P13 repository preparation is complete: the Render Blueprint generates Prisma, builds the backend, validates production configuration, deploys migrations before promotion, and uses database-backed readiness. The production handover documents environment, deployment, migration, verification, recovery, troubleshooting, and administrator onboarding.
 - The configured Supabase database is reachable and all seven Prisma migrations are applied, including reward workflow integrity, operational audit indexing, and atomic score-verification claim support.
+- The Render backend is live at https://slyce-setp.onrender.com and /healthz returns 200. It is not yet healthy for promotion because /readyz returns 503 with database unreachable; the Render DATABASE_URL configuration must be corrected and redeployed.
 
 ## Implemented and verified
 
@@ -42,7 +44,7 @@ Updated: 2026-10-28. Target: GoodDollar Season 5. Web + installable PWA on Verce
 - Challenge and bounty backend capabilities do not yet have their required admin/player interfaces.
 - Reward backend workflows exist, but the administrator dashboard does not yet expose their controls.
 - The restored exact local toolchain passes Prisma generation, backend compilation, all 43 backend tests, backend/web/shared typechecks, architecture checks, core checks, whitespace checks, and git diff --check.
-- Production Render/frontend deployment and smoke testing remain blocked because authorized service access, identifiers, and production URLs are not available in the workspace.
+- Production smoke testing remains blocked until Render /readyz returns 200 and the frontend is configured against the deployed backend.
 - Streak rewards and power-ups are not implemented.
 - Local Node is 22.10; the project needs 24.21.0.
 - The low-gas threshold (0.005 CELO) is a product estimate.
