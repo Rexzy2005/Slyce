@@ -288,6 +288,36 @@ test('rate limiter rejects requests only after the configured window quota', () 
   assert.equal(limiter.allow('client'), true);
 });
 
+test('reflects request origins when the CORS wildcard is explicitly configured', async () => {
+  const server = createApp({
+    environment: 'test',
+    port: 0,
+    host: '127.0.0.1',
+    corsOrigins: ['*'],
+    maxRequestBytes: 100_000,
+    rateLimitWindowMs: 60_000,
+    rateLimitMaxRequests: 20,
+    adminEmails: [],
+    goodDollarEnvironment: 'development',
+  }).listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Test server did not bind');
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/session`, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'https://frontend.example.com',
+      'Access-Control-Request-Method': 'GET',
+      'Access-Control-Request-Headers': 'authorization',
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('access-control-allow-origin'), 'https://frontend.example.com');
+  assert.equal(response.headers.get('access-control-allow-credentials'), 'true');
+  server.close();
+  await once(server, 'close');
+});
+
 test('validates versioned API query and idempotency contracts', () => {
   assert.deepEqual(leaderboardQuerySchema.parse({ scope: 'today', limit: '10' }), { scope: 'today', limit: 10 });
   assert.throws(() => parseRequest(leaderboardQuerySchema, { scope: 'invalid' }), RequestValidationError);

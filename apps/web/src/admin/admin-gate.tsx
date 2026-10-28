@@ -38,8 +38,11 @@ export function AdminGate({ children }: { children: ReactNode }) {
       setEmail(body.data.email);
       setState('ready');
     };
-    void check().catch(() => { if (active) { setState('error'); setMessage('The administrator session could not be verified.'); } });
-    const { data: listener } = client.auth.onAuthStateChange(() => { void check(); });
+    const handleCheck = () => {
+      void check().catch(() => { if (active) { setState('error'); setMessage('The administrator session could not be verified.'); } });
+    };
+    handleCheck();
+    const { data: listener } = client.auth.onAuthStateChange(handleCheck);
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
 

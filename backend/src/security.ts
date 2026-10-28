@@ -66,7 +66,9 @@ export function requirePlayerOwnership(principal: AuthenticatedPrincipal, player
 }
 
 export function applyCors(response: ServerResponse, origin: string | undefined, allowedOrigins: readonly string[]): void {
-  if (!origin || !allowedOrigins.includes(origin)) return;
+  if (!origin || (!allowedOrigins.includes('*') && !allowedOrigins.includes(origin))) return;
+  // Credentialed CORS cannot return a literal wildcard. Reflecting the request
+  // origin preserves browser compatibility when an explicit wildcard is enabled.
   response.setHeader('Access-Control-Allow-Origin', origin);
   response.setHeader('Vary', 'Origin');
   response.setHeader('Access-Control-Allow-Credentials', 'true');
