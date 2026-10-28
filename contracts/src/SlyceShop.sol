@@ -41,7 +41,7 @@ contract SlyceShop is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.0.0";
+        return "1.1.0";
     }
 
     function items(uint256 itemId) external view returns (Item memory) {
@@ -70,7 +70,7 @@ contract SlyceShop is SlyceBase {
         if (total > maxTotal) revert PriceAboveLimit(total, maxTotal);
         $.purchased[msg.sender][itemId] = owned;
         emit Purchased(msg.sender, itemId, quantity, total);
-        _pullExact(msg.sender, treasury(), total);
+        _pull(msg.sender, treasury(), total);
     }
 
     function _shop() private pure returns (ShopStorage storage $) {

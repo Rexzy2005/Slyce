@@ -7,7 +7,7 @@ import {SlyceBase} from "../src/SlyceBase.sol";
 import {SlyceShop} from "../src/SlyceShop.sol";
 import {SlyceTournament} from "../src/SlyceTournament.sol";
 import {SlyceArcade} from "../src/SlyceArcade.sol";
-import {SlyceTest, FeeOnTransferToken} from "./utils/SlyceTest.sol";
+import {SlyceTest} from "./utils/SlyceTest.sol";
 
 contract EdgeCasesTest is SlyceTest {
     function test_initializeRejectsZeroAddresses() public {
@@ -29,8 +29,8 @@ contract EdgeCasesTest is SlyceTest {
     function test_versionsAndViews() public {
         SlyceTournament t = deployTournament(IERC20(address(token)));
         SlyceArcade arcade = deployArcade(IERC20(address(token)), 0);
-        assertEq(t.version(), "1.0.0");
-        assertEq(arcade.version(), "1.0.0");
+        assertEq(t.version(), "1.1.0");
+        assertEq(arcade.version(), "1.1.0");
         vm.prank(owner);
         uint256 id = t.createTournament(uint64(block.timestamp), uint64(block.timestamp + 1 hours), 1 ether, 0);
         fund(alice, address(t), 10 ether);
@@ -77,38 +77,5 @@ contract EdgeCasesTest is SlyceTest {
         vm.prank(owner);
         vm.expectRevert(SlyceBase.ZeroAddress.selector);
         t.rescue(IERC20(address(token)), address(0), 0);
-    }
-
-    function test_feeOnTransferRejectedEverywhere() public {
-        FeeOnTransferToken fot = new FeeOnTransferToken();
-        SlyceTournament t = deployTournament(IERC20(address(fot)));
-        SlyceArcade arcade = deployArcade(IERC20(address(fot)), 10 ether);
-        vm.prank(owner);
-        uint256 id = t.createTournament(uint64(block.timestamp), uint64(block.timestamp + 1 hours), 10 ether, 0);
-        fot.mint(alice, 100 ether);
-        vm.startPrank(alice);
-        fot.approve(address(t), type(uint256).max);
-        fot.approve(address(arcade), type(uint256).max);
-        vm.expectRevert(abi.encodeWithSelector(SlyceBase.TransferMismatch.selector, 10 ether, 9.9 ether));
-        t.enter(id);
-        vm.expectRevert(abi.encodeWithSelector(SlyceBase.TransferMismatch.selector, 10 ether, 9.9 ether));
-        arcade.play(10 ether);
-        vm.stopPrank();
-    }
-
-    function test_pushExactRejectsShortPayout() public {
-        // A token that starts charging fees after deposit must not let a claim under-pay silently.
-        FeeOnTransferToken fot = new FeeOnTransferToken();
-        SlyceTournament t = deployTournament(IERC20(address(fot)));
-        vm.prank(owner);
-        uint256 id = t.createTournament(uint64(block.timestamp), uint64(block.timestamp + 1 hours), 0, 0);
-        vm.prank(alice);
-        t.enter(id);
-        vm.prank(owner);
-        t.cancelTournament(id);
-        fot.mint(address(t), 10 ether); // simulated deposit
-        vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(SlyceTournament.NothingToRefund.selector, id));
-        t.refund(id);
     }
 }

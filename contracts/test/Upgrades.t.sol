@@ -88,7 +88,7 @@ contract UpgradesTest is SlyceTest {
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSelector(ERC1967Utils.ERC1967InvalidImplementation.selector, broken));
         shop.upgradeToAndCall(broken, "");
-        assertEq(shop.version(), "1.0.0");
+        assertEq(shop.version(), "1.1.0");
     }
 
     function test_shopUpgradePreservesState() public {

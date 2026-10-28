@@ -28,6 +28,15 @@ Deployed 2026-10-25 against **development G$** (`0xFa51eFDc0910CCdA91732e6806912
 
 A later, interrupted run also created an unused shop at `0x7d21725aa1f3a8e8c83640615a91e48a7fa1ece3`. Ignore it.
 
+Player gas with v1.1.0 (ADR-0006), measured on a Celo fork at a 200 gwei base fee:
+
+| Action | Gas | CELO |
+| --- | --- | --- |
+| Play a round | 239k | 0.048 |
+| Buy a blade | 249k | 0.050 |
+| Enter a tournament | 316k | 0.063 |
+| Approve G$ (once per 10 rounds) | 51k | 0.010 |
+
 ## Setup and test
 
 ```bash

@@ -33,7 +33,7 @@ contract SlyceArcade is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.0.0";
+        return "1.1.0";
     }
 
     function playFee() external view returns (uint128) {
@@ -60,7 +60,7 @@ contract SlyceArcade is SlyceBase {
         round = ++$.totalRounds;
         uint64 playerRound = ++$.roundsPlayed[msg.sender];
         emit RoundPaid(msg.sender, round, playerRound, fee);
-        if (fee != 0) _pullExact(msg.sender, treasury(), fee);
+        if (fee != 0) _pull(msg.sender, treasury(), fee);
     }
 
     function _setPlayFee(uint128 playFee_) private {

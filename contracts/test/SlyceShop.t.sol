@@ -6,7 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {SlyceShop} from "../src/SlyceShop.sol";
 import {SlyceBase} from "../src/SlyceBase.sol";
-import {SlyceTest, FeeOnTransferToken} from "./utils/SlyceTest.sol";
+import {SlyceTest} from "./utils/SlyceTest.sol";
 
 contract SlyceShopTest is SlyceTest {
     SlyceShop shop;
@@ -25,7 +25,7 @@ contract SlyceShopTest is SlyceTest {
         assertEq(address(shop.token()), address(token));
         assertEq(shop.treasury(), treasury);
         assertEq(shop.owner(), owner);
-        assertEq(shop.version(), "1.0.0");
+        assertEq(shop.version(), "1.1.0");
         assertFalse(shop.paused());
     }
 
@@ -125,17 +125,11 @@ contract SlyceShopTest is SlyceTest {
         assertEq(shop.owner(), bob);
     }
 
-    function test_rejectsFeeOnTransferToken() public {
-        FeeOnTransferToken fot = new FeeOnTransferToken();
-        SlyceShop fotShop = deployShop(IERC20(address(fot)));
-        vm.prank(owner);
-        fotShop.setItem(1, 100 ether, 0, true);
-        fot.mint(alice, 1000 ether);
-        vm.startPrank(alice);
-        fot.approve(address(fotShop), type(uint256).max);
-        vm.expectRevert(abi.encodeWithSelector(SlyceBase.TransferMismatch.selector, 100 ether, 99 ether));
-        fotShop.buy(1, 1, 100 ether);
-        vm.stopPrank();
+    /// The payment token is fixed at initialization; there is no way to point a live proxy at another token.
+    function test_tokenIsImmutableAfterInitialization() public {
+        (bool ok,) = address(shop).call(abi.encodeWithSignature("setToken(address)", address(this)));
+        assertFalse(ok);
+        assertEq(address(shop.token()), address(token));
     }
 
     function testFuzz_buy(uint128 price, uint8 quantity) public {

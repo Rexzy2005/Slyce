@@ -11,8 +11,9 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Pau
 
 /// @title Slyce shared base
 /// @notice UUPS-upgradeable, two-step ownership, pausable. State lives in ERC-7201 namespaced storage so
-/// upgrades cannot collide with inherited layouts. Token transfers are checked by balance delta, so
-/// fee-on-transfer or otherwise non-standard behaviour reverts instead of corrupting accounting.
+/// upgrades cannot collide with inherited layouts. The token is fixed at initialization to G$, a standard
+/// (non-fee-on-transfer) SuperToken, so transfers use SafeERC20 without balance-delta checks: on G$ each
+/// balanceOf costs ~160k gas and the checks doubled the cost of every payment (ADR-0006).
 abstract contract SlyceBase is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, PausableUpgradeable, ReentrancyGuardTransient {
     using SafeERC20 for IERC20;
 
@@ -29,7 +30,6 @@ abstract contract SlyceBase is Initializable, UUPSUpgradeable, Ownable2StepUpgra
 
     error ZeroAddress();
     error InvalidTreasury();
-    error TransferMismatch(uint256 expected, uint256 received);
     error RenounceDisabled();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -78,21 +78,12 @@ abstract contract SlyceBase is Initializable, UUPSUpgradeable, Ownable2StepUpgra
         emit TreasuryChanged(treasury_);
     }
 
-    /// @dev Moves exactly `amount` from `from` to `to`, verified by the recipient's balance delta.
-    function _pullExact(address from, address to, uint256 amount) internal {
-        IERC20 t = _baseStorage().token;
-        uint256 before = t.balanceOf(to);
-        t.safeTransferFrom(from, to, amount);
-        uint256 received = t.balanceOf(to) - before;
-        if (received != amount) revert TransferMismatch(amount, received);
+    function _pull(address from, address to, uint256 amount) internal {
+        _baseStorage().token.safeTransferFrom(from, to, amount);
     }
 
-    function _pushExact(address to, uint256 amount) internal {
-        IERC20 t = _baseStorage().token;
-        uint256 before = t.balanceOf(to);
-        t.safeTransfer(to, amount);
-        uint256 received = t.balanceOf(to) - before;
-        if (received != amount) revert TransferMismatch(amount, received);
+    function _push(address to, uint256 amount) internal {
+        _baseStorage().token.safeTransfer(to, amount);
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}

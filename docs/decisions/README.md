@@ -9,6 +9,7 @@
 | [ADR-0003 — Local Practice Rounds](ADR-0003-local-practice-rounds.md) | Accepted | Device-local, unverified practice scoring until authoritative rules and replay exist. |
 | [ADR-0004 — Contracts, GoodDollar SDK, PWA-only](ADR-0004-contracts-gooddollar-pwa.md) | Accepted (partly superseded by ADR-0005) | SlyceShop/SlyceTournament, operator-posted results, citizen-sdk 1.2.7, MiniPay removed; agent installs authorized. |
 | [ADR-0005 — Upgradeable contracts, sign-in, paid rounds, app shell](ADR-0005-app-shell-signin-upgradeable.md) | Accepted | UUPS + strict contracts, SlyceArcade play fee, Reown AppKit email/wallet sign-in, app-style shell, Slyce rename. |
+| [ADR-0006 — Drop balance-delta checks for G$](ADR-0006-gd-transfer-gas.md) | Accepted | Halves gas per payment (G$ balanceOf ≈160k gas); token fixed at init. |
 
 The statuses above match their ADRs exactly. The [active execution plan](../exec-plans/active/current.md) records the user-authorized implementation scope; agent installation/server startup remain prohibited. Supporting research is [dependency-baseline.md](../research/dependency-baseline.md), not the nonexistent `frontend-dependency-baseline.md` named in the ADR source field.
 

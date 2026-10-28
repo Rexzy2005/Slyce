@@ -87,7 +87,7 @@ contract SlyceTournament is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.0.0";
+        return "1.1.0";
     }
 
     // ----- Views -----
@@ -161,7 +161,7 @@ contract SlyceTournament is SlyceBase {
         uint128 remainder = t.pool - payoutTotal;
         $.liabilities -= remainder;
         emit ResultsPosted(id, root, payoutTotal, remainder);
-        if (remainder != 0) _pushExact(treasury(), remainder);
+        if (remainder != 0) _push(treasury(), remainder);
     }
 
     /// @notice Cancels a tournament before results; every entrant and sponsor can then call `refund`.
@@ -183,7 +183,7 @@ contract SlyceTournament is SlyceBase {
         t.claimed = t.payoutTotal;
         $.liabilities -= amount;
         emit UnclaimedSwept(id, amount);
-        if (amount != 0) _pushExact(treasury(), amount);
+        if (amount != 0) _push(treasury(), amount);
     }
 
     /// @notice Recovers tokens sent here by mistake. G$ owed to players can never be withdrawn.
@@ -209,7 +209,7 @@ contract SlyceTournament is SlyceBase {
         t.pool += t.entryFee;
         $.liabilities += t.entryFee;
         emit Entered(id, msg.sender, t.entryFee);
-        if (t.entryFee != 0) _pullExact(msg.sender, address(this), t.entryFee);
+        if (t.entryFee != 0) _pull(msg.sender, address(this), t.entryFee);
     }
 
     /// @notice Anyone may add G$ to a prize pool before it ends.
@@ -223,7 +223,7 @@ contract SlyceTournament is SlyceBase {
         t.pool += amount;
         $.liabilities += amount;
         emit Sponsored(id, msg.sender, amount);
-        _pullExact(msg.sender, address(this), amount);
+        _pull(msg.sender, address(this), amount);
     }
 
     /// @notice Self-reported score while the tournament is open. Only improvements are kept.
@@ -249,7 +249,7 @@ contract SlyceTournament is SlyceBase {
         t.claimed += amount;
         $.liabilities -= amount;
         emit PrizeClaimed(id, msg.sender, amount);
-        _pushExact(msg.sender, amount);
+        _push(msg.sender, amount);
     }
 
     /// @notice Returns the caller's entry fee and sponsorship for a cancelled tournament.
@@ -264,7 +264,7 @@ contract SlyceTournament is SlyceBase {
         t.pool -= amount;
         $.liabilities -= amount;
         emit Refunded(id, msg.sender, amount);
-        _pushExact(msg.sender, amount);
+        _push(msg.sender, amount);
     }
 
     // ----- Internal -----
