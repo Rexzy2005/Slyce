@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSignMessage } from 'wagmi';
 import { publicConfig } from '../config/public';
+import { apiFetch } from '../api/http';
 import { useWallet } from '../web3/context';
 import { simulateVerifiedFruitSlice, verifiedFruitSliceTargets, verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion, type ReplayInput } from '@slyce/shared/verified-game';
 
@@ -11,7 +12,7 @@ type Result = { status: 'verified' | 'rejected'; score?: number; reason?: string
 
 async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
   if (!publicConfig.backendUrl) throw new Error('The gameplay service is not configured.');
-  const response = await fetch(`${publicConfig.backendUrl}${path}`, {
+  const response = await apiFetch(`${publicConfig.backendUrl}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify(body),

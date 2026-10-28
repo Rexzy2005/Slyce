@@ -167,6 +167,216 @@ export const goodDollarVerificationCountSchema = z.object({
 
 export const idempotencyKeySchema = z.string().trim().regex(/^\S+$/, 'Idempotency-Key must not contain whitespace.').min(16).max(255);
 
+export const challengeEventTypeSchema = z.enum([
+  'targets_cut',
+  'combo_achieved',
+  'round_completed',
+  'score_reached',
+  'clean_round',
+]);
+
+export const challengeOperatorSchema = z.enum(['gte', 'lte', 'eq']);
+
+export const challengeCounterSchema = z.enum([
+  'targets_cut',
+  'best_combo',
+  'rounds_completed',
+  'score',
+  'clean_rounds',
+]);
+
+export const challengeRuleInputSchema = z.object({
+  eventType: challengeEventTypeSchema,
+  operator: challengeOperatorSchema,
+  counter: challengeCounterSchema,
+  threshold: z.number().int().positive(),
+  configuration: z.record(z.string(), z.unknown()).default({}),
+});
+
+export const challengeRuleSchema = challengeRuleInputSchema.extend({
+  id: uuid,
+  position: z.number().int().nonnegative(),
+});
+
+export const createChallengeSchema = z.object({
+  slug: z.string().trim().min(3).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  title: nonEmptyString(160),
+  description: nonEmptyString(2000),
+  startsAt: z.string().datetime().optional(),
+  endsAt: z.string().datetime().optional(),
+  rulesVersion: rulesVersionSchema.default('verified-fruit-slice-v1'),
+  rewardAsset: z.string().trim().min(1).max(80).default('G$'),
+  rewardAmount: z.number().positive(),
+  rules: z.array(challengeRuleInputSchema).min(1).max(10),
+});
+
+export const updateChallengeSchema = z.object({
+  title: nonEmptyString(160).optional(),
+  description: nonEmptyString(2000).optional(),
+  startsAt: z.string().datetime().nullable().optional(),
+  endsAt: z.string().datetime().nullable().optional(),
+});
+
+export const challengeVersionSchema = z.object({
+  id: uuid,
+  version: z.number().int().positive(),
+  status: z.enum(['DRAFT', 'SCHEDULED', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
+  rulesVersion: z.string(),
+  rewardAsset: z.string(),
+  rewardAmount: z.number(),
+  rules: z.array(challengeRuleSchema),
+  createdAt: z.string().datetime(),
+  publishedAt: z.string().datetime().nullable(),
+});
+
+export const challengeSchema = z.object({
+  id: uuid,
+  slug: z.string(),
+  title: z.string(),
+  description: z.string(),
+  status: z.enum(['DRAFT', 'SCHEDULED', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
+  startsAt: z.string().datetime().nullable(),
+  endsAt: z.string().datetime().nullable(),
+  publishedAt: z.string().datetime().nullable(),
+  archivedAt: z.string().datetime().nullable(),
+  currentVersion: challengeVersionSchema.nullable(),
+  participationsCount: z.number().int().nonnegative().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const challengeListResponseSchema = z.object({
+  data: z.array(challengeSchema),
+  pagination: paginationSchema,
+});
+
+export const challengeParticipationSchema = z.object({
+  id: uuid,
+  challengeId: uuid,
+  challengeSlug: z.string(),
+  challengeTitle: z.string(),
+  versionId: uuid,
+  versionNumber: z.number().int(),
+  status: z.enum(['ACTIVE', 'COMPLETED', 'FAILED', 'DISQUALIFIED', 'EXPIRED']),
+  progress: z.record(z.string(), z.number()),
+  rules: z.array(challengeRuleSchema),
+  rewardAsset: z.string(),
+  rewardAmount: z.number(),
+  enrolledAt: z.string().datetime(),
+  completedAt: z.string().datetime().nullable(),
+});
+
+export const playerChallengeParticipationsResponseSchema = z.object({
+  data: z.array(challengeParticipationSchema),
+});
+
+// ---------------------------------------------------------------------------
+// Phase 9: Bounty contracts
+// ---------------------------------------------------------------------------
+
+export const bountyStatusSchema = z.enum(['DRAFT', 'SCHEDULED', 'PUBLISHED', 'PAUSED', 'CLOSED', 'ARCHIVED']);
+export const bountyParticipationStatusSchema = z.enum(['ACTIVE', 'SUBMITTED', 'APPROVED', 'REJECTED', 'DISQUALIFIED', 'EXPIRED']);
+export const submissionReviewStatusSchema = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
+
+export const createBountySchema = z.object({
+  slug: z.string().trim().min(3).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  title: nonEmptyString(160),
+  description: nonEmptyString(2000),
+  startsAt: z.string().datetime().optional(),
+  endsAt: z.string().datetime().optional(),
+  maxParticipants: z.number().int().positive().nullable().optional(),
+  rewardAsset: z.string().trim().min(1).max(80).default('G$'),
+  rewardAmount: z.number().positive(),
+  leaderboardMode: z.string().trim().min(1).max(40).nullable().optional(),
+  requirements: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const updateBountySchema = z.object({
+  title: nonEmptyString(160).optional(),
+  description: nonEmptyString(2000).optional(),
+  startsAt: z.string().datetime().nullable().optional(),
+  endsAt: z.string().datetime().nullable().optional(),
+  maxParticipants: z.number().int().positive().nullable().optional(),
+  leaderboardMode: z.string().trim().min(1).max(40).nullable().optional(),
+  requirements: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const bountySubmissionView = z.object({
+  id: uuid,
+  participationId: uuid,
+  status: submissionReviewStatusSchema,
+  evidence: z.record(z.string(), z.unknown()),
+  reviewNotes: z.string().nullable(),
+  submittedAt: z.string().datetime(),
+  reviewedAt: z.string().datetime().nullable(),
+});
+
+export const bountySchema = z.object({
+  id: uuid,
+  slug: z.string(),
+  title: z.string(),
+  description: z.string(),
+  status: bountyStatusSchema,
+  startsAt: z.string().datetime().nullable(),
+  endsAt: z.string().datetime().nullable(),
+  publishedAt: z.string().datetime().nullable(),
+  closedAt: z.string().datetime().nullable(),
+  archivedAt: z.string().datetime().nullable(),
+  maxParticipants: z.number().int().positive().nullable(),
+  rewardAsset: z.string(),
+  rewardAmount: z.number(),
+  leaderboardMode: z.string().nullable(),
+  requirements: z.record(z.string(), z.unknown()),
+  participationsCount: z.number().int().nonnegative().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const bountyListResponseSchema = z.object({
+  data: z.array(bountySchema),
+  pagination: paginationSchema,
+});
+
+export const bountyParticipationSchema = z.object({
+  id: uuid,
+  bountyId: uuid,
+  bountySlug: z.string(),
+  bountyTitle: z.string(),
+  versionId: uuid,
+  status: bountyParticipationStatusSchema,
+  joinedAt: z.string().datetime(),
+  completedAt: z.string().datetime().nullable(),
+  submissions: z.array(bountySubmissionView),
+});
+
+export const playerBountyParticipationsResponseSchema = z.object({
+  data: z.array(bountyParticipationSchema),
+});
+
+export const submitBountyEvidenceSchema = z.object({
+  evidence: z.record(z.string(), z.unknown()),
+});
+
+export const reviewBountySubmissionSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED']),
+  reviewNotes: z.string().trim().max(2000).optional(),
+});
+
+export const bountyLeaderboardEntrySchema = z.object({
+  rank: z.number().int().positive(),
+  playerId: uuid,
+  displayName: z.string().nullable(),
+  participationId: uuid,
+  joinedAt: z.string().datetime(),
+  completedAt: z.string().datetime().nullable(),
+  status: bountyParticipationStatusSchema,
+});
+
+export const bountyLeaderboardResponseSchema = z.object({
+  data: z.array(bountyLeaderboardEntrySchema),
+  pagination: paginationSchema,
+});
+
 export const routeGroups = {
   health: '/healthz',
   readiness: '/readyz',

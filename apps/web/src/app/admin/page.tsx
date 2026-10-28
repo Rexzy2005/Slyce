@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, ClipboardList, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react';
 import { getAdminAuthClient } from '../../admin/supabase';
 import { publicConfig } from '../../config/public';
+import { apiFetch } from '../../api/http';
 
 const navigation = [
   { label: 'Overview', icon: LayoutDashboard, active: true },
@@ -21,7 +22,7 @@ export default function AdminPage() {
     void (async () => {
       const { data: { session } } = await getAdminAuthClient().auth.getSession();
       if (!session || !publicConfig.backendUrl) return;
-      const response = await fetch(`${publicConfig.backendUrl}/api/v1/admin/gooddollar/verification-count`, {
+      const response = await apiFetch(`${publicConfig.backendUrl}/api/v1/admin/gooddollar/verification-count`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
         cache: 'no-store',
       });

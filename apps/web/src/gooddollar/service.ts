@@ -1,5 +1,6 @@
 import type { Address } from 'viem';
 import type { PublicConfig } from '../config/schema';
+import { apiFetch } from '../api/http';
 /**
  * G$ token addresses per GoodDollar environment on Celo, from @goodsdks/citizen-sdk 1.2.7 chainConfigs
  * (docs/research/gooddollar.md). The configured token must match the selected environment.
@@ -36,7 +37,7 @@ export function goodDollarAvailability(config: PublicConfig): GoodDollarAvailabi
 
 export async function recordGoodDollarVerification(backendUrl: string | undefined, address: Address): Promise<void> {
   if (!backendUrl) return;
-  const response = await fetch(`${backendUrl}/api/v1/gooddollar/verification/check`, {
+  const response = await apiFetch(`${backendUrl}/api/v1/gooddollar/verification/check`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ address }),

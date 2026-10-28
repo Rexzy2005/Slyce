@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { getAdminAuthClient } from './supabase';
 import { publicConfig } from '../config/public';
+import { apiFetch } from '../api/http';
 
 type GateState = 'loading' | 'signed-out' | 'forbidden' | 'ready' | 'error';
 
@@ -24,7 +25,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
     const check = async () => {
       const { data: { session } } = await client.auth.getSession();
       if (!session) { if (active) setState('signed-out'); return; }
-      const response = await fetch(`${publicConfig.backendUrl ?? ''}/api/v1/session`, {
+      const response = await apiFetch(`${publicConfig.backendUrl ?? ''}/api/v1/session`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
         cache: 'no-store',
       });

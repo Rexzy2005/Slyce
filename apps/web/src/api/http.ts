@@ -7,6 +7,10 @@ export type HttpBindings = { [K in keyof SlyceApi]: {
   request: (...args: Parameters<SlyceApi[K]>) => HttpRequest;
   response: z.ZodType<Awaited<ReturnType<SlyceApi[K]>>>;
 } };
+export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  return fetch(input, init);
+}
+
 export async function requestValidated<T>(request: HttpRequest, schema: z.ZodType<T>, signal?: AbortSignal, transport: typeof fetch = fetch): Promise<T> {
   signal?.throwIfAborted();
   let response: Response;

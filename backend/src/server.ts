@@ -3,7 +3,41 @@ import { pathToFileURL } from 'node:url';
 import { loadConfig, type BackendConfig } from './config.js';
 import { logger } from './logger.js';
 import { applyCors, authenticate, FixedWindowRateLimiter, requestContentLength, type TokenVerifier } from './security.js';
-import { apiPrefix, adminPlayerListResponseSchema, createGameSessionSchema, finishGameSessionSchema, gameSessionSchema, goodDollarVerificationCheckSchema, goodDollarVerificationCountSchema, goodDollarVerificationSchema, leaderboardQuerySchema, leaderboardResponseSchema, paginationQuerySchema, playerProfileSchema, scoreSubmissionResultSchema, sessionResponseSchema, walletChallengeRequestSchema, walletChallengeResponseSchema, walletVerifyRequestSchema, walletVerifyResponseSchema } from './api/contracts.js';
+import {
+  apiPrefix,
+  adminPlayerListResponseSchema,
+  bountyLeaderboardResponseSchema,
+  bountyListResponseSchema,
+  bountyParticipationSchema,
+  bountySchema,
+  challengeListResponseSchema,
+  challengeParticipationSchema,
+  challengeSchema,
+  createBountySchema,
+  createChallengeSchema,
+  createGameSessionSchema,
+  finishGameSessionSchema,
+  gameSessionSchema,
+  goodDollarVerificationCheckSchema,
+  goodDollarVerificationCountSchema,
+  goodDollarVerificationSchema,
+  leaderboardQuerySchema,
+  leaderboardResponseSchema,
+  paginationQuerySchema,
+  playerBountyParticipationsResponseSchema,
+  playerChallengeParticipationsResponseSchema,
+  playerProfileSchema,
+  reviewBountySubmissionSchema,
+  scoreSubmissionResultSchema,
+  sessionResponseSchema,
+  submitBountyEvidenceSchema,
+  updateBountySchema,
+  updateChallengeSchema,
+  walletChallengeRequestSchema,
+  walletChallengeResponseSchema,
+  walletVerifyRequestSchema,
+  walletVerifyResponseSchema,
+} from './api/contracts.js';
 import { createPrismaClient } from './database.js';
 import { createSupabaseTokenVerifier } from './supabase-auth.js';
 import { PrismaPrincipalStore, type PrincipalStore } from './principal-store.js';
@@ -15,6 +49,8 @@ import { createVerifiedFruitSliceRules, GameplayService, PrismaGameplaySessionRe
 import { PrismaPendingScoreStore, ScoreVerificationService, VerifiedFruitSliceVerifier } from './gameplay-verifier.js';
 import { requireIdempotencyKey } from './api/validation.js';
 import { createWalletChallenge, PrismaWalletChallengeStore, PrismaWalletPlayerStore, verifyWalletChallenge, walletAuthMessage, WalletSessionTokenVerifier } from './wallet-auth.js';
+import { ChallengeService, PrismaChallengeRepository } from './challenge-service.js';
+import { BountyService, PrismaBountyRepository } from './bounty-service.js';
 
 interface ErrorResponse {
   error: {
@@ -32,7 +68,7 @@ function sendJson(response: ServerResponse, statusCode: number, body: unknown): 
 }
 
 function methodNotAllowed(response: ServerResponse): void {
-  response.setHeader('Allow', 'GET, POST');
+  response.setHeader('Allow', 'GET, POST, PATCH');
   sendJson(response, 405, { error: { code: 'method_not_allowed', message: 'The requested method is not supported for this endpoint.' } } satisfies ErrorResponse);
 }
 
@@ -51,6 +87,8 @@ interface AppDependencies {
   walletPlayers?: PrismaWalletPlayerStore;
   walletVerifier?: TokenVerifier;
   walletVerifierSecret?: string;
+  challengeService?: ChallengeService;
+  bountyService?: BountyService;
 }
 
 async function readJsonBody(request: IncomingMessage): Promise<unknown> {
@@ -228,19 +266,273 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       ...(input.breakdown ? { breakdown: input.breakdown } : {}),
       ...(input.replayInputs ? { replayInputs: input.replayInputs } : {}),
     }, idempotencyKey);
-    if (result.status === 'rejected' || result.status === 'accepted' && !dependencies.scoreVerificationService) {
+    if (result.status === 'rejected' || (result.status === 'accepted' && !dependencies.scoreVerificationService)) {
       return sendJson(response, result.status === 'rejected' ? 400 : 202, { data: scoreSubmissionResultSchema.parse(result) });
     }
     if (result.status === 'accepted' && dependencies.scoreVerificationService) {
       const verification = await dependencies.scoreVerificationService.verifyPending(result.scoreId);
       if (verification.status === 'verified') {
+        if (dependencies.challengeService && principal.playerId) {
+          const breakdown = input.breakdown ?? {};
+          await dependencies.challengeService.evaluateGameplay(principal.playerId, {
+            targetsCut: breakdown.targetsCut ?? 0,
+            bestCombo: breakdown.bestCombo ?? 0,
+            bombsCut: breakdown.bombsCut ?? 0,
+            score: verification.score,
+            roundCompleted: true,
+          }).catch(err => logger.error('Challenge evaluation failed', { error: err instanceof Error ? err.message : String(err) }));
+        }
         return sendJson(response, 200, { data: scoreSubmissionResultSchema.parse({ status: 'verified', scoreId: result.scoreId, score: verification.score, verificationStatus: 'VERIFIED' }) });
       }
       return sendJson(response, 400, { data: scoreSubmissionResultSchema.parse({ status: 'rejected', reason: verification.reason }) });
     }
   }
+
+  // --- Admin Challenges ---
+  if (pathname === `${apiPrefix}/admin/challenges` && request.method === 'POST') {
+    if (!dependencies.verifier || !dependencies.challengeService) {
+      return sendJson(response, 503, { error: { code: 'challenge_service_not_configured', message: 'Challenge service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.verifier);
+    requireAdministrator(principal);
+    const input = createChallengeSchema.parse(await readJsonBody(request));
+    const challenge = await dependencies.challengeService.createChallenge(principal, input);
+    return sendJson(response, 201, { data: challengeSchema.parse(challenge) });
+  }
+  if (pathname === `${apiPrefix}/admin/challenges` && request.method === 'GET') {
+    if (!dependencies.verifier || !dependencies.challengeService) {
+      return sendJson(response, 503, { error: { code: 'challenge_service_not_configured', message: 'Challenge service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.verifier);
+    requireAdministrator(principal);
+    const query = paginationQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.challengeService.listAdminChallenges(principal, query);
+    return sendJson(response, 200, challengeListResponseSchema.parse({
+      data: result.items,
+      pagination: { nextCursor: result.nextCursor, limit: query.limit },
+    }));
+  }
+  const adminChallengeActionMatch = pathname.match(new RegExp(`^${apiPrefix}/admin/challenges/([^/]+)(?:/(publish|pause|archive))?$`));
+  if (adminChallengeActionMatch) {
+    const challengeId = adminChallengeActionMatch[1]!;
+    const action = adminChallengeActionMatch[2];
+    if (!dependencies.verifier || !dependencies.challengeService) {
+      return sendJson(response, 503, { error: { code: 'challenge_service_not_configured', message: 'Challenge service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.verifier);
+    requireAdministrator(principal);
+
+    if (action === 'publish' && request.method === 'POST') {
+      const challenge = await dependencies.challengeService.publishChallenge(principal, challengeId);
+      return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
+    }
+    if (action === 'pause' && request.method === 'POST') {
+      const challenge = await dependencies.challengeService.pauseChallenge(principal, challengeId);
+      return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
+    }
+    if (action === 'archive' && request.method === 'POST') {
+      const challenge = await dependencies.challengeService.archiveChallenge(principal, challengeId);
+      return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
+    }
+    if (!action && request.method === 'GET') {
+      const challenge = await dependencies.challengeService.getAdminChallenge(principal, challengeId);
+      if (!challenge) return sendJson(response, 404, { error: { code: 'not_found', message: 'Challenge not found.' } } satisfies ErrorResponse);
+      return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
+    }
+    if (!action && request.method === 'PATCH') {
+      const input = updateChallengeSchema.parse(await readJsonBody(request));
+      const challenge = await dependencies.challengeService.updateChallenge(principal, challengeId, input);
+      return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
+    }
+  }
+
+  // --- Public & Player Challenges ---
+  if (pathname === `${apiPrefix}/challenges` && request.method === 'GET') {
+    if (!dependencies.challengeService) {
+      return sendJson(response, 503, { error: { code: 'challenge_service_not_configured', message: 'Challenge service is not configured.' } } satisfies ErrorResponse);
+    }
+    const query = paginationQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.challengeService.listPublishedChallenges(query);
+    return sendJson(response, 200, challengeListResponseSchema.parse({
+      data: result.items,
+      pagination: { nextCursor: result.nextCursor, limit: query.limit },
+    }));
+  }
+  if (pathname === `${apiPrefix}/challenges/me` && request.method === 'GET') {
+    if (!dependencies.walletVerifier || !dependencies.challengeService) {
+      return sendJson(response, 503, { error: { code: 'challenge_service_not_configured', message: 'Challenge service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.walletVerifier);
+    if (!principal.playerId) return sendJson(response, 403, { error: { code: 'forbidden', message: 'Player access is required.' } } satisfies ErrorResponse);
+    const participations = await dependencies.challengeService.listPlayerParticipations(principal.playerId);
+    return sendJson(response, 200, playerChallengeParticipationsResponseSchema.parse({ data: participations }));
+  }
+  const playerJoinMatch = pathname.match(new RegExp(`^${apiPrefix}/challenges/([^/]+)/join$`));
+  if (playerJoinMatch && request.method === 'POST') {
+    if (!dependencies.walletVerifier || !dependencies.challengeService) {
+      return sendJson(response, 503, { error: { code: 'challenge_service_not_configured', message: 'Challenge service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.walletVerifier);
+    if (!principal.playerId) return sendJson(response, 403, { error: { code: 'forbidden', message: 'Player access is required.' } } satisfies ErrorResponse);
+    const participation = await dependencies.challengeService.joinChallenge(principal.playerId, playerJoinMatch[1]!);
+    return sendJson(response, 201, { data: challengeParticipationSchema.parse(participation) });
+  }
+  const publicChallengeMatch = pathname.match(new RegExp(`^${apiPrefix}/challenges/([^/]+)$`));
+  if (publicChallengeMatch && request.method === 'GET') {
+    if (!dependencies.challengeService) {
+      return sendJson(response, 503, { error: { code: 'challenge_service_not_configured', message: 'Challenge service is not configured.' } } satisfies ErrorResponse);
+    }
+    const challenge = await dependencies.challengeService.getPublishedChallenge(publicChallengeMatch[1]!);
+    if (!challenge || challenge.status !== 'PUBLISHED') {
+      return sendJson(response, 404, { error: { code: 'not_found', message: 'Challenge not found.' } } satisfies ErrorResponse);
+    }
+    return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 9: Bounty Routes
+  // ---------------------------------------------------------------------------
+
+  // --- Admin Bounties ---
+  if (pathname === `${apiPrefix}/admin/bounties`) {
+    if (!dependencies.verifier || !dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.verifier);
+    requireAdministrator(principal);
+    if (request.method === 'GET') {
+      const query = paginationQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+      const result = await dependencies.bountyService.listBounties(principal, query);
+      return sendJson(response, 200, bountyListResponseSchema.parse({
+        data: result.items,
+        pagination: { nextCursor: result.nextCursor, limit: query.limit },
+      }));
+    }
+    if (request.method === 'POST') {
+      const input = createBountySchema.parse(await readJsonBody(request));
+      const bounty = await dependencies.bountyService.createBounty(principal, input);
+      return sendJson(response, 201, { data: bountySchema.parse(bounty) });
+    }
+    return methodNotAllowed(response);
+  }
+
+  const adminBountyActionMatch = pathname.match(new RegExp(`^${apiPrefix}/admin/bounties/([^/]+)(?:/(publish|pause|close|archive))?$`));
+  if (adminBountyActionMatch) {
+    const bountyId = adminBountyActionMatch[1]!;
+    const action = adminBountyActionMatch[2];
+    if (!dependencies.verifier || !dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.verifier);
+    requireAdministrator(principal);
+    if (action === 'publish' && request.method === 'POST') {
+      return sendJson(response, 200, { data: bountySchema.parse(await dependencies.bountyService.publishBounty(principal, bountyId)) });
+    }
+    if (action === 'pause' && request.method === 'POST') {
+      return sendJson(response, 200, { data: bountySchema.parse(await dependencies.bountyService.pauseBounty(principal, bountyId)) });
+    }
+    if (action === 'close' && request.method === 'POST') {
+      return sendJson(response, 200, { data: bountySchema.parse(await dependencies.bountyService.closeBounty(principal, bountyId)) });
+    }
+    if (action === 'archive' && request.method === 'POST') {
+      return sendJson(response, 200, { data: bountySchema.parse(await dependencies.bountyService.archiveBounty(principal, bountyId)) });
+    }
+    if (!action && request.method === 'GET') {
+      const bounty = await dependencies.bountyService.getBounty(bountyId);
+      return sendJson(response, 200, { data: bountySchema.parse(bounty) });
+    }
+    if (!action && request.method === 'PATCH') {
+      const input = updateBountySchema.parse(await readJsonBody(request));
+      const bounty = await dependencies.bountyService.updateBounty(principal, bountyId, input);
+      return sendJson(response, 200, { data: bountySchema.parse(bounty) });
+    }
+  }
+
+  // Admin: review submission
+  const adminSubmissionReviewMatch = pathname.match(new RegExp(`^${apiPrefix}/admin/bounty-submissions/([^/]+)/review$`));
+  if (adminSubmissionReviewMatch && request.method === 'POST') {
+    const submissionId = adminSubmissionReviewMatch[1]!;
+    if (!dependencies.verifier || !dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.verifier);
+    const input = reviewBountySubmissionSchema.parse(await readJsonBody(request));
+    const submission = await dependencies.bountyService.reviewSubmission(principal, submissionId, input);
+    return sendJson(response, 200, { data: submission });
+  }
+
+  // --- Public & Player Bounties ---
+  if (pathname === `${apiPrefix}/bounties` && request.method === 'GET') {
+    if (!dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const query = paginationQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.bountyService.listPublishedBounties(query);
+    return sendJson(response, 200, bountyListResponseSchema.parse({
+      data: result.items,
+      pagination: { nextCursor: result.nextCursor, limit: query.limit },
+    }));
+  }
+
+  if (pathname === `${apiPrefix}/bounties/me` && request.method === 'GET') {
+    if (!dependencies.walletVerifier || !dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.walletVerifier);
+    const participations = await dependencies.bountyService.getPlayerParticipations(principal);
+    return sendJson(response, 200, playerBountyParticipationsResponseSchema.parse({ data: participations }));
+  }
+
+  const bountyJoinMatch = pathname.match(new RegExp(`^${apiPrefix}/bounties/([^/]+)/join$`));
+  if (bountyJoinMatch && request.method === 'POST') {
+    if (!dependencies.walletVerifier || !dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.walletVerifier);
+    const participation = await dependencies.bountyService.joinBounty(principal, bountyJoinMatch[1]!);
+    return sendJson(response, 201, { data: bountyParticipationSchema.parse(participation) });
+  }
+
+  const bountySubmitEvidenceMatch = pathname.match(new RegExp(`^${apiPrefix}/bounty-participations/([^/]+)/submit$`));
+  if (bountySubmitEvidenceMatch && request.method === 'POST') {
+    if (!dependencies.walletVerifier || !dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const principal = await authenticate(request, dependencies.walletVerifier);
+    const input = submitBountyEvidenceSchema.parse(await readJsonBody(request));
+    const submission = await dependencies.bountyService.submitEvidence(principal, bountySubmitEvidenceMatch[1]!, input);
+    return sendJson(response, 201, { data: submission });
+  }
+
+  const bountyLeaderboardMatch = pathname.match(new RegExp(`^${apiPrefix}/bounties/([^/]+)/leaderboard$`));
+  if (bountyLeaderboardMatch && request.method === 'GET') {
+    if (!dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const query = paginationQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.bountyService.getBountyLeaderboard(bountyLeaderboardMatch[1]!, query);
+    return sendJson(response, 200, bountyLeaderboardResponseSchema.parse({
+      data: result.items,
+      pagination: { nextCursor: result.nextCursor, limit: query.limit },
+    }));
+  }
+
+  const publicBountyMatch = pathname.match(new RegExp(`^${apiPrefix}/bounties/([^/]+)$`));
+  if (publicBountyMatch && request.method === 'GET') {
+    if (!dependencies.bountyService) {
+      return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
+    }
+    const bounty = await dependencies.bountyService.getBounty(publicBountyMatch[1]!);
+    if (bounty.status === 'DRAFT') {
+      return sendJson(response, 404, { error: { code: 'not_found', message: 'Bounty not found.' } } satisfies ErrorResponse);
+    }
+    return sendJson(response, 200, { data: bountySchema.parse(bounty) });
+  }
+
   return sendJson(response, 404, { error: { code: 'not_found', message: 'The requested route was not found.' } } satisfies ErrorResponse);
 }
+
+
 
 export function createApp(config: BackendConfig = loadConfig(), dependencies: AppDependencies = {}): Server {
   const limiter = new FixedWindowRateLimiter(config.rateLimitWindowMs, config.rateLimitMaxRequests);
@@ -295,6 +587,8 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
       walletVerifierSecret: config.authSessionSecret,
       walletVerifier: new WalletSessionTokenVerifier(config.authSessionSecret, async address => (await prisma.wallet.findFirst({ where: { address: address.toLowerCase() }, select: { playerId: true } }))?.playerId ?? null),
     } : {}),
+    challengeService: new ChallengeService(new PrismaChallengeRepository(prisma)),
+    bountyService: new BountyService(new PrismaBountyRepository(prisma)),
   });
   server.listen(config.port, config.host, () => {
     const address = server.address();
