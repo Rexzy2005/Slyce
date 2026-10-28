@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { createElement as h, useEffect, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, ClipboardList, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react';
-import { getAdminAuthClient } from '../../admin/supabase';
+import { clearAdminSessionStart, getAdminAuthClient } from '../../admin/supabase';
 import { publicConfig } from '../../config/public';
 import { apiFetch } from '../../api/http';
 import { OperationsPanel } from '../../admin/operations-panel';
@@ -16,7 +16,7 @@ const navigation = [
 ];
 export default function AdminPage() {
   const [verifiedUsers, setVerifiedUsers] = useState<number | null>(null);
-  const signOut = async () => { await getAdminAuthClient().auth.signOut(); window.location.reload(); };
+  const signOut = async () => { await getAdminAuthClient().auth.signOut(); clearAdminSessionStart(); window.location.reload(); };
   useEffect(() => {
     let active = true;
     void (async () => {
