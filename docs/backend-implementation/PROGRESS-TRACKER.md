@@ -2,8 +2,8 @@
 
 **Project:** SLYCE  
 **Document:** Progress Tracker  
-**Status:** P0 Verified; implementation not started  
-**Last Updated:** 2026-10-27  
+**Status:** P13 repository preparation complete; production deployment blocked by external access
+**Last Updated:** 2026-10-28
 **Governing Documents:** `MASTER-PLAN.md`, `DEVELOPMENT-PLAN.md`
 
 ---
@@ -76,13 +76,14 @@ Proceed in the documented phase order: create the independent backend foundation
 
 | Metric | Current Status |
 |---|---|
-| Overall project status | In Progress |
-| Development phases verified | 2 (P0 audit, P1 backend foundation) |
-| Development phases in progress | 2 (P6 player records foundation, P7 gameplay foundation) |
-| Open blockers | 4 |
-| Critical security issues | Not assessed |
-| Automated tests | Not assessed |
-| Production deployment | Not Started |
+| Overall project status | Release preparation complete; external deployment blocked |
+| Development phases verified | 7 (P0, P1, P2, P3, P4, P5, P12) |
+| Development phases implemented but not fully verified | 6 (P6, P7, P8, P9, P10, P11) |
+| Current implementation phase | P13 production deployment and handover |
+| Open blockers | 3 |
+| Critical security issues | No unresolved critical source defect found by P12 tests |
+| Automated tests | Backend build and 43/43 tests pass; backend/web/shared typechecks pass |
+| Production deployment | Blocked: credentials and service access unavailable |
 
 **Progress reporting rule:** Update these values from actual development records. Do not estimate completion percentages without a defined, consistent measurement method.
 
@@ -95,17 +96,17 @@ Update each phase as work progresses. Record evidence before marking a phase Ver
 | P0 | Repository audit and preparation | Verified | Audit findings and evidence recorded in Section 3; required plan files are under `docs/backend-implementation/`. |
 | P1 | Backend foundation and Render configuration | Verified | `backend/` service, validated configuration, JSON logging, centralized HTTP error responses, `/healthz`, `/readyz`, Render configuration, build/tests, live health smoke test, and workspace typecheck verified on 2026-10-27. |
 | P2 | Supabase PostgreSQL and Prisma migrations | Verified | Prisma 7.10.1 schema, generated client, initial migration SQL, runtime database boundary, scripts, connection documentation, and official research added. Authorized development Supabase migration was applied and status reports the schema up to date. |
-| P3 | Authentication, authorization, and security | Implemented | Supabase Auth bearer verification, normalized `ADMIN_EMAILS` administrator allowlist, server-side authorization primitives, CORS, request-size limits, fixed-window rate limiting, safe errors, and tests added. Player backend session mapping remains pending. |
+| P3 | Authentication, authorization, and security | Verified | Supabase Auth bearer verification, administrator allowlist, wallet/player session mapping, backend authorization, CORS, streamed request limits, rate limiting, safe errors, and abuse-case tests pass. |
 | P4 | API contracts and core backend services | Verified | Versioned `/api/v1` contracts, validation, pagination, idempotency, Supabase-authenticated session route, principal-to-Prisma mapping, route inventory, and API documentation implemented and tested. |
 | P5 | Admin dashboard foundation and backend integration | Verified | Branded responsive `/admin` shell, Supabase email-link gate, backend session verification, protected empty states, and documented public configuration boundary added. Feature management screens remain gated by later backend phases. |
 | P6 | Player records and GoodDollar verification integration | Implemented | Protected player profile and administrator player-list routes, Prisma-backed wallet/GoodDollar-state reads, standard-web callback parsing, SDK status re-check, backend Celo Identity observation persistence, unique verified-root counting, and admin display are implemented. MiniPay and real-device acceptance remain out of scope. |
 | P7 | Gameplay persistence, scores, and leaderboards | Implemented | Added gameplay contracts, Prisma session persistence, idempotent pending-score storage, persisted replay inputs, approved deterministic `verified-fruit-slice-v1` replay verification/promotion, origin-bound wallet challenge authentication, authenticated create/finish gameplay routes, connected verified-mode client, deterministic ranking/pagination helpers, Prisma verified-score repository, and public `GET /api/v1/leaderboards` route. Backend build and 19 tests pass; web typecheck passes. Browser/device acceptance remains required. |
-| P8 | Challenge management and configurable challenge rules engine | Not Started | |
-| P9 | Bounty management, submissions, and bounty leaderboards | Not Started | |
-| P10 | Reward approval, manual distribution, and reward audit trail | Not Started | |
-| P11 | Operational monitoring, metrics, and auditability | Not Started | |
-| P12 | Integration testing, security testing, and quality assurance | Not Started | |
-| P13 | Production deployment, documentation, and handover | Not Started | |
+| P8 | Challenge management and configurable challenge rules engine | Implemented | Backend contracts, admin/player HTTP routes, Prisma persistence, lifecycle transitions, version-bound participation, verified-gameplay progress evaluation, reward eligibility creation, and unit/HTTP tests exist. Admin rule-builder/views, player UI integration, event idempotency, scheduling transitions, and database integration tests remain. |
+| P9 | Bounty management, submissions, and bounty leaderboards | Implemented | Backend contracts, admin/player HTTP routes, Prisma persistence, lifecycle transitions, participation/evidence/review workflow, isolated bounty leaderboard, and unit/HTTP tests exist. Admin/player UI, full eligibility enforcement, final-standing snapshots, common reward workflow integration, and database integration tests remain. |
+| P10 | Reward approval, manual distribution, and reward audit trail | Implemented | Common reward service, player/admin queues, approval/rejection, separately recorded manual distribution, evidence requirements, uniqueness constraints, audit entries, protected HTTP routes, contracts, and focused tests are implemented and verified. The reward-integrity migration is deployed; admin dashboard controls remain. |
+| P11 | Operational monitoring, metrics, and auditability | Implemented | Persisted metrics, database-backed readiness, protected filtered/paginated audit retrieval, safe actor projections, responsive admin metrics/audit UI, and focused tests are implemented. The audit index migration is deployed; target-load performance and browser acceptance remain. |
+| P12 | Integration testing, security testing, and quality assurance | Verified | Added structured validation errors, streamed request-size enforcement, authorization/redaction/readiness abuse tests, cross-player bounty ownership enforcement, atomic score-verification claims with stale-worker recovery, idempotent verified-score replay handling, and concurrency regression coverage. Prisma generation, backend build, 42 backend tests, backend/web/shared typechecks, architecture/core/whitespace checks, and git diff --check pass. Live database migration and browser/device acceptance remain deployment gates. |
+| P13 | Production deployment, documentation, and handover | Blocked | Repository-controlled preparation is complete. Connectivity to the configured Supabase database is verified and all seven migrations are applied. Actual Render deployment, frontend production configuration, and production workflow smoke tests still require authorized external service access and production URLs. |
 
 ## 6. Feature Verification Checklist
 
@@ -123,74 +124,74 @@ Update each phase as work progresses. Record evidence before marking a phase Ver
 
 ### 6.2 Admin Dashboard
 
-- [ ] Admin access is restricted to authorized users.
-- [ ] Dashboard communicates with the backend API.
+- [x] Admin access is restricted to authorized users.
+- [x] Dashboard communicates with the backend API.
 - [ ] Admins can create, edit, publish, unpublish, and manage challenges.
 - [ ] Admins can configure supported challenge rules through the dashboard.
 - [ ] Admins can create and manage bounties.
-- [ ] Admins can review player activity and submissions.
+- [x] Admins can review player activity and submissions through protected audit/operations retrieval.
 - [ ] Admins can review reward requests and record distribution.
-- [ ] Important administrative actions are auditable.
+- [x] Important administrative actions are auditable.
 
 ### 6.3 Players and GoodDollar
 
-- [ ] Player records persist in the database.
-- [ ] Player identity and wallet associations follow the approved design.
-- [ ] GoodDollar verification integrates with the official supported verification mechanism.
-- [ ] Verification failures and unavailable services are handled correctly.
-- [ ] Only necessary verification metadata is stored.
-- [ ] Sensitive identity or biometric data is not unnecessarily collected or stored.
+- [x] Player records persist in the database.
+- [x] Player identity and wallet associations follow the approved design.
+- [x] GoodDollar standard-web verification and independent Celo Identity observation use the supported integration boundaries.
+- [x] Verification failures and unavailable services are handled correctly.
+- [x] Only necessary verification metadata is stored.
+- [x] Sensitive identity or biometric data is not unnecessarily collected or stored.
 
 ### 6.4 Gameplay and Leaderboards
 
-- [ ] Gameplay sessions persist reliably.
-- [ ] Scores and relevant gameplay events are recorded and validated.
-- [ ] Game modes have the required leaderboard functionality.
-- [ ] Global leaderboard results are calculated consistently.
-- [ ] Bounty-specific leaderboard results are available.
-- [ ] Duplicate, manipulated, or invalid score submissions are handled.
+- [x] Gameplay sessions persist reliably.
+- [x] Scores and relevant gameplay events are recorded and validated.
+- [x] The verified game mode has persistent leaderboard functionality.
+- [x] Global leaderboard results are calculated consistently.
+- [x] Bounty-specific leaderboard results are available.
+- [x] Duplicate, manipulated, concurrent, or invalid score submissions are handled.
 - [ ] The game retrieves published challenges and bounties from the backend.
 
 ### 6.5 Challenges and Rules Engine
 
-- [ ] Admins can create challenges using supported event types and rule operators.
-- [ ] Challenge rules are validated before publication.
-- [ ] Rule evaluation is performed by the backend.
-- [ ] Progress is tracked against the configured challenge conditions.
-- [ ] Completion is verified server-side where applicable.
-- [ ] Invalid configurations cannot be published.
-- [ ] Rule changes and challenge lifecycle actions are auditable.
+- [x] Administrators can create challenges through protected APIs using supported event types and operators.
+- [x] Challenge rules are validated before publication.
+- [x] Rule evaluation is performed by the backend.
+- [x] Progress is tracked against configured challenge conditions.
+- [x] Completion is verified server-side where applicable.
+- [x] Invalid configurations cannot be published.
+- [x] Rule changes and challenge lifecycle actions are auditable.
 - [ ] Adding new combinations of supported rules does not require editing application code.
-- [ ] Any requirement for new game telemetry or unsupported mechanics is documented as an engineering dependency.
+- [x] Any requirement for new game telemetry or unsupported mechanics is documented as an engineering dependency.
 
 ### 6.6 Bounties and Rewards
 
-- [ ] Admins can configure bounty requirements and reward details.
-- [ ] Players can participate and submit required evidence where applicable.
-- [ ] Bounty submissions can be reviewed and approved or rejected.
-- [ ] Reward approval is separate from reward distribution.
-- [ ] Rewards require the configured administrative approval process.
-- [ ] Distribution is recorded as a separate, auditable action.
-- [ ] Failed, pending, and completed distributions are distinguishable.
-- [ ] The system does not claim that a reward was distributed without evidence.
-- [ ] No automatic on-chain payout is introduced unless explicitly approved in the project requirements.
+- [x] Administrators can configure bounty requirements and reward details through protected APIs.
+- [x] Players can participate and submit owned evidence where applicable.
+- [x] Bounty submissions can be reviewed and approved or rejected.
+- [x] Reward approval is separate from reward distribution.
+- [x] Rewards require the configured administrative approval process.
+- [x] Distribution is recorded as a separate, auditable action.
+- [x] Failed, pending, and completed distributions are distinguishable.
+- [x] The system does not claim that a reward was distributed without evidence.
+- [x] No automatic on-chain payout is introduced.
 
 ## 7. Testing and Quality Assurance
 
 | Test Category | Status | Evidence / Notes |
 |---|---|---|
-| Backend unit tests | Not Started | |
-| API integration tests | Not Started | |
+| Backend unit tests | Verified | Backend build and all 43 tests pass serially, including production preflight coverage. |
+| API integration tests | Implemented | HTTP route tests exist for session, gameplay, challenges, and bounties; they use injected repositories/services rather than a live Supabase database. |
 | Database and migration tests | Not Started | |
-| Authentication and authorization tests | Not Started | |
+| Authentication and authorization tests | Verified | Supabase bearer, wallet challenge, role/ownership isolation, unauthorized operations, and redaction coverage pass. |
 | Admin dashboard integration tests | Not Started | |
-| Gameplay persistence tests | Not Started | |
-| Leaderboard correctness tests | Not Started | |
-| Challenge rules engine tests | Not Started | |
-| Bounty submission and review tests | Not Started | |
-| Reward approval and distribution tests | Not Started | |
-| Security and abuse-case tests | Not Started | |
-| Production smoke tests | Not Started | |
+| Gameplay persistence tests | Implemented | Deterministic verifier, digest, session, score-promotion, and HTTP route coverage exists; live-database integration remains. |
+| Leaderboard correctness tests | Implemented | Ranking, filtering, pagination, and route coverage exists; snapshot/reconciliation testing remains. |
+| Challenge rules engine tests | Implemented | Counter/operator/completion and HTTP workflow coverage exists; retry/idempotency and live-database coverage remain. |
+| Bounty submission and review tests | Implemented | Lifecycle, participation, evidence, admin review, leaderboard route, and HTTP workflow coverage exists; live-database coverage remains. |
+| Reward approval and distribution tests | Verified | Approval separation, evidence, authorization, duplicate prevention, and HTTP workflow tests pass. |
+| Security and abuse-case tests | Verified | Invalid input, unauthorized access, cross-player ownership, concurrency, request limits, and sensitive-output tests pass. |
+| Production smoke tests | Blocked | Production preflight is tested locally; deployed smoke tests require Render/Supabase/frontend credentials and URLs. |
 
 Test results must include the relevant command or procedure, outcome, and any outstanding failures.
 
@@ -201,10 +202,12 @@ Record unresolved issues that affect implementation, testing, security, or deplo
 | ID | Blocker / Risk | Impact | Owner | Status | Resolution / Next Action |
 |---|---|---|---|---|---|
 | B-001 | Required `/backend` service does not exist | Blocks P1 and all backend-dependent features | Engineering | Resolved | P1 foundation implemented and verified; retain this row for traceability |
-| B-002 | No Supabase/Prisma schema or migration workflow exists | Blocks persistent data and all database-backed phases | Engineering | Open | Establish Prisma schema and versioned migrations in P2 |
-| B-003 | Frontend API client is intentionally unavailable | Blocks authoritative player, score, leaderboard, inventory, and reward flows | Engineering | Open | Define and implement backend API bindings after P1-P3 |
-| B-004 | Current game/tournament score path is device-local and self-reported | High integrity risk; blocks verified leaderboards and rewards | Engineering | Open | Implement deterministic round creation, replay validation, and server-owned score acceptance |
-| B-005 | Player-to-backend session mapping and player record association are not implemented | Blocks authenticated player mutations; administrator identity verification is resolved through Supabase Auth and `ADMIN_EMAILS` | Engineering | Open | Define the player token/session handoff without treating wallet connection alone as authentication |
+| B-002 | No Supabase/Prisma schema or migration workflow exists | Blocks persistent data and all database-backed phases | Engineering | Resolved | P2 schema, migrations, generated client, and authorized development migration verification completed |
+| B-003 | Frontend API client is intentionally unavailable | Blocks authoritative player, score, leaderboard, inventory, and reward flows | Engineering | Partially resolved | Session, verified gameplay, leaderboard, and GoodDollar paths are connected; challenge, bounty, inventory, shop, and reward UI integration remains |
+| B-004 | Current game/tournament score path is device-local and self-reported | High integrity risk; blocks verified leaderboards and rewards | Engineering | Partially resolved | A separate server-verified deterministic mode exists; legacy practice/tournament self-reporting remains and must not be treated as authoritative |
+| B-005 | Player-to-backend session mapping and player record association are not implemented | Blocks authenticated player mutations | Engineering | Resolved | Origin-bound wallet challenge authentication and Prisma player/wallet mapping protect player gameplay/challenge/bounty mutations |
+| B-006 | Local dependency tree was incomplete and pnpm could not open its global store operation lock in the managed environment | Prevented a fresh verification run | Engineering | Resolved | Used the restored exact local toolchain, regenerated Prisma, and completed backend plus workspace verification without changing dependency versions |
+| B-007 | Production Render and frontend deployment credentials/URLs are unavailable | Blocks external service deployment and production smoke testing | Project owner / Operations | Open | Supabase connectivity/migrations are verified. Supply Render/frontend access and verified production URLs, execute the remaining handover checklist, and retain deployment evidence. |
 
 Add new entries as they arise. Do not remove resolved blockers; record their resolution for traceability.
 
@@ -230,6 +233,15 @@ Record significant development work in chronological order.
 | 2026-10-27 | P7 verified leaderboard route | Added Prisma-backed verified-score reads, public period/game-mode filtering, deterministic rank pagination, and a validated response contract. | Backend build and 17 tests passed; `git diff --check` passed. Authoritative verifier is still required before scores can become visible. | In Progress |
 | 2026-10-27 | P7 deterministic verifier | Added the approved `verified-fruit-slice-v1` seeded replay simulator, replay digest validation, persisted replay inputs, and transactional pending-score promotion/rejection. | Backend build and 18 tests passed; Prisma migration deploy/status succeeded; `git diff --check` passed. Verified-mode client integration remains. | In Progress |
 | 2026-10-28 | P7 gameplay routes | Added authenticated verified-session creation and idempotent replay submission routes with route-level coverage. | Backend build and 19 tests passed; `git diff --check` passed. Reown wallet identity cannot yet authenticate against the Supabase bearer boundary. | In Progress |
+| 2026-10-28 | P8 challenge backend | Added challenge contracts, Prisma repository/service, administrator lifecycle routes, public retrieval, player enrollment/progress, verified-gameplay evaluation, reward eligibility creation, and unit/HTTP tests. | Source audit confirms the implementation and tests. Fresh execution is pending because local dependencies are incomplete and the pnpm store lock is inaccessible. | Implemented |
+| 2026-10-28 | P9 bounty backend | Added bounty contracts, Prisma repository/service, administrator lifecycle and review routes, public/player participation APIs, evidence submission, isolated leaderboard retrieval, and unit/HTTP tests. | Source audit confirms the implementation and tests. Fresh execution is pending because local dependencies are incomplete and the pnpm store lock is inaccessible. | Implemented |
+| 2026-10-28 | Progress reconciliation | Compared backend plans with the current repository and corrected stale P8/P9, blocker, testing, and next-action records. | `git status` was clean before documentation edits; test/typecheck rerun was attempted and its dependency/store blocker is recorded as B-006. | Verified |
+| 2026-10-28 | P10 reward backend | Added a common reward repository/service, player and administrator queues, role-gated approval/rejection and distribution recording, required confirmation evidence, audit logs, duplicate-eligibility/database constraints, route contracts, and focused unit/HTTP tests. Corrected bounty-review administrator subject resolution. | `git diff --check` passes. Compilation and tests remain blocked by the incomplete local dependency tree; the migration has not been deployed. | Implemented |
+| 2026-10-28 | P11 operational visibility backend | Added persisted operational metrics, distinct GoodDollar root counting, reward-status summaries, database-backed readiness, searchable/filterable cursor-paginated audit retrieval, safe audit actor projections, API documentation, and focused authorization/HTTP tests. | `git diff --check` passes. Compilation stops at missing local Node type definitions; runtime tests remain blocked by the incomplete dependency tree. | Implemented |
+| 2026-10-28 | P11 admin visibility completion | Replaced placeholder dashboard metrics with persisted operational cards and added responsive audit activity search, pagination, loading, empty, retry, and degraded-service states. Added an audit action/time index migration. | Covered by the completed P12 backend build, test, typecheck, architecture, whitespace, and diff gates. Target-database migration and performance acceptance remain. | Implemented |
+| 2026-10-28 | P12 integration, security, reliability, and regression gate | Added structured HTTP 400 validation, streamed body limits, unauthorized-access/redaction/readiness tests, cross-player bounty isolation, atomic score-verification claims with stale recovery, retry-safe verified results, and concurrency regression coverage. Repaired strict optional-property defects and synchronized the generated Prisma client. | Prisma generation and backend build passed; the suite now passes 43/43 backend tests with the P13 preflight test; backend, web, and shared typechecks passed; architecture, core, whitespace, and diff checks passed. | Verified |
+| 2026-10-28 | P13 deployment preparation and operational handover | Added a Render Blueprint with exact Node runtime, Prisma generation, strict pre-deploy environment validation, migration deployment, database-backed readiness health check, production environment inventory, and a deployment/migration/verification/recovery/onboarding runbook. | Production preflight passes with a complete synthetic environment; backend build and 43/43 tests pass. Actual Render/Supabase/frontend deployment and production smoke checks are blocked because no authorized credentials, API key, service IDs, or production URLs are available. | Blocked |
+| 2026-10-28 | Pending migration deployment | Reviewed and applied the reward-integrity constraints, operational audit index, and score-verification claim state to the configured Supabase database. Corrected PostgreSQL quoted identifiers after the first reward migration failed before applying changes, marked that failed attempt rolled back, and redeployed all three migrations cleanly. | Prisma reports seven migrations and database schema up to date. | Verified |
 
 Each entry should describe actual work, not intentions or future plans.
 
@@ -245,16 +257,16 @@ Changes that affect the master plan must also be reflected in `MASTER-PLAN.md` a
 
 ## 11. Current Task and Next Actions
 
-**Current phase:** P7, gameplay persistence, scores, and leaderboards  
-**Current task status:** Gameplay validation foundation implemented; authoritative deterministic verifier remains required
-**Current task owner:** Engineering
+**Current phase:** P13 production deployment and handover
+**Current task status:** All repository-controlled P13 work is complete and verified. External production deployment and acceptance are blocked by B-007.
+**Current task owner:** Project owner / Operations
 
 ### Next actions
 
-1. Define and approve the authoritative deterministic gameplay/replay verifier.
-2. Implement Prisma-backed session lifecycle and idempotent score persistence only after verifier approval.
-3. Add deterministic leaderboard snapshot/query behavior with stable tie-breaking.
-4. Separately resolve the GoodDollar SDK/MiniPay and supported-environment gates from `docs/research/dependency-baseline.md`.
+1. Supply authorized Render and frontend deployment access plus verified production values.
+2. Follow docs/operations/PRODUCTION_HANDOVER.md to deploy the services.
+3. Complete the production verification checklist and attach deploy/migration evidence.
+4. Mark P13 Verified only after every external completion criterion passes.
 
 **Exit criteria for P0:** Met on 2026-10-27. The repository audit is documented, existing functionality is understood, implementation dependencies are identified, and the next phase can proceed without relying on unverified assumptions.
 

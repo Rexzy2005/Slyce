@@ -60,6 +60,7 @@ export type GameSessionStatus = (typeof GameSessionStatus)[keyof typeof GameSess
 
 export const ScoreStatus = {
   PENDING: 'PENDING',
+  VERIFYING: 'VERIFYING',
   VERIFIED: 'VERIFIED',
   REJECTED: 'REJECTED',
   INVALIDATED: 'INVALIDATED'

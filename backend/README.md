@@ -1,6 +1,6 @@
 # Slyce backend
 
-The backend is an independently runnable Node.js service. It provides the verified P1 foundation plus P2 Prisma/database and P4 API contract infrastructure; feature handlers remain intentionally disabled until authentication and database verification are complete.
+The backend is an independently runnable Node.js service providing authenticated player/admin APIs, persisted gameplay verification and leaderboards, challenges, bounties, rewards, and operational visibility.
 
 ## Local commands
 
@@ -20,13 +20,14 @@ Configure a Render web service from the repository root with:
 
 - Build command: `pnpm install --frozen-lockfile && pnpm --filter @slyce/backend build`
 - Start command: `pnpm --filter @slyce/backend start`
-- Health check path: `/healthz`
+- Pre-deploy command: deployment:check followed by db:migrate:deploy
+- Health check path: /readyz
 
-The service must provide its own environment variables in Render. Database and authentication variables will be documented when their respective phases are implemented.
+The service must provide its own environment variables in Render. Deployment, migration, recovery, and verification are documented in docs/operations/PRODUCTION_HANDOVER.md.
 
 Security configuration is provided through `CORS_ORIGINS`, `MAX_REQUEST_BYTES`, `RATE_LIMIT_WINDOW_MS`, and `RATE_LIMIT_MAX_REQUESTS`. Production requires an explicit non-empty `CORS_ORIGINS` allowlist.
 
-API contracts and the route inventory are documented in the repository root at `docs/API_CONTRACTS.md`. Domain handlers remain disabled until authentication and persistence prerequisites are verified.
+API contracts and the route inventory are documented in docs/API_CONTRACTS.md.
 
 Authentication configuration uses Supabase Auth bearer tokens and an explicit, lowercased `ADMIN_EMAILS` allowlist. The backend verifies the token with Supabase Auth before assigning an administrator principal. The existing Reown/AppKit wallet UX remains the player-facing sign-in experience, but player-to-backend session mapping is still required before player mutations are enabled.
 

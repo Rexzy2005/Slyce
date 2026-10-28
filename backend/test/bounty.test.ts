@@ -51,6 +51,7 @@ function makeBountyView(overrides: Partial<BountyView> = {}): BountyView {
 function makeParticipationView(overrides: Partial<BountyParticipationView> = {}): BountyParticipationView {
   return {
     id: MOCK_PART_ID,
+    playerId: MOCK_PLAYER_ID,
     bountyId: MOCK_BOUNTY_ID,
     bountySlug: 'weekly-slice',
     bountyTitle: 'Weekly Slice',
@@ -89,7 +90,16 @@ class MockBountyRepository implements BountyRepository {
   async update(id: string, input: Parameters<BountyRepository['update']>[1]): Promise<BountyView> {
     const idx = this.bounties.findIndex(b => b.id === id);
     if (idx === -1) throw new Error('Not found');
-    this.bounties[idx] = { ...this.bounties[idx]!, ...input };
+    this.bounties[idx] = {
+      ...this.bounties[idx]!,
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.startsAt !== undefined ? { startsAt: input.startsAt } : {}),
+      ...(input.endsAt !== undefined ? { endsAt: input.endsAt } : {}),
+      ...(input.maxParticipants !== undefined ? { maxParticipants: input.maxParticipants } : {}),
+      ...(input.leaderboardMode !== undefined ? { leaderboardMode: input.leaderboardMode } : {}),
+      ...(input.requirements !== undefined ? { requirements: input.requirements } : {}),
+    };
     return this.bounties[idx]!;
   }
   async findById(id: string): Promise<BountyView | null> {
@@ -246,6 +256,18 @@ await it('bounty service allows evidence submission and admin review', async () 
   assert.equal(reviewed.reviewNotes, 'Looks valid.');
 });
 
+await it('bounty service rejects evidence submission for another player participation', async () => {
+  const repo = new MockBountyRepository();
+  const service = new BountyService(repo);
+  const admin = makeAdminPrincipal();
+  const owner = makePlayerPrincipal();
+  await service.createBounty(admin, { slug: 'ownership', title: 'Ownership', description: 'D', rewardAmount: 25 });
+  await service.publishBounty(admin, MOCK_BOUNTY_ID);
+  const participation = await service.joinBounty(owner, MOCK_BOUNTY_ID);
+  const attacker: AuthenticatedPrincipal = { kind: 'player', subject: 'other', playerId: '00000000-0000-4000-8000-000000000099', roles: [] };
+  await assert.rejects(() => service.submitEvidence(attacker, participation.id, { evidence: { note: 'not mine' } }), /does not belong/i);
+});
+
 await it('bounty service full lifecycle: draft -> published -> closed -> archived', async () => {
   const repo = new MockBountyRepository();
   const service = new BountyService(repo);
@@ -291,8 +313,8 @@ await it('HTTP bounty routes serve admin and player operations', async () => {
     {
       port: 0, host: '127.0.0.1', environment: 'test',
       corsOrigins: [], rateLimitWindowMs: 60000, rateLimitMaxRequests: 1000,
-      maxRequestBytes: 1_048_576, logLevel: 'error',
-    } as Parameters<typeof createApp>[0],
+      maxRequestBytes: 1_048_576, adminEmails: [], goodDollarEnvironment: 'development',
+    },
     {
       verifier: alwaysAdmin,
       walletVerifier: alwaysPlayer,

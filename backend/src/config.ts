@@ -47,6 +47,10 @@ function parseAdminEmails(value: string | undefined): readonly string[] {
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig {
   const environment = parseEnvironment(env.NODE_ENV);
+  const adminEmails = parseAdminEmails(env.ADMIN_EMAILS);
+  const authSessionSecret = parseSecret(env.AUTH_SESSION_SECRET, 'AUTH_SESSION_SECRET');
+  if (environment === 'production' && adminEmails.length === 0) throw new Error('ADMIN_EMAILS is required in production');
+  if (environment === 'production' && !authSessionSecret) throw new Error('AUTH_SESSION_SECRET is required in production');
   return {
     environment,
     port: parsePort(env.PORT),
@@ -55,15 +59,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
     maxRequestBytes: parsePositiveInteger(env.MAX_REQUEST_BYTES, 'MAX_REQUEST_BYTES', 1_048_576),
     rateLimitWindowMs: parsePositiveInteger(env.RATE_LIMIT_WINDOW_MS, 'RATE_LIMIT_WINDOW_MS', 60_000),
     rateLimitMaxRequests: parsePositiveInteger(env.RATE_LIMIT_MAX_REQUESTS, 'RATE_LIMIT_MAX_REQUESTS', 120),
-    adminEmails: parseAdminEmails(env.ADMIN_EMAILS),
-    authSessionSecret: parseSecret(env.AUTH_SESSION_SECRET, 'AUTH_SESSION_SECRET'),
+    adminEmails,
+    ...(authSessionSecret ? { authSessionSecret } : {}),
     ...(env.GOODDOLLAR_RPC_URL?.trim() ? { goodDollarRpcUrl: env.GOODDOLLAR_RPC_URL.trim() } : {}),
     goodDollarEnvironment: env.GOODDOLLAR_ENV === 'staging' || env.GOODDOLLAR_ENV === 'development' ? env.GOODDOLLAR_ENV : 'production',
     ...(env.GOODDOLLAR_IDENTITY_ADDRESS?.trim() ? { goodDollarIdentityAddress: env.GOODDOLLAR_IDENTITY_ADDRESS.trim() } : {}),
   };
 }
 
-function parseSecret(value: string | undefined, name: string): string {
-  if (!value || value.length < 32) throw new Error(`${name} must be at least 32 characters`);
+function parseSecret(value: string | undefined, name: string): string | undefined {
+  if (!value) return undefined;
+  if (value.length < 32) throw new Error(`${name} must be at least 32 characters`);
   return value;
 }

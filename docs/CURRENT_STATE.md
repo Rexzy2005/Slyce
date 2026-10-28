@@ -1,6 +1,6 @@
 # Slyce Current State
 
-Updated: 2026-10-27. Target: GoodDollar Season 5. Web + installable PWA on Vercel with an independently runnable backend foundation (ADR-0004, ADR-0005). Repo/packages renamed to Slyce.
+Updated: 2026-10-28. Target: GoodDollar Season 5. Web + installable PWA on Vercel with an independently runnable backend (ADR-0004, ADR-0005). Repo/packages renamed to Slyce.
 
 ## Backend foundation
 
@@ -11,10 +11,14 @@ Updated: 2026-10-27. Target: GoodDollar Season 5. Web + installable PWA on Verce
 - P5 admin dashboard foundation is verified: a responsive, branded `/admin` operations console with Supabase email-link access, backend session verification, protected empty states, and no fabricated metrics. Domain management screens remain intentionally disabled until their backend phases are implemented.
 - P6 player-record foundation is implemented: authenticated `/api/v1/players/me`, administrator `/api/v1/admin/players`, Prisma-backed player/wallet/GoodDollar-state reads, and typed service boundaries. GoodDollar external verification and wallet-association mutations remain gated by unresolved official integration and ownership verification requirements.
 - GoodDollar standard-web verification now parses the official return parameters, removes them from the URL, re-checks status through the pinned Citizen SDK, and records an independent Celo Identity observation through the backend. The backend persists minimal wallet/environment/root/timestamp metadata and the admin dashboard counts unique verified root identities. MiniPay is intentionally out of scope.
-- P7 gameplay foundation is in progress: gameplay session and score contracts, input-digest support, ownership/expiry/bounds validation, Prisma session persistence, idempotent pending-score storage, an explicit verifier interface, and deterministic ranking/pagination helpers exist as an isolated service boundary. No authoritative score route or leaderboard persistence is enabled because the current Phaser runtime is practice-only.
-- P7 now also has a Prisma-backed public verified-leaderboard route for period filtering, deterministic ranking, display names, and pagination. It returns only scores already promoted to `VERIFIED`; the current practice runtime still cannot produce such records.
-- P7 now includes an approved deterministic `verified-fruit-slice-v1` replay simulator, digest checking, pending-score verification/promotion service, persisted replay inputs, authenticated create/finish gameplay routes, and a standard Celo wallet challenge session. The player-facing verified mode is connected separately from practice mode; MiniPay remains out of scope.
-- Domain feature endpoints remain unimplemented; authoritative gameplay verification and official GoodDollar integration gates remain open.
+- P7 includes an approved deterministic `verified-fruit-slice-v1` replay simulator, digest checking, persisted replay inputs, authenticated create/finish routes, pending-score verification/promotion, a standard Celo wallet challenge session, and a public verified-score leaderboard. The player-facing verified mode is separate from local practice mode.
+- P8 challenge backend is implemented: administrator lifecycle APIs, structured rules, version-bound participation, published retrieval, verified-gameplay progress evaluation, completion persistence, and reward-eligibility creation. Admin/player challenge UI, retry idempotency, scheduling automation, and live-database integration tests remain.
+- P9 bounty backend is implemented: administrator lifecycle and submission review APIs, public retrieval, player participation/evidence submission, and bounty-specific leaderboard retrieval. Admin/player bounty UI, complete eligibility enforcement, final-standing snapshots, common reward workflow integration, and live-database integration tests remain.
+- P10 reward backend is implemented: player/admin queues, role-gated approval and rejection, separately recorded manual distribution, confirmation evidence, duplicate prevention, and audit logging. The protected dashboard controls, migration deployment, and executable verification remain.
+- P11 implementation is complete: persisted player/game/content/reward metrics, distinct GoodDollar root-identity counts, database-backed readiness, protected filtered/paginated audit retrieval, audit indexing, and responsive admin metrics/audit views with loading/error/empty/search/pagination states. Automated verification passes; target-database performance and browser acceptance remain.
+- P12 automated quality assurance is complete: structured validation errors, streamed request-size enforcement, authorization and redaction tests, cross-player bounty isolation, atomic/recoverable score verification, retry-safe score results, and concurrency regression coverage are implemented and verified.
+- P13 repository preparation is complete: the Render Blueprint generates Prisma, builds the backend, validates production configuration, deploys migrations before promotion, and uses database-backed readiness. The production handover documents environment, deployment, migration, verification, recovery, troubleshooting, and administrator onboarding.
+- The configured Supabase database is reachable and all seven Prisma migrations are applied, including reward workflow integrity, operational audit indexing, and atomic score-verification claim support.
 
 ## Implemented and verified
 
@@ -34,11 +38,15 @@ Updated: 2026-10-27. Target: GoodDollar Season 5. Web + installable PWA on Verce
 
 ## Known gaps
 
-- Leaderboard: no backend. Tournament scores are self-reported (operator review).
+- Legacy tournament scores are still self-reported and must not be confused with the separate server-verified leaderboard path.
+- Challenge and bounty backend capabilities do not yet have their required admin/player interfaces.
+- Reward backend workflows exist, but the administrator dashboard does not yet expose their controls.
+- The restored exact local toolchain passes Prisma generation, backend compilation, all 43 backend tests, backend/web/shared typechecks, architecture checks, core checks, whitespace checks, and git diff --check.
+- Production Render/frontend deployment and smoke testing remain blocked because authorized service access, identifiers, and production URLs are not available in the workspace.
 - Streak rewards and power-ups are not implemented.
 - Local Node is 22.10; the project needs 24.21.0.
 - The low-gas threshold (0.005 CELO) is a product estimate.
 
 ## Next action
 
-See `docs/handoffs/CURRENT.md`.
+An authorized operator must deploy Render and the frontend through docs/operations/PRODUCTION_HANDOVER.md, complete the remaining production checklist, and retain deployment evidence.

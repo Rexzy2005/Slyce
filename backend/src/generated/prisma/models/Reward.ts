@@ -328,15 +328,15 @@ export type RewardOrderByWithRelationInput = {
 
 export type RewardWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  challengeParticipationId?: string
+  bountyParticipationId?: string
   AND?: Prisma.RewardWhereInput | Prisma.RewardWhereInput[]
   OR?: Prisma.RewardWhereInput[]
   NOT?: Prisma.RewardWhereInput | Prisma.RewardWhereInput[]
   playerId?: Prisma.UuidFilter<"Reward"> | string
   sourceType?: Prisma.EnumRewardSourceTypeFilter<"Reward"> | $Enums.RewardSourceType
   challengeId?: Prisma.UuidNullableFilter<"Reward"> | string | null
-  challengeParticipationId?: Prisma.UuidNullableFilter<"Reward"> | string | null
   bountyId?: Prisma.UuidNullableFilter<"Reward"> | string | null
-  bountyParticipationId?: Prisma.UuidNullableFilter<"Reward"> | string | null
   asset?: Prisma.StringFilter<"Reward"> | string
   amount?: Prisma.DecimalFilter<"Reward"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   status?: Prisma.EnumRewardStatusFilter<"Reward"> | $Enums.RewardStatus
@@ -352,7 +352,7 @@ export type RewardWhereUniqueInput = Prisma.AtLeast<{
   bountyParticipation?: Prisma.XOR<Prisma.BountyParticipationNullableScalarRelationFilter, Prisma.BountyParticipationWhereInput> | null
   approvals?: Prisma.RewardApprovalListRelationFilter
   distributions?: Prisma.RewardDistributionListRelationFilter
-}, "id">
+}, "id" | "challengeParticipationId" | "bountyParticipationId">
 
 export type RewardOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

@@ -13,12 +13,31 @@ import { PrismaPrincipalStore } from '../src/principal-store.js';
 import { PlayerService } from '../src/player-service.js';
 import { createPracticeSafeRules, digestInput, GameplayService, type ScoreSubmission, type SessionDescriptor } from '../src/gameplay-service.js';
 import { compareLeaderboardCandidates, digestReplayInputs, paginateLeaderboardCandidates, rankLeaderboardCandidates, ScoreVerificationService, VerifiedFruitSliceVerifier } from '../src/gameplay-verifier.js';
+import { verifyDeploymentEnvironment } from '../src/deployment-preflight.js';
 import { simulateVerifiedFruitSlice, verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion } from '@slyce/shared/verified-game';
 import { LeaderboardService } from '../src/leaderboard-service.js';
 
 test('rejects invalid ports before startup', () => {
   assert.throws(() => loadConfig({ PORT: '70000' }), /PORT must be an integer/);
   assert.throws(() => loadConfig({ PORT: 'not-a-port' }), /PORT must be an integer/);
+});
+
+test('validates the complete production deployment environment', () => {
+  const valid = {
+    NODE_ENV: 'production',
+    DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app?sslmode=require',
+    DIRECT_URL: 'postgresql://user:pass@db.example.com:5432/app?sslmode=require',
+    SUPABASE_URL: 'https://example.supabase.co',
+    SUPABASE_ANON_KEY: 'anon-key',
+    ADMIN_EMAILS: 'admin@example.com',
+    CORS_ORIGINS: 'https://app.example.com',
+    AUTH_SESSION_SECRET: 'a'.repeat(32),
+  };
+  assert.doesNotThrow(() => verifyDeploymentEnvironment(valid));
+  assert.throws(() => verifyDeploymentEnvironment({ ...valid, DIRECT_URL: '' }), /DIRECT_URL/);
+  assert.throws(() => verifyDeploymentEnvironment({ ...valid, ADMIN_EMAILS: '' }), /ADMIN_EMAILS/);
+  assert.throws(() => verifyDeploymentEnvironment({ ...valid, CORS_ORIGINS: '' }), /CORS_ORIGINS/);
+  assert.throws(() => verifyDeploymentEnvironment({ ...valid, AUTH_SESSION_SECRET: '' }), /AUTH_SESSION_SECRET/);
 });
 
 test('requires a runtime database URL without exposing its value', () => {
@@ -163,6 +182,43 @@ test('keeps accepted gameplay submissions pending until authoritative verificati
     assert.equal(accepted.status, 'verified');
     const rejected = await verifier.verify(context, { inputDigest: digestReplayInputs(inputs), score: simulation.score + 10, replayInputs: inputs });
     assert.deepEqual(rejected, { status: 'rejected', reason: 'Submitted score does not match the deterministic replay result.' });
+  });
+
+  test('claims a pending score once under concurrent verification attempts', async () => {
+    let claimed = false;
+    let verifierCalls = 0;
+    let promotions = 0;
+    const inputs = [
+      { kind: 'pointer' as const, phase: 'down' as const, elapsedMs: 0, x: 0, y: 0 },
+      { kind: 'pointer' as const, phase: 'up' as const, elapsedMs: 0, x: 0, y: 0 },
+    ];
+    const service = new ScoreVerificationService({
+      claimPending: async () => {
+        if (claimed) return null;
+        claimed = true;
+        return {
+          id: 'score',
+          playerId: 'player',
+          score: 0,
+          inputDigest: digestReplayInputs(inputs),
+          replayInputs: inputs,
+          context: { sessionId: 'session', playerId: 'player', gameMode: 'mode', rulesVersion: 'v1', seed: 'seed' },
+        };
+      },
+      markVerified: async () => { promotions += 1; },
+      markRejected: async () => undefined,
+    }, {
+      verify: async () => {
+        verifierCalls += 1;
+        await new Promise(resolve => setImmediate(resolve));
+        return { status: 'verified', score: 0 };
+      },
+    });
+
+    const results = await Promise.all([service.verifyPending('score'), service.verifyPending('score')]);
+    assert.equal(results.filter(result => result.status === 'verified').length, 1);
+    assert.equal(verifierCalls, 1);
+    assert.equal(promotions, 1);
   });
 
   test('ranks leaderboard candidates deterministically by score, time, then ID', () => {
@@ -322,7 +378,7 @@ test('creates and verifies an authenticated deterministic gameplay round', async
       }),
     } as never);
     const verification = new ScoreVerificationService({
-      findPending: async id => id === scoreId ? {
+      claimPending: async id => id === scoreId ? {
         id,
         playerId: '00000000-0000-4000-8000-000000000001',
         score: 0,

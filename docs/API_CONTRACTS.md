@@ -1,6 +1,6 @@
 # Slyce API contracts
 
-Status: P7 gameplay and leaderboard contracts; practice mode remains local and unverified.
+Status: Backend contracts implemented through P10; practice mode remains local and unverified.
 
 The backend uses `/api/v1` and defines shared validation/error/pagination infrastructure in `backend/src/api/`.
 
@@ -27,12 +27,20 @@ The backend route inventory is in `backend/src/api/route-plan.ts`. It records pu
 - `POST /api/v1/gameplay/rounds` — authenticated player route for creating an approved `verified-fruit-slice-v1` session.
 - `POST /api/v1/gameplay/rounds/:roundId/finish` — authenticated, idempotent score submission with replay inputs. The backend verifies the replay before returning `VERIFIED`; invalid or tampered submissions are rejected.
 - `GET /api/v1/leaderboards?scope=today|week|all&gameMode=<mode>&limit=<n>&cursor=<offset>` — public verified-score leaderboard. Results include deterministic rank, score, player ID, display name, and an opaque pagination cursor. Pending, rejected, and invalidated scores are excluded.
+- `GET /api/v1/rewards?status=<status>` — authenticated player reward history, including approval and separately recorded distribution state.
+- `GET /api/v1/admin/rewards?status=<status>` — administrator reward queue with cursor pagination.
+- `POST /api/v1/admin/rewards/:rewardId/review` — reviewer approval or rejection. Rejections require a reason and repeated review is rejected.
+- `POST /api/v1/admin/rewards/:rewardId/distributions` — administrator-only manual distribution record. Confirmation requires a transaction reference or evidence and never initiates an automatic payout.
+- `GET /api/v1/admin/metrics` — administrator-only persisted operational summary. Player counts use `Player` rows, verified GoodDollar users are distinct non-null root identities for the configured environment, active sessions are unexpired `CREATED` or `STARTED` sessions, and reward states are reported separately.
+- `GET /api/v1/admin/audit-logs?action=<action>&entityType=<type>&search=<text>` — administrator-only cursor-paginated audit history. Search covers entity identifiers and recorded reasons; response actors expose display name/email but no authentication subject or sensitive before/after payload.
+- `GET /readyz` — returns ready only after a successful database query; failures return `503` without database credentials or internal error details.
 
 Wallet association mutations remain unavailable until wallet ownership authentication is approved. GoodDollar observation refreshes use the official on-chain Identity contract and never store facial or biometric data. Unknown and not-yet-enabled routes remain unavailable rather than returning fabricated data.
 
 ## Wire conventions
 
 - Errors use `{ error: { code, message, requestId?, fields? } }`.
+- Schema-validation failures return HTTP 400 with `validation_error` and field-scoped messages; malformed client input is not reported as an internal server failure.
 - Listing endpoints use `cursor` and `limit`; the default limit is 25 and the maximum is 100.
 - Sensitive mutations require an `Idempotency-Key` header containing 16–255 non-whitespace characters.
 - Request bodies, query parameters, and route parameters are validated server-side.

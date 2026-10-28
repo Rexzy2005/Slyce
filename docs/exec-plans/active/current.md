@@ -1,5 +1,13 @@
 # Active Execution Plan — Frontend and Backend Integration Readiness
 
+## Backend P12 quality checkpoint (2026-10-28)
+
+Backend Phase 12 automated integration, security, reliability, and regression work is complete. The quality pass added streamed request-size enforcement, structured validation responses, audit/readiness redaction tests, cross-player bounty ownership enforcement, atomic score-verification claims with five-minute stale-worker recovery, retry-safe verified score responses, and concurrency regression coverage. Prisma generation and backend compilation pass; the expanded suite passes all 43 backend tests serially; backend, web, and shared typechecks plus architecture, core, whitespace, and diff checks pass. All P10-P12 migrations are now applied; browser/device checks remain deployment acceptance work.
+
+## Backend P13 deployment checkpoint (2026-10-28)
+
+All repository-controlled production preparation is complete. The Render Blueprint now pins Node 24.21.0, installs from the lockfile, generates Prisma Client, builds the backend, validates the complete production environment, deploys migrations before promotion, starts the compiled service, and checks database-backed readiness. The configured Supabase database is reachable and all seven migrations are applied. The operational handover covers environment ownership, deployment, migration review, frontend configuration, production verification, administrator onboarding, backup/recovery, rollback, troubleshooting, incident evidence, and known limitations. Backend build and 43 tests pass, including production preflight validation. External Render/frontend deployment remains blocked because no authorized service access, production URLs, or backup confirmation are available.
+
 ## Backend foundation (2026-10-27)
 
 P1 is verified. Added an independently runnable `@slyce/backend` workspace package under `backend/` using Node 24 and the built-in Node HTTP server. The built-in server was selected because the repository audit found no existing backend framework and the P1 phase did not authorize a new dependency; this keeps the service independently deployable and avoids changing application behavior.

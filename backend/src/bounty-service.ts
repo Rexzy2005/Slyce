@@ -29,6 +29,7 @@ export interface BountyView {
 
 export interface BountyParticipationView {
   id: string;
+  playerId: string;
   bountyId: string;
   bountySlug: string;
   bountyTitle: string;
@@ -100,7 +101,7 @@ export interface BountyRepository {
   update(id: string, input: UpdateBountyInput): Promise<BountyView>;
   findById(id: string): Promise<BountyView | null>;
   findBySlug(slug: string): Promise<BountyView | null>;
-  list(opts: { cursor?: string; limit: number; status?: BountyStatusType }): Promise<{ items: BountyView[]; nextCursor: string | null }>;
+  list(opts: { cursor?: string | undefined; limit: number; status?: BountyStatusType | undefined }): Promise<{ items: BountyView[]; nextCursor: string | null }>;
   transition(id: string, to: BountyStatusType): Promise<BountyView>;
   findParticipation(bountyId: string, playerId: string): Promise<BountyParticipationView | null>;
   findParticipationById(id: string): Promise<BountyParticipationView | null>;
@@ -108,7 +109,7 @@ export interface BountyRepository {
   join(bountyId: string, playerId: string): Promise<BountyParticipationView>;
   submitEvidence(participationId: string, input: SubmitBountyEvidenceInput): Promise<BountySubmissionView>;
   reviewSubmission(submissionId: string, adminId: string, input: ReviewSubmissionInput): Promise<BountySubmissionView>;
-  leaderboard(bountyId: string, opts: { limit: number; cursor?: string }): Promise<{ items: BountyLeaderboardEntry[]; nextCursor: string | null }>;
+  leaderboard(bountyId: string, opts: { limit: number; cursor?: string | undefined }): Promise<{ items: BountyLeaderboardEntry[]; nextCursor: string | null }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -171,7 +172,7 @@ function rowToView(row: {
     rewardAmount: row.rewardAmount.toNumber(),
     leaderboardMode: row.leaderboardMode ?? null,
     requirements: row.requirements as Record<string, unknown>,
-    participationsCount: row._count?.participations,
+    ...(row._count ? { participationsCount: row._count.participations } : {}),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -180,6 +181,7 @@ function rowToView(row: {
 function participationToView(
   row: {
     id: string;
+    playerId: string;
     bountyId: string;
     status: string;
     joinedAt: Date;
@@ -199,6 +201,7 @@ function participationToView(
 ): BountyParticipationView {
   return {
     id: row.id,
+    playerId: row.playerId,
     bountyId: row.bountyId,
     bountySlug: row.bounty.slug,
     bountyTitle: row.bounty.title,
@@ -235,8 +238,8 @@ export class PrismaBountyRepository implements BountyRepository {
           slug: input.slug,
           title: input.title,
           description: input.description,
-          startsAt: input.startsAt ? new Date(input.startsAt) : undefined,
-          endsAt: input.endsAt ? new Date(input.endsAt) : undefined,
+          ...(input.startsAt ? { startsAt: new Date(input.startsAt) } : {}),
+          ...(input.endsAt ? { endsAt: new Date(input.endsAt) } : {}),
           maxParticipants: input.maxParticipants ?? null,
           rewardAsset: input.rewardAsset ?? 'G$',
           rewardAmount: new Prisma.Decimal(input.rewardAmount),
@@ -289,9 +292,9 @@ export class PrismaBountyRepository implements BountyRepository {
     return row ? rowToView(row) : null;
   }
 
-  async list(opts: { cursor?: string; limit: number; status?: BountyStatusType }): Promise<{ items: BountyView[]; nextCursor: string | null }> {
+  async list(opts: { cursor?: string | undefined; limit: number; status?: BountyStatusType | undefined }): Promise<{ items: BountyView[]; nextCursor: string | null }> {
     const rows = await this.db.bounty.findMany({
-      where: opts.status ? { status: opts.status } : undefined,
+      ...(opts.status ? { where: { status: opts.status } } : {}),
       include: { _count: { select: { participations: true } } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: opts.limit + 1,
@@ -408,8 +411,9 @@ export class PrismaBountyRepository implements BountyRepository {
     };
   }
 
-  async reviewSubmission(submissionId: string, adminId: string, input: ReviewSubmissionInput): Promise<BountySubmissionView> {
+  async reviewSubmission(submissionId: string, adminSubject: string, input: ReviewSubmissionInput): Promise<BountySubmissionView> {
     const row = await this.db.$transaction(async (tx) => {
+      const admin = await tx.adminAccount.findUniqueOrThrow({ where: { externalSubject: adminSubject } });
       const submission = await tx.bountySubmission.findUniqueOrThrow({
         where: { id: submissionId },
         include: { participation: true },
@@ -420,7 +424,7 @@ export class PrismaBountyRepository implements BountyRepository {
         data: {
           status: input.status,
           reviewNotes: input.reviewNotes ?? null,
-          reviewedById: adminId,
+          reviewedById: admin.id,
           reviewedAt: new Date(),
         },
       });
@@ -445,7 +449,7 @@ export class PrismaBountyRepository implements BountyRepository {
             bountyParticipationId: submission.participationId,
             asset: bounty.rewardAsset,
             amount: bounty.rewardAmount,
-            eligibilityEvidence: { submissionId, reviewedById: adminId, reviewedAt: now.toISOString() } as Prisma.JsonObject,
+            eligibilityEvidence: { submissionId, reviewedById: admin.id, reviewedAt: now.toISOString() } as Prisma.JsonObject,
           },
         });
       }
@@ -462,7 +466,7 @@ export class PrismaBountyRepository implements BountyRepository {
     };
   }
 
-  async leaderboard(bountyId: string, opts: { limit: number; cursor?: string }): Promise<{ items: BountyLeaderboardEntry[]; nextCursor: string | null }> {
+  async leaderboard(bountyId: string, opts: { limit: number; cursor?: string | undefined }): Promise<{ items: BountyLeaderboardEntry[]; nextCursor: string | null }> {
     // Leaderboard ranks APPROVED participants by completedAt ascending (earliest completion = highest rank)
     const rows = await this.db.bountyParticipation.findMany({
       where: {
@@ -523,12 +527,12 @@ export class BountyService {
     return bounty;
   }
 
-  async listBounties(principal: AuthenticatedPrincipal, opts: { cursor?: string; limit: number }): Promise<{ items: BountyView[]; nextCursor: string | null }> {
+  async listBounties(principal: AuthenticatedPrincipal, opts: { cursor?: string | undefined; limit: number }): Promise<{ items: BountyView[]; nextCursor: string | null }> {
     requireAdministrator(principal);
     return this.repository.list(opts);
   }
 
-  async listPublishedBounties(opts: { cursor?: string; limit: number }): Promise<{ items: BountyView[]; nextCursor: string | null }> {
+  async listPublishedBounties(opts: { cursor?: string | undefined; limit: number }): Promise<{ items: BountyView[]; nextCursor: string | null }> {
     return this.repository.list({ ...opts, status: 'PUBLISHED' });
   }
 
@@ -561,15 +565,13 @@ export class BountyService {
     if (!principal.playerId) throw new Error('A player account is required to submit evidence.');
     const participation = await this.repository.findParticipationById(participationId);
     if (!participation) throw new Error('Participation not found.');
+    if (participation.playerId !== principal.playerId) throw new Error('This participation does not belong to the authenticated player.');
     if (participation.bountyId === undefined) throw new Error('Invalid participation record.');
     return this.repository.submitEvidence(participationId, input);
   }
 
   async reviewSubmission(principal: AuthenticatedPrincipal, submissionId: string, input: ReviewSubmissionInput): Promise<BountySubmissionView> {
     requireAdministrator(principal);
-    // We need an adminId — for now derive it from the principal subject (AdminAccount.externalSubject)
-    // The reviewer's DB id is not directly on the principal; we skip that constraint here and pass the subject
-    // as a placeholder. A real implementation would resolve the AdminAccount row.
     return this.repository.reviewSubmission(submissionId, principal.subject, input);
   }
 
@@ -578,7 +580,7 @@ export class BountyService {
     return this.repository.listPlayerParticipations(principal.playerId);
   }
 
-  async getBountyLeaderboard(bountyId: string, opts: { limit: number; cursor?: string }): Promise<{ items: BountyLeaderboardEntry[]; nextCursor: string | null }> {
+  async getBountyLeaderboard(bountyId: string, opts: { limit: number; cursor?: string | undefined }): Promise<{ items: BountyLeaderboardEntry[]; nextCursor: string | null }> {
     const bounty = await this.repository.findById(bountyId);
     if (!bounty) throw new Error('Bounty not found.');
     if (bounty.status === 'DRAFT') throw new Error('Leaderboard is not available for draft bounties.');

@@ -339,6 +339,7 @@ export const bountyListResponseSchema = z.object({
 
 export const bountyParticipationSchema = z.object({
   id: uuid,
+  playerId: uuid,
   bountyId: uuid,
   bountySlug: z.string(),
   bountyTitle: z.string(),
@@ -375,6 +376,73 @@ export const bountyLeaderboardEntrySchema = z.object({
 export const bountyLeaderboardResponseSchema = z.object({
   data: z.array(bountyLeaderboardEntrySchema),
   pagination: paginationSchema,
+});
+
+// ---------------------------------------------------------------------------
+// Phase 10: Reward approval and manual distribution contracts
+// ---------------------------------------------------------------------------
+
+export const rewardStatusSchema = z.enum(['ELIGIBLE', 'PENDING_REVIEW', 'APPROVED', 'REJECTED', 'DISTRIBUTION_PENDING', 'DISTRIBUTION_FAILED', 'DISTRIBUTED', 'COMPLETED']);
+export const distributionStatusSchema = z.enum(['PENDING', 'SUBMITTED', 'CONFIRMED', 'FAILED']);
+
+export const rewardDistributionSchema = z.object({
+  id: uuid,
+  status: distributionStatusSchema,
+  transactionReference: z.string().nullable(),
+  evidence: z.record(z.string(), z.unknown()).nullable(),
+  failureReason: z.string().nullable(),
+  attemptedAt: z.string().datetime(),
+  confirmedAt: z.string().datetime().nullable(),
+});
+
+export const rewardSchema = z.object({
+  id: uuid,
+  playerId: uuid,
+  sourceType: z.enum(['CHALLENGE', 'BOUNTY']),
+  challengeId: uuid.nullable(),
+  bountyId: uuid.nullable(),
+  asset: nonEmptyString(80),
+  amount: z.string().regex(/^\d+$/),
+  status: rewardStatusSchema,
+  eligibilityEvidence: z.record(z.string(), z.unknown()),
+  rejectionReason: z.string().nullable(),
+  eligibleAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  distributions: z.array(rewardDistributionSchema),
+});
+
+export const rewardListQuerySchema = paginationQuerySchema.extend({ status: rewardStatusSchema.optional() });
+export const rewardListResponseSchema = z.object({ data: z.array(rewardSchema), pagination: paginationSchema });
+
+export const reviewRewardSchema = z.object({
+  decision: z.enum(['APPROVED', 'REJECTED']),
+  reason: z.string().trim().min(1).max(1000).optional(),
+}).superRefine((value, context) => {
+  if (value.decision === 'REJECTED' && !value.reason) context.addIssue({ code: 'custom', path: ['reason'], message: 'A rejection reason is required.' });
+});
+
+export const recordRewardDistributionSchema = z.object({
+  status: distributionStatusSchema,
+  transactionReference: z.string().trim().min(1).max(255).optional(),
+  evidence: z.record(z.string(), z.unknown()).optional(),
+  failureReason: z.string().trim().min(1).max(1000).optional(),
+}).superRefine((value, context) => {
+  if (value.status === 'CONFIRMED' && !value.transactionReference && !value.evidence) context.addIssue({ code: 'custom', path: ['evidence'], message: 'Confirmed distribution requires transaction reference or evidence.' });
+  if (value.status === 'FAILED' && !value.failureReason) context.addIssue({ code: 'custom', path: ['failureReason'], message: 'A failure reason is required.' });
+});
+
+export const auditActionSchema = z.enum(['CREATE', 'UPDATE', 'PUBLISH', 'UNPUBLISH', 'PAUSE', 'ARCHIVE', 'APPROVE', 'REJECT', 'DISTRIBUTE', 'RESTRICT', 'PERMISSION_CHANGE', 'SETTINGS_CHANGE']);
+export const auditLogQuerySchema = paginationQuerySchema.extend({ action: auditActionSchema.optional(), entityType: z.string().trim().min(1).max(80).optional(), search: z.string().trim().min(1).max(100).optional() });
+export const auditLogSchema = z.object({ id: uuid, action: auditActionSchema, entityType: z.string(), entityId: z.string(), reason: z.string().nullable(), createdAt: z.string().datetime(), administrator: z.object({ email: z.string().email().nullable(), displayName: z.string().nullable() }) });
+export const auditLogListResponseSchema = z.object({ data: z.array(auditLogSchema), pagination: paginationSchema });
+
+export const operationalMetricsSchema = z.object({
+  generatedAt: z.string().datetime(), players: z.object({ total: z.number().int().nonnegative(), active: z.number().int().nonnegative() }),
+  goodDollar: z.object({ verifiedRootIdentities: z.number().int().nonnegative() }), gameplay: z.object({ activeSessions: z.number().int().nonnegative(), verifiedScores: z.number().int().nonnegative() }),
+  content: z.object({ publishedChallenges: z.number().int().nonnegative(), publishedBounties: z.number().int().nonnegative() }),
+  rewards: z.object({ pendingReview: z.number().int().nonnegative(), approved: z.number().int().nonnegative(), distributionPending: z.number().int().nonnegative(), distributed: z.number().int().nonnegative(), failed: z.number().int().nonnegative() }),
+  health: z.object({ database: z.literal('reachable') }),
 });
 
 export const routeGroups = {

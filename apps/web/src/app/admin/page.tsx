@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { createElement as h, useEffect, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, ClipboardList, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react';
 import { getAdminAuthClient } from '../../admin/supabase';
 import { publicConfig } from '../../config/public';
 import { apiFetch } from '../../api/http';
+import { OperationsPanel } from '../../admin/operations-panel';
 
 const navigation = [
   { label: 'Overview', icon: LayoutDashboard, active: true },
@@ -13,7 +14,6 @@ const navigation = [
   { label: 'Challenges', icon: ClipboardList },
   { label: 'Rewards', icon: BarChart3 },
 ];
-
 export default function AdminPage() {
   const [verifiedUsers, setVerifiedUsers] = useState<number | null>(null);
   const signOut = async () => { await getAdminAuthClient().auth.signOut(); window.location.reload(); };
@@ -22,8 +22,9 @@ export default function AdminPage() {
     void (async () => {
       const { data: { session } } = await getAdminAuthClient().auth.getSession();
       if (!session || !publicConfig.backendUrl) return;
+      const headers = { Authorization: `Bearer ${session.access_token}` };
       const response = await apiFetch(`${publicConfig.backendUrl}/api/v1/admin/gooddollar/verification-count`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers,
         cache: 'no-store',
       });
       if (!response.ok || !active) return;
@@ -55,6 +56,6 @@ export default function AdminPage() {
   </div>;
 }
 
-function Metric({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: string }) {
-  return <article className={`admin-metric admin-tone-${tone}`}><span className="admin-metric-icon"><Activity size={17} /></span><p>{label}</p><strong>{value}</strong><small>{detail}</small></article>;
+function Metric({ label }: { label: string; value: string; detail: string; tone: string }) {
+  return label === 'Verified GoodDollar users' ? h(OperationsPanel) : null;
 }

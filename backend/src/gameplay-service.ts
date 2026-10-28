@@ -42,6 +42,7 @@ export interface GameplaySessionRepository {
 
 export type ScoreSubmissionResult =
   | { status: 'accepted'; scoreId: string; score: number; verificationStatus: 'PENDING' }
+  | { status: 'verified'; scoreId: string; score: number; verificationStatus: 'VERIFIED' }
   | { status: 'rejected'; reason: string };
 
 export function digestInput(input: string): string {
@@ -179,7 +180,13 @@ export class PrismaGameplaySessionRepository implements GameplaySessionRepositor
       where: { key_operation: { key: args.idempotencyKey, operation: args.operation } },
     });
     if (existing?.status === 'COMPLETED' && existing.response && typeof existing.response === 'object' && 'status' in existing.response) {
-      return existing.response as ScoreSubmissionResult;
+      const response = existing.response as ScoreSubmissionResult;
+      if (response.status === 'accepted') {
+        const score = await this.database.scoreRecord.findUnique({ where: { id: response.scoreId }, select: { status: true, score: true, rejectionReason: true } });
+        if (score?.status === 'VERIFIED') return { status: 'verified', scoreId: response.scoreId, score: score.score, verificationStatus: 'VERIFIED' };
+        if (score?.status === 'REJECTED' || score?.status === 'INVALIDATED') return { status: 'rejected', reason: score.rejectionReason ?? 'The score was rejected.' };
+      }
+      return response;
     }
 
     try {

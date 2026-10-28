@@ -43,6 +43,7 @@ enum GameSessionStatus {
 
 enum ScoreStatus {
   PENDING
+  VERIFYING
   VERIFIED
   REJECTED
   INVALIDATED
@@ -456,9 +457,9 @@ model Reward {
   playerId                 String                  @db.Uuid
   sourceType               RewardSourceType
   challengeId              String?                 @db.Uuid
-  challengeParticipationId String?                 @db.Uuid
+  challengeParticipationId String?                 @unique @db.Uuid
   bountyId                 String?                 @db.Uuid
-  bountyParticipationId    String?                 @db.Uuid
+  bountyParticipationId    String?                 @unique @db.Uuid
   asset                    String                  @db.VarChar(80)
   amount                   Decimal                 @db.Decimal(78, 0)
   status                   RewardStatus            @default(ELIGIBLE)
@@ -500,7 +501,7 @@ model RewardDistribution {
   attemptedById        String             @db.Uuid
   status               DistributionStatus @default(PENDING)
   evidence             Json?
-  transactionReference String?            @db.VarChar(255)
+  transactionReference String?            @unique @db.VarChar(255)
   failureReason        String?            @db.VarChar(1000)
   attemptedAt          DateTime           @default(now())
   confirmedAt          DateTime?
@@ -543,6 +544,7 @@ model AuditLog {
 
   @@index([entityType, entityId, createdAt])
   @@index([adminId, createdAt])
+  @@index([action, createdAt])
 }
 
 model ChallengeEvent {

@@ -2,6 +2,32 @@ services:
   - type: web
     name: slyce-backend
     runtime: node
-    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @slyce/backend build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @slyce/backend db:generate && pnpm --filter @slyce/backend build
+    preDeployCommand: pnpm --filter @slyce/backend deployment:check && pnpm --filter @slyce/backend db:migrate:deploy
     startCommand: pnpm --filter @slyce/backend start
-    healthCheckPath: /healthz
+    healthCheckPath: /readyz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.21.0
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: AUTH_SESSION_SECRET
+        sync: false
+      - key: GOODDOLLAR_ENV
+        value: production
+      - key: GOODDOLLAR_RPC_URL
+        sync: false
+      - key: GOODDOLLAR_IDENTITY_ADDRESS
+        sync: false

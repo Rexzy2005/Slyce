@@ -1,10 +1,13 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { pathToFileURL } from 'node:url';
+import { ZodError } from 'zod';
 import { loadConfig, type BackendConfig } from './config.js';
 import { logger } from './logger.js';
 import { applyCors, authenticate, FixedWindowRateLimiter, requestContentLength, type TokenVerifier } from './security.js';
 import {
   apiPrefix,
+  auditLogListResponseSchema,
+  auditLogQuerySchema,
   adminPlayerListResponseSchema,
   bountyLeaderboardResponseSchema,
   bountyListResponseSchema,
@@ -23,11 +26,17 @@ import {
   goodDollarVerificationSchema,
   leaderboardQuerySchema,
   leaderboardResponseSchema,
+  operationalMetricsSchema,
   paginationQuerySchema,
   playerBountyParticipationsResponseSchema,
   playerChallengeParticipationsResponseSchema,
   playerProfileSchema,
   reviewBountySubmissionSchema,
+  recordRewardDistributionSchema,
+  reviewRewardSchema,
+  rewardListQuerySchema,
+  rewardListResponseSchema,
+  rewardSchema,
   scoreSubmissionResultSchema,
   sessionResponseSchema,
   submitBountyEvidenceSchema,
@@ -51,6 +60,8 @@ import { requireIdempotencyKey } from './api/validation.js';
 import { createWalletChallenge, PrismaWalletChallengeStore, PrismaWalletPlayerStore, verifyWalletChallenge, walletAuthMessage, WalletSessionTokenVerifier } from './wallet-auth.js';
 import { ChallengeService, PrismaChallengeRepository } from './challenge-service.js';
 import { BountyService, PrismaBountyRepository } from './bounty-service.js';
+import { PrismaRewardRepository, RewardService } from './reward-service.js';
+import { OperationsService, PrismaOperationsRepository } from './operations-service.js';
 
 interface ErrorResponse {
   error: {
@@ -72,6 +83,11 @@ function methodNotAllowed(response: ServerResponse): void {
   sendJson(response, 405, { error: { code: 'method_not_allowed', message: 'The requested method is not supported for this endpoint.' } } satisfies ErrorResponse);
 }
 
+function validationError(response: ServerResponse, error: ZodError): void {
+  const fields = Object.fromEntries(error.issues.map(issue => [issue.path.length ? issue.path.join('.') : '_request', [issue.message]]));
+  sendJson(response, 400, { error: { code: 'validation_error', message: 'The request contains invalid values.', fields } });
+}
+
 interface AppDependencies {
   verifier?: TokenVerifier;
   principalStore?: PrincipalStore;
@@ -89,16 +105,26 @@ interface AppDependencies {
   walletVerifierSecret?: string;
   challengeService?: ChallengeService;
   bountyService?: BountyService;
+  rewardService?: RewardService;
+  operationsService?: OperationsService;
 }
 
-async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+async function readJsonBody(request: IncomingMessage, maxBytes: number): Promise<unknown> {
   const chunks: Buffer[] = [];
-  for await (const chunk of request) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  let receivedBytes = 0;
+  for await (const chunk of request) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    receivedBytes += buffer.byteLength;
+    if (receivedBytes > maxBytes) {
+      throw Object.assign(new Error('The request body is too large.'), { statusCode: 413, code: 'request_too_large' });
+    }
+    chunks.push(buffer);
+  }
   if (chunks.length === 0) return {};
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
 }
 
-async function route(request: IncomingMessage, response: ServerResponse, dependencies: AppDependencies): Promise<void> {
+async function route(request: IncomingMessage, response: ServerResponse, dependencies: AppDependencies, maxRequestBytes: number): Promise<void> {
   const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
   if (pathname === '/healthz') {
     if (request.method !== 'GET') return methodNotAllowed(response);
@@ -106,7 +132,9 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
   }
   if (pathname === '/readyz') {
     if (request.method !== 'GET') return methodNotAllowed(response);
-    return sendJson(response, 503, { status: 'not_ready', checks: { database: 'not_configured' } });
+    if (!dependencies.operationsService) return sendJson(response, 503, { status: 'not_ready', checks: { database: 'not_configured' } });
+    try { await dependencies.operationsService.ping(); return sendJson(response, 200, { status: 'ready', checks: { database: 'reachable' } }); }
+    catch { return sendJson(response, 503, { status: 'not_ready', checks: { database: 'unreachable' } }); }
   }
   if (pathname === `${apiPrefix}/session`) {
     if (request.method !== 'GET') return methodNotAllowed(response);
@@ -127,7 +155,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
   if (pathname === `${apiPrefix}/auth/wallet/challenge`) {
     if (request.method !== 'POST') return methodNotAllowed(response);
     if (!dependencies.walletChallenges) return sendJson(response, 503, { error: { code: 'wallet_auth_not_configured', message: 'Wallet authentication is not configured.' } } satisfies ErrorResponse);
-    const input = walletChallengeRequestSchema.parse(await readJsonBody(request));
+    const input = walletChallengeRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
     if (input.chainId !== 42220 || input.origin !== request.headers.origin) {
       return sendJson(response, 400, { error: { code: 'invalid_wallet_origin', message: 'The wallet origin or chain is not accepted.' } } satisfies ErrorResponse);
     }
@@ -146,7 +174,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     if (!dependencies.walletChallenges || !dependencies.walletPlayers || !dependencies.walletVerifierSecret) {
       return sendJson(response, 503, { error: { code: 'wallet_auth_not_configured', message: 'Wallet authentication is not configured.' } } satisfies ErrorResponse);
     }
-    const input = walletVerifyRequestSchema.parse(await readJsonBody(request));
+    const input = walletVerifyRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
     if (input.chainId !== 42220 || input.origin !== request.headers.origin) {
       return sendJson(response, 400, { error: { code: 'invalid_wallet_origin', message: 'The wallet origin or chain is not accepted.' } } satisfies ErrorResponse);
     }
@@ -194,7 +222,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     if (!dependencies.goodDollarClient || !dependencies.goodDollarRecords || !dependencies.goodDollarEnvironment || !dependencies.goodDollarIdentityAddress) {
       return sendJson(response, 503, { error: { code: 'gooddollar_not_configured', message: 'GoodDollar verification is not configured.' } } satisfies ErrorResponse);
     }
-    const input = goodDollarVerificationCheckSchema.parse(await readJsonBody(request));
+    const input = goodDollarVerificationCheckSchema.parse(await readJsonBody(request, maxRequestBytes));
     const record = await checkGoodDollarAddress(dependencies.goodDollarClient, dependencies.goodDollarIdentityAddress, input.address as `0x${string}`);
     await dependencies.goodDollarRecords.upsert({ ...record, environment: dependencies.goodDollarEnvironment });
     return sendJson(response, 200, { data: goodDollarVerificationSchema.parse({
@@ -237,7 +265,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       return sendJson(response, 503, { error: { code: 'gameplay_not_configured', message: 'Gameplay is not configured.' } } satisfies ErrorResponse);
     }
     const principal = await authenticate(request, dependencies.walletVerifier);
-    const input = createGameSessionSchema.parse(await readJsonBody(request));
+    const input = createGameSessionSchema.parse(await readJsonBody(request, maxRequestBytes));
     if (input.gameMode !== 'verified-fruit-slice' || input.rulesVersion !== 'verified-fruit-slice-v1') {
       return sendJson(response, 400, { error: { code: 'unsupported_ruleset', message: 'Only the approved verified fruit-slice ruleset is available.' } } satisfies ErrorResponse);
     }
@@ -257,7 +285,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       return sendJson(response, 503, { error: { code: 'gameplay_not_configured', message: 'Gameplay is not configured.' } } satisfies ErrorResponse);
     }
     const principal = await authenticate(request, dependencies.walletVerifier);
-    const input = finishGameSessionSchema.parse(await readJsonBody(request));
+    const input = finishGameSessionSchema.parse(await readJsonBody(request, maxRequestBytes));
     const rawIdempotencyKey = request.headers['idempotency-key'];
     const idempotencyKey = requireIdempotencyKey(Array.isArray(rawIdempotencyKey) ? rawIdempotencyKey[0] : rawIdempotencyKey);
     const result = await dependencies.gameplayService.submitScore(principal, finishMatch[1]!, createVerifiedFruitSliceRules(), {
@@ -266,6 +294,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       ...(input.breakdown ? { breakdown: input.breakdown } : {}),
       ...(input.replayInputs ? { replayInputs: input.replayInputs } : {}),
     }, idempotencyKey);
+    if (result.status === 'verified') return sendJson(response, 200, { data: scoreSubmissionResultSchema.parse(result) });
     if (result.status === 'rejected' || (result.status === 'accepted' && !dependencies.scoreVerificationService)) {
       return sendJson(response, result.status === 'rejected' ? 400 : 202, { data: scoreSubmissionResultSchema.parse(result) });
     }
@@ -295,7 +324,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     }
     const principal = await authenticate(request, dependencies.verifier);
     requireAdministrator(principal);
-    const input = createChallengeSchema.parse(await readJsonBody(request));
+    const input = createChallengeSchema.parse(await readJsonBody(request, maxRequestBytes));
     const challenge = await dependencies.challengeService.createChallenge(principal, input);
     return sendJson(response, 201, { data: challengeSchema.parse(challenge) });
   }
@@ -340,7 +369,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
     }
     if (!action && request.method === 'PATCH') {
-      const input = updateChallengeSchema.parse(await readJsonBody(request));
+      const input = updateChallengeSchema.parse(await readJsonBody(request, maxRequestBytes));
       const challenge = await dependencies.challengeService.updateChallenge(principal, challengeId, input);
       return sendJson(response, 200, { data: challengeSchema.parse(challenge) });
     }
@@ -409,7 +438,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       }));
     }
     if (request.method === 'POST') {
-      const input = createBountySchema.parse(await readJsonBody(request));
+      const input = createBountySchema.parse(await readJsonBody(request, maxRequestBytes));
       const bounty = await dependencies.bountyService.createBounty(principal, input);
       return sendJson(response, 201, { data: bountySchema.parse(bounty) });
     }
@@ -442,7 +471,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       return sendJson(response, 200, { data: bountySchema.parse(bounty) });
     }
     if (!action && request.method === 'PATCH') {
-      const input = updateBountySchema.parse(await readJsonBody(request));
+      const input = updateBountySchema.parse(await readJsonBody(request, maxRequestBytes));
       const bounty = await dependencies.bountyService.updateBounty(principal, bountyId, input);
       return sendJson(response, 200, { data: bountySchema.parse(bounty) });
     }
@@ -456,7 +485,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
     }
     const principal = await authenticate(request, dependencies.verifier);
-    const input = reviewBountySubmissionSchema.parse(await readJsonBody(request));
+    const input = reviewBountySubmissionSchema.parse(await readJsonBody(request, maxRequestBytes));
     const submission = await dependencies.bountyService.reviewSubmission(principal, submissionId, input);
     return sendJson(response, 200, { data: submission });
   }
@@ -499,7 +528,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       return sendJson(response, 503, { error: { code: 'bounty_service_not_configured', message: 'Bounty service is not configured.' } } satisfies ErrorResponse);
     }
     const principal = await authenticate(request, dependencies.walletVerifier);
-    const input = submitBountyEvidenceSchema.parse(await readJsonBody(request));
+    const input = submitBountyEvidenceSchema.parse(await readJsonBody(request, maxRequestBytes));
     const submission = await dependencies.bountyService.submitEvidence(principal, bountySubmitEvidenceMatch[1]!, input);
     return sendJson(response, 201, { data: submission });
   }
@@ -529,6 +558,52 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     return sendJson(response, 200, { data: bountySchema.parse(bounty) });
   }
 
+  if (pathname === `${apiPrefix}/rewards` && request.method === 'GET') {
+    if (!dependencies.walletVerifier || !dependencies.rewardService) return sendJson(response, 503, { error: { code: 'reward_service_not_configured', message: 'Reward service is not configured.' } } satisfies ErrorResponse);
+    const principal = await authenticate(request, dependencies.walletVerifier);
+    const query = rewardListQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.rewardService.listForPlayer(principal, query);
+    return sendJson(response, 200, rewardListResponseSchema.parse({ data: result.items, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
+  }
+
+  if (pathname === `${apiPrefix}/admin/rewards` && request.method === 'GET') {
+    if (!dependencies.verifier || !dependencies.rewardService) return sendJson(response, 503, { error: { code: 'reward_service_not_configured', message: 'Reward service is not configured.' } } satisfies ErrorResponse);
+    const principal = await authenticate(request, dependencies.verifier);
+    const query = rewardListQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.rewardService.listForAdmin(principal, query);
+    return sendJson(response, 200, rewardListResponseSchema.parse({ data: result.items, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
+  }
+
+  const rewardReviewMatch = pathname.match(new RegExp(`^${apiPrefix}/admin/rewards/([^/]+)/review$`));
+  if (rewardReviewMatch && request.method === 'POST') {
+    if (!dependencies.verifier || !dependencies.rewardService) return sendJson(response, 503, { error: { code: 'reward_service_not_configured', message: 'Reward service is not configured.' } } satisfies ErrorResponse);
+    const principal = await authenticate(request, dependencies.verifier);
+    const reward = await dependencies.rewardService.review(principal, rewardReviewMatch[1]!, reviewRewardSchema.parse(await readJsonBody(request, maxRequestBytes)));
+    return sendJson(response, 200, { data: rewardSchema.parse(reward) });
+  }
+
+  const rewardDistributionMatch = pathname.match(new RegExp(`^${apiPrefix}/admin/rewards/([^/]+)/distributions$`));
+  if (rewardDistributionMatch && request.method === 'POST') {
+    if (!dependencies.verifier || !dependencies.rewardService) return sendJson(response, 503, { error: { code: 'reward_service_not_configured', message: 'Reward service is not configured.' } } satisfies ErrorResponse);
+    const principal = await authenticate(request, dependencies.verifier);
+    const reward = await dependencies.rewardService.recordDistribution(principal, rewardDistributionMatch[1]!, recordRewardDistributionSchema.parse(await readJsonBody(request, maxRequestBytes)));
+    return sendJson(response, 201, { data: rewardSchema.parse(reward) });
+  }
+
+  if (pathname === `${apiPrefix}/admin/metrics` && request.method === 'GET') {
+    if (!dependencies.verifier || !dependencies.operationsService) return sendJson(response, 503, { error: { code: 'operations_not_configured', message: 'Operational metrics are not configured.' } } satisfies ErrorResponse);
+    const principal = await authenticate(request, dependencies.verifier);
+    return sendJson(response, 200, { data: operationalMetricsSchema.parse(await dependencies.operationsService.metrics(principal)) });
+  }
+
+  if (pathname === `${apiPrefix}/admin/audit-logs` && request.method === 'GET') {
+    if (!dependencies.verifier || !dependencies.operationsService) return sendJson(response, 503, { error: { code: 'operations_not_configured', message: 'Audit retrieval is not configured.' } } satisfies ErrorResponse);
+    const principal = await authenticate(request, dependencies.verifier);
+    const query = auditLogQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.operationsService.auditLogs(principal, query);
+    return sendJson(response, 200, auditLogListResponseSchema.parse({ data: result.items, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
+  }
+
   return sendJson(response, 404, { error: { code: 'not_found', message: 'The requested route was not found.' } } satisfies ErrorResponse);
 }
 
@@ -549,16 +624,19 @@ export function createApp(config: BackendConfig = loadConfig(), dependencies: Ap
         response.setHeader('Retry-After', Math.ceil(config.rateLimitWindowMs / 1000));
         return sendJson(response, 429, { error: { code: 'rate_limited', message: 'Too many requests. Try again later.' } } satisfies ErrorResponse);
       }
-      void route(request, response, dependencies).catch(error => {
+      void route(request, response, dependencies, config.maxRequestBytes).catch(error => {
         logger.error('Unhandled route error', { error: error instanceof Error ? error.message : 'unknown' });
+        if (error instanceof ZodError) return validationError(response, error);
         if (error instanceof Error && 'statusCode' in error && typeof error.statusCode === 'number') {
-          return sendJson(response, error.statusCode, { error: { code: 'authentication_error', message: error.message } } satisfies ErrorResponse);
+          const code = 'code' in error && typeof error.code === 'string' ? error.code : 'request_error';
+          return sendJson(response, error.statusCode, { error: { code, message: error.message } } satisfies ErrorResponse);
         }
         if (!response.headersSent) sendJson(response, 500, { error: { code: 'internal_error', message: 'The server could not complete the request.' } } satisfies ErrorResponse);
         else response.destroy();
       });
     } catch (error) {
       logger.error('Unhandled request error', { error: error instanceof Error ? error.message : 'unknown' });
+      if (error instanceof ZodError) return validationError(response, error);
       if (!response.headersSent) sendJson(response, 500, { error: { code: 'internal_error', message: 'The server could not complete the request.' } } satisfies ErrorResponse);
       else response.destroy();
     }
@@ -589,6 +667,8 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     } : {}),
     challengeService: new ChallengeService(new PrismaChallengeRepository(prisma)),
     bountyService: new BountyService(new PrismaBountyRepository(prisma)),
+    rewardService: new RewardService(new PrismaRewardRepository(prisma)),
+    operationsService: new OperationsService(new PrismaOperationsRepository(prisma), config.goodDollarEnvironment),
   });
   server.listen(config.port, config.host, () => {
     const address = server.address();

@@ -230,6 +230,7 @@ export type RewardDistributionOrderByWithRelationInput = {
 
 export type RewardDistributionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  transactionReference?: string
   AND?: Prisma.RewardDistributionWhereInput | Prisma.RewardDistributionWhereInput[]
   OR?: Prisma.RewardDistributionWhereInput[]
   NOT?: Prisma.RewardDistributionWhereInput | Prisma.RewardDistributionWhereInput[]
@@ -237,13 +238,12 @@ export type RewardDistributionWhereUniqueInput = Prisma.AtLeast<{
   attemptedById?: Prisma.UuidFilter<"RewardDistribution"> | string
   status?: Prisma.EnumDistributionStatusFilter<"RewardDistribution"> | $Enums.DistributionStatus
   evidence?: Prisma.JsonNullableFilter<"RewardDistribution">
-  transactionReference?: Prisma.StringNullableFilter<"RewardDistribution"> | string | null
   failureReason?: Prisma.StringNullableFilter<"RewardDistribution"> | string | null
   attemptedAt?: Prisma.DateTimeFilter<"RewardDistribution"> | Date | string
   confirmedAt?: Prisma.DateTimeNullableFilter<"RewardDistribution"> | Date | string | null
   reward?: Prisma.XOR<Prisma.RewardScalarRelationFilter, Prisma.RewardWhereInput>
   attemptedBy?: Prisma.XOR<Prisma.AdminAccountScalarRelationFilter, Prisma.AdminAccountWhereInput>
-}, "id">
+}, "id" | "transactionReference">
 
 export type RewardDistributionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

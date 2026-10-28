@@ -305,14 +305,14 @@ Add supporting models only when required by the agreed architecture.
 
 ## 6.4 Completion Criteria
 
-- [ ] Prisma schema validates.
-- [ ] Prisma Client generates successfully.
-- [ ] Development migrations run successfully.
-- [ ] Database constraints are verified.
-- [ ] Required indexes and relationships are defined.
-- [ ] Production migration commands are documented.
-- [ ] No production secrets are committed.
-- [ ] Runtime and migration connection behavior is understood.
+- [x] Prisma schema validates.
+- [x] Prisma Client generates successfully.
+- [x] Development migrations run successfully.
+- [x] Database constraints are verified.
+- [x] Required indexes and relationships are defined.
+- [x] Production migration commands are documented.
+- [x] No production secrets are committed.
+- [x] Runtime and migration connection behavior is understood.
 
 **Gate:** Dependent application features must use the approved Prisma models rather than introducing ad hoc database access.
 

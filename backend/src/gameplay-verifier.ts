@@ -57,7 +57,7 @@ export function digestReplayInputs(inputs: readonly ReplayInput[]): string {
 }
 
 export interface PendingScoreStore {
-  findPending(scoreId: string): Promise<{
+  claimPending(scoreId: string): Promise<{
     id: string;
     playerId: string;
     score: number;
@@ -73,7 +73,7 @@ export class ScoreVerificationService {
   constructor(private readonly store: PendingScoreStore, private readonly verifier: DeterministicGameplayVerifier) {}
 
   async verifyPending(scoreId: string): Promise<VerificationResult> {
-    const pending = await this.store.findPending(scoreId);
+    const pending = await this.store.claimPending(scoreId);
     if (!pending) return { status: 'rejected', reason: 'The score is not pending or does not exist.' };
     const parsedInputs = replayInputSchema.array().safeParse(pending.replayInputs);
     if (!parsedInputs.success) {
@@ -94,7 +94,19 @@ export class ScoreVerificationService {
 export class PrismaPendingScoreStore implements PendingScoreStore {
   constructor(private readonly database: PrismaClient) {}
 
-  async findPending(scoreId: string): Promise<Awaited<ReturnType<PendingScoreStore['findPending']>>> {
+  async claimPending(scoreId: string): Promise<Awaited<ReturnType<PendingScoreStore['claimPending']>>> {
+    const staleBefore = new Date(Date.now() - 5 * 60 * 1000);
+    const claimed = await this.database.scoreRecord.updateMany({
+      where: {
+        id: scoreId,
+        OR: [
+          { status: 'PENDING' },
+          { status: 'VERIFYING', updatedAt: { lt: staleBefore } },
+        ],
+      },
+      data: { status: 'VERIFYING' },
+    });
+    if (claimed.count !== 1) return null;
     const row = await this.database.scoreRecord.findUnique({
       where: { id: scoreId },
       select: {
@@ -108,7 +120,7 @@ export class PrismaPendingScoreStore implements PendingScoreStore {
         session: { select: { id: true, playerId: true, gameMode: true, rulesVersion: true, seed: true } },
       },
     });
-    if (!row || row.status !== 'PENDING' || !row.replayInputs) return null;
+    if (!row || row.status !== 'VERIFYING' || !row.replayInputs) return null;
     return {
       id: row.id,
       playerId: row.playerId,
@@ -128,7 +140,7 @@ export class PrismaPendingScoreStore implements PendingScoreStore {
   async markVerified(scoreId: string, result: Extract<VerificationResult, { status: 'verified' }>): Promise<void> {
     await this.database.$transaction(async transaction => {
       const current = await transaction.scoreRecord.findUnique({ where: { id: scoreId }, select: { status: true, sessionId: true } });
-      if (!current || current.status !== 'PENDING') return;
+      if (!current || current.status !== 'VERIFYING') return;
       await transaction.scoreRecord.update({
         where: { id: scoreId },
         data: {
@@ -145,7 +157,7 @@ export class PrismaPendingScoreStore implements PendingScoreStore {
   async markRejected(scoreId: string, reason: string): Promise<void> {
     await this.database.$transaction(async transaction => {
       const current = await transaction.scoreRecord.findUnique({ where: { id: scoreId }, select: { status: true, sessionId: true } });
-      if (!current || current.status !== 'PENDING') return;
+      if (!current || current.status !== 'VERIFYING') return;
       await transaction.scoreRecord.update({ where: { id: scoreId }, data: { status: 'REJECTED', rejectionReason: reason } });
       await transaction.gameSession.update({ where: { id: current.sessionId }, data: { status: 'REJECTED', endedAt: new Date() } });
     });
