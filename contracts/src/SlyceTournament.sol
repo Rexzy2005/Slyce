@@ -38,6 +38,8 @@ contract SlyceTournament is SlyceBase {
         mapping(uint256 id => mapping(address player => uint32)) bestScore;
         mapping(uint256 id => mapping(address sponsor => uint128)) sponsored;
         mapping(uint256 id => mapping(address account => bool)) refunded;
+        address arcade; // the only contract allowed to add play fees to a prize pool
+        uint256 prizeTournament; // tournament whose pool receives play fees while it is open
     }
 
     // keccak256(abi.encode(uint256(keccak256("slyce.storage.Tournament")) - 1)) & ~bytes32(uint256(0xff))
@@ -60,6 +62,10 @@ contract SlyceTournament is SlyceBase {
     event TournamentCancelled(uint256 indexed id);
     event Refunded(uint256 indexed id, address indexed account, uint128 amount);
     event Rescued(address indexed token, address indexed to, uint256 amount);
+    event ArcadeChanged(address indexed arcade);
+    event PrizeTournamentChanged(uint256 indexed id);
+    /// @notice Play fees routed into a prize pool by the arcade. Recorded as treasury sponsorship (refundable on cancel).
+    event PoolFundedByPlay(uint256 indexed id, uint128 amount);
 
     error InvalidSchedule();
     error InvalidFee();
@@ -81,13 +87,15 @@ contract SlyceTournament is SlyceBase {
     error NotCancelled(uint256 id);
     error NothingToRefund(uint256 id);
     error ExceedsSurplus(uint256 amount, uint256 surplus);
+    error NotArcade();
+    error NoOpenPrizeTournament();
 
     function initialize(IERC20 token_, address treasury_, address owner_) external initializer {
         __SlyceBase_init(token_, treasury_, owner_);
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.1.0";
+        return "1.2.0";
     }
 
     // ----- Views -----
@@ -124,7 +132,56 @@ contract SlyceTournament is SlyceBase {
         return _store().refunded[id][account];
     }
 
+    function arcade() external view returns (address) {
+        return _store().arcade;
+    }
+
+    function prizeTournament() external view returns (uint256) {
+        return _store().prizeTournament;
+    }
+
+    /// @notice The prize tournament id if it is currently open (accepting entries and play fees), else 0.
+    function openPrizeTournament() public view returns (uint256) {
+        TournamentStorage storage $ = _store();
+        uint256 id = $.prizeTournament;
+        if (id == 0) return 0;
+        Tournament storage t = $.tournaments[id];
+        if (t.cancelled || t.resultsRoot != bytes32(0) || block.timestamp < t.startTime || block.timestamp >= t.endTime) return 0;
+        return id;
+    }
+
     // ----- Owner -----
+
+    function setArcade(address arcade_) external onlyOwner {
+        _store().arcade = arcade_;
+        emit ArcadeChanged(arcade_);
+    }
+
+    /// @notice Selects the tournament (usually today's) whose pool grows with every paid round. 0 disables routing.
+    function setPrizeTournament(uint256 id) external onlyOwner {
+        if (id != 0) {
+            Tournament storage t = _existing(id);
+            if (t.cancelled) revert Cancelled(id);
+        }
+        _store().prizeTournament = id;
+        emit PrizeTournamentChanged(id);
+    }
+
+    // ----- Arcade -----
+
+    /// @notice Called by the arcade after it transferred `amount` G$ here from a player's play fee.
+    function creditFromArcade(uint128 amount) external nonReentrant returns (uint256 id) {
+        TournamentStorage storage $ = _store();
+        if (msg.sender != $.arcade || msg.sender == address(0)) revert NotArcade();
+        id = openPrizeTournament();
+        if (id == 0) revert NoOpenPrizeTournament();
+        if (amount == 0) revert InvalidAmount();
+        Tournament storage t = $.tournaments[id];
+        t.pool += amount;
+        $.liabilities += amount;
+        $.sponsored[id][treasury()] += amount;
+        emit PoolFundedByPlay(id, amount);
+    }
 
     function createTournament(uint64 startTime, uint64 endTime, uint128 entryFee, uint32 maxEntrants)
         external

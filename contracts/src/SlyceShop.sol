@@ -41,7 +41,7 @@ contract SlyceShop is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.1.0";
+        return "1.2.0";
     }
 
     function items(uint256 itemId) external view returns (Item memory) {

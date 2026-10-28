@@ -25,7 +25,7 @@ contract SlyceShopTest is SlyceTest {
         assertEq(address(shop.token()), address(token));
         assertEq(shop.treasury(), treasury);
         assertEq(shop.owner(), owner);
-        assertEq(shop.version(), "1.1.0");
+        assertEq(shop.version(), "1.2.0");
         assertFalse(shop.paused());
     }
 

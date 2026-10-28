@@ -27,6 +27,9 @@ contract Deploy is Script {
         shop.setItem(103, 150 ether, 1, true); // Leaf blade
         tournament = SlyceTournament(address(new ERC1967Proxy(address(new SlyceTournament()), abi.encodeCall(SlyceTournament.initialize, (token, treasury, deployer)))));
         arcade = SlyceArcade(address(new ERC1967Proxy(address(new SlyceArcade()), abi.encodeCall(SlyceArcade.initialize, (token, treasury, deployer, playFee)))));
+        // Every paid round grows the open daily prize pool (see CreateTournament.s.sol).
+        tournament.setArcade(address(arcade));
+        arcade.setPrizePool(address(tournament));
         if (owner != deployer) {
             shop.transferOwnership(owner);
             tournament.transferOwnership(owner);

@@ -29,8 +29,8 @@ contract EdgeCasesTest is SlyceTest {
     function test_versionsAndViews() public {
         SlyceTournament t = deployTournament(IERC20(address(token)));
         SlyceArcade arcade = deployArcade(IERC20(address(token)), 0);
-        assertEq(t.version(), "1.1.0");
-        assertEq(arcade.version(), "1.1.0");
+        assertEq(t.version(), "1.2.0");
+        assertEq(arcade.version(), "1.2.0");
         vm.prank(owner);
         uint256 id = t.createTournament(uint64(block.timestamp), uint64(block.timestamp + 1 hours), 1 ether, 0);
         fund(alice, address(t), 10 ether);

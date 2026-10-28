@@ -18,7 +18,7 @@ contract SlyceArcadeTest is SlyceTest {
 
     function test_playChargesFeeAndCountsRounds() public {
         vm.expectEmit(address(arcade));
-        emit SlyceArcade.RoundPaid(alice, 1, 1, 1 ether);
+        emit SlyceArcade.RoundPaid(alice, 1, 1, 1 ether, 0);
         vm.prank(alice);
         assertEq(arcade.play(1 ether), 1);
         vm.prank(alice);

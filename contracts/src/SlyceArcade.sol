@@ -4,15 +4,22 @@ pragma solidity 0.8.28;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SlyceBase} from "./SlyceBase.sol";
 
+interface ISlycePrizePool {
+    function openPrizeTournament() external view returns (uint256);
+    function creditFromArcade(uint128 amount) external returns (uint256);
+}
+
 /// @title Slyce Arcade (UUPS)
-/// @notice Charges the G$ play fee that starts a round. The fee goes straight to the treasury.
-/// The app only starts a round after this transaction confirms.
+/// @notice Charges the G$ play fee that starts a round. While a prize tournament is open the fee grows its
+/// prize pool (players compete for it); otherwise it goes to the treasury. The app only starts a round after
+/// this transaction confirms.
 contract SlyceArcade is SlyceBase {
     /// @custom:storage-location erc7201:slyce.storage.Arcade
     struct ArcadeStorage {
         uint128 playFee;
         uint64 totalRounds;
         mapping(address player => uint64) roundsPlayed;
+        ISlycePrizePool prizePool; // SlyceTournament; zero disables fee routing
     }
 
     // keccak256(abi.encode(uint256(keccak256("slyce.storage.Arcade")) - 1)) & ~bytes32(uint256(0xff))
@@ -22,7 +29,9 @@ contract SlyceArcade is SlyceBase {
 
     event PlayFeeChanged(uint128 playFee);
     /// @param round Global round number, unique per paid round.
-    event RoundPaid(address indexed player, uint64 indexed round, uint64 playerRound, uint128 fee);
+    /// @param prizeTournament Tournament whose pool received the fee, or 0 if it went to the treasury.
+    event RoundPaid(address indexed player, uint64 indexed round, uint64 playerRound, uint128 fee, uint256 prizeTournament);
+    event PrizePoolChanged(address indexed prizePool);
 
     error InvalidFee();
     error FeeAboveLimit(uint256 fee, uint256 maxFee);
@@ -33,7 +42,7 @@ contract SlyceArcade is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.1.0";
+        return "1.2.0";
     }
 
     function playFee() external view returns (uint128) {
@@ -48,8 +57,17 @@ contract SlyceArcade is SlyceBase {
         return _arcade().roundsPlayed[player];
     }
 
+    function prizePool() external view returns (address) {
+        return address(_arcade().prizePool);
+    }
+
     function setPlayFee(uint128 playFee_) external onlyOwner {
         _setPlayFee(playFee_);
+    }
+
+    function setPrizePool(address prizePool_) external onlyOwner {
+        _arcade().prizePool = ISlycePrizePool(prizePool_);
+        emit PrizePoolChanged(prizePool_);
     }
 
     /// @param maxFee Protects the player if the fee changes after the UI displayed it.
@@ -59,8 +77,16 @@ contract SlyceArcade is SlyceBase {
         if (fee > maxFee) revert FeeAboveLimit(fee, maxFee);
         round = ++$.totalRounds;
         uint64 playerRound = ++$.roundsPlayed[msg.sender];
-        emit RoundPaid(msg.sender, round, playerRound, fee);
-        if (fee != 0) _pull(msg.sender, treasury(), fee);
+        ISlycePrizePool pool = $.prizePool;
+        uint256 prizeId = fee != 0 && address(pool) != address(0) ? pool.openPrizeTournament() : 0;
+        emit RoundPaid(msg.sender, round, playerRound, fee, prizeId);
+        if (fee == 0) return round;
+        if (prizeId != 0) {
+            _pull(msg.sender, address(pool), fee);
+            pool.creditFromArcade(fee);
+        } else {
+            _pull(msg.sender, treasury(), fee);
+        }
     }
 
     function _setPlayFee(uint128 playFee_) private {

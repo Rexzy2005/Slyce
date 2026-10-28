@@ -4,7 +4,7 @@ UUPS-upgradeable `SlyceShop`, `SlyceTournament` and `SlyceArcade` on a shared `S
 
 | Contract | Purpose |
 | --- | --- |
-| `SlyceArcade` | `play(maxFee)` charges the per-round G$ play fee to the treasury. |
+| `SlyceArcade` | `play(maxFee)` charges the per-round G$ fee, which goes into the open daily prize pool (else the treasury). See ADR-0007. |
 | `SlyceShop` | Cosmetic blade trails; G$ to treasury; on-chain ownership. |
 | `SlyceTournament` | Entry fees, sponsorship, self-reported scores, operator-posted Merkle prizes, cancel + full refunds. |
 
@@ -17,6 +17,8 @@ Safety properties:
 - `rescue` can't touch funds owed to players.
 
 ## Current deployment (Celo mainnet, 42220)
+
+**Obsolete:** this deployment uses development G$, and it is being replaced by a real-G$ v1.2.0 deployment.
 
 Deployed 2026-10-25 against **development G$** (`0xFa51eFDc0910CCdA91732e6806912Fa12e2FD475`). Owner and treasury: `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`. Play fee 1 G$; blades 101/102/103 at 100/100/150 G$.
 
@@ -79,6 +81,14 @@ cast send $CONTRACT "pause()" --account slyce-owner --rpc-url $RPC
 2. Run the tests and the upgrades-core validation above.
 3. Run: `PROXY=0x... CONTRACT=Shop|Tournament|Arcade forge script script/Upgrade.s.sol --rpc-url $RPC --account slyce-owner --broadcast`.
 4. Then: `node script/export-abis.mjs`. Redeploy the web app if the ABI changed.
+
+## Run the daily tournament
+
+Create one every day. It becomes the prize tournament automatically (`PRIZE=1`), and entry is free by default because the pool is funded by play fees:
+
+```bash
+TOURNAMENT=0x... DURATION=86400 forge script script/CreateTournament.s.sol --rpc-url https://forno.celo.org --account slyce-owner --broadcast --with-gas-price 205gwei --priority-gas-price 3gwei
+```
 
 ## Run a tournament
 

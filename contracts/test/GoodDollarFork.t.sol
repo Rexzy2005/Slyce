@@ -52,4 +52,23 @@ contract GoodDollarForkTest is Test {
         assertEq(GD.balanceOf(player), before + 10 ether);
         assertEq(t.liabilities(), 0);
     }
+
+    function test_realGoodDollarPlayFeesFundPrizePool() public {
+        SlyceArcade arcade = SlyceArcade(address(new ERC1967Proxy(address(new SlyceArcade()), abi.encodeCall(SlyceArcade.initialize, (GD, treasury, address(this), 1 ether)))));
+        SlyceTournament t = SlyceTournament(address(new ERC1967Proxy(address(new SlyceTournament()), abi.encodeCall(SlyceTournament.initialize, (GD, treasury, address(this))))));
+        t.setArcade(address(arcade));
+        arcade.setPrizePool(address(t));
+        uint256 id = t.createTournament(uint64(block.timestamp), uint64(block.timestamp + 1 days), 0, 0);
+        t.setPrizeTournament(id);
+        vm.startPrank(player);
+        GD.approve(address(arcade), 3 ether);
+        uint256 gasBefore = gasleft();
+        arcade.play(1 ether);
+        emit log_named_uint("real G$ play gas (prize routing)", gasBefore - gasleft());
+        arcade.play(1 ether);
+        arcade.play(1 ether);
+        vm.stopPrank();
+        assertEq(t.getTournament(id).pool, 3 ether);
+        assertEq(GD.balanceOf(address(t)), t.liabilities());
+    }
 }
