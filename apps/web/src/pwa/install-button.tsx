@@ -15,7 +15,7 @@ export function InstallButton() {
     window.addEventListener('beforeinstallprompt', before); window.addEventListener('appinstalled', complete);
     return () => { window.removeEventListener('beforeinstallprompt', before); window.removeEventListener('appinstalled', complete); };
   }, []);
-  if (installed) return <p className="muted">Slyce is on your home screen.</p>;
+  if (installed) return <p className="muted">Slyyce is on your home screen.</p>;
   return <div className="install-control"><button className="button secondary" onClick={async () => {
     if (!prompt) { setHint(true); return; }
     try { await prompt.prompt(); await prompt.userChoice; } catch { setHint(true); } finally { setPrompt(undefined); }

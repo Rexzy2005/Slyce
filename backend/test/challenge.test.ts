@@ -199,7 +199,7 @@ test('challenge service enforces administrator permissions and full lifecycle', 
   const repo = createMockChallengeRepo();
   const service = new ChallengeService(repo);
 
-  const admin = { subject: 'admin-1', kind: 'administrator' as const, email: 'admin@slyce.io', roles: ['admin' as const] };
+    const admin = { subject: 'admin-1', kind: 'administrator' as const, email: 'admin@slyyce.io', roles: ['admin' as const] };
   const player = { subject: 'player-1', kind: 'player' as const, playerId: '00000000-0000-4000-8000-000000000001', roles: [] as const };
 
   // Player cannot create challenges
@@ -267,7 +267,7 @@ test('HTTP challenge routes serve admin and player operations', async () => {
   }, {
     verifier: {
       verify: async token => token === 'admin-token'
-        ? { subject: 'admin-id', kind: 'administrator', email: 'admin@slyce.io', roles: ['admin' as const] }
+        ? { subject: 'admin-id', kind: 'administrator', email: 'admin@slyyce.io', roles: ['admin' as const] }
         : null,
     },
     walletVerifier: {

@@ -2,9 +2,9 @@ services:
   - type: web
     name: slyce-backend
     runtime: node
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @slyce/backend db:generate && pnpm --filter @slyce/backend build
-    preDeployCommand: pnpm --filter @slyce/backend deployment:check && pnpm --filter @slyce/backend db:migrate:deploy
-    startCommand: pnpm --filter @slyce/backend start
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @slyyce/backend db:generate && pnpm --filter @slyyce/backend build
+    preDeployCommand: pnpm --filter @slyyce/backend deployment:check && pnpm --filter @slyyce/backend db:migrate:deploy
+    startCommand: pnpm --filter @slyyce/backend start
     healthCheckPath: /readyz
     envVars:
       - key: NODE_ENV

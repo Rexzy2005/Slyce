@@ -1,4 +1,4 @@
-# Slyce Architecture
+# Slyyce Architecture
 
 > 2026-10-15: MiniPay is removed and the app ships as web + PWA only. Application contracts live in `contracts/`. See ADR-0004, which supersedes the MiniPay sections below.
 
@@ -26,7 +26,7 @@ Architectural changes that materially alter this document require a decision rec
 
 ## 2. System Overview
 
-Slyce/Slyce consists of five primary runtime domains:
+Slyyce/Slyyce consists of five primary runtime domains:
 
 1. Web application
 2. Game runtime
@@ -554,7 +554,7 @@ through page components.
 
 ## 16. G$ Transaction Model
 
-Slyce uses GoodDollar G$ for supported value flows.
+Slyyce uses GoodDollar G$ for supported value flows.
 
 Purchases and tournament entry are designed around a single-transaction token-and-call flow where supported by the confirmed contracts.
 
@@ -569,7 +569,7 @@ G$ Token
      |
      | token transfer + callback
      v
-Slyce Contract
+Slyyce Contract
      |
      | event
      v

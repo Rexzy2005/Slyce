@@ -13,7 +13,7 @@ import { PlayerService } from '../src/player-service.js';
 import { createPracticeSafeRules, digestInput, GameplayService, type ScoreSubmission, type SessionDescriptor } from '../src/gameplay-service.js';
 import { compareLeaderboardCandidates, digestReplayInputs, paginateLeaderboardCandidates, rankLeaderboardCandidates, ScoreVerificationService, VerifiedFruitSliceVerifier } from '../src/gameplay-verifier.js';
 import { verifyDeploymentEnvironment } from '../src/deployment-preflight.js';
-import { simulateVerifiedFruitSlice, verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion } from '@slyce/shared/verified-game';
+import { simulateVerifiedFruitSlice, verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion } from '@slyyce/shared/verified-game';
 import { LeaderboardService } from '../src/leaderboard-service.js';
 import { PrismaWalletChallengeStore } from '../src/wallet-auth.js';
 import { createWalletSessionToken, WalletSessionTokenVerifier } from '../src/wallet-auth.js';
@@ -403,7 +403,7 @@ test('completes administrator login through the CSRF-protected cookie route', as
   if (!address || typeof address === 'string') throw new Error('Test server did not bind');
   const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/admin/auth/login`, {
     method: 'POST',
-    headers: { Origin: 'https://console.example', 'Content-Type': 'application/json', 'X-Slyce-CSRF': '1' },
+    headers: { Origin: 'https://console.example', 'Content-Type': 'application/json', 'X-Slyyce-CSRF': '1' },
     body: JSON.stringify({ email: 'admin@example.com', password: 'a secure password' }),
   });
   assert.equal(response.status, 200);
@@ -430,7 +430,7 @@ test('serves health and readiness endpoints without exposing configuration', asy
     environment: 'test',
     port: 0,
     host: '127.0.0.1',
-    corsOrigins: ['https://slyce.example'],
+    corsOrigins: ['https://slyyce.example'],
     maxRequestBytes: 100,
     rateLimitWindowMs: 60_000,
     rateLimitMaxRequests: 10,
@@ -444,10 +444,10 @@ test('serves health and readiness endpoints without exposing configuration', asy
 
   const health = await fetch(`${baseUrl}/healthz`);
   assert.equal(health.status, 200);
-  assert.deepEqual(await health.json(), { status: 'ok', service: 'slyce-backend' });
+  assert.deepEqual(await health.json(), { status: 'ok', service: 'slyyce-backend' });
 
-  const cors = await fetch(`${baseUrl}/healthz`, { headers: { Origin: 'https://slyce.example' } });
-  assert.equal(cors.headers.get('access-control-allow-origin'), 'https://slyce.example');
+  const cors = await fetch(`${baseUrl}/healthz`, { headers: { Origin: 'https://slyyce.example' } });
+  assert.equal(cors.headers.get('access-control-allow-origin'), 'https://slyyce.example');
 
   const readiness = await fetch(`${baseUrl}/readyz`);
   assert.equal(readiness.status, 503);

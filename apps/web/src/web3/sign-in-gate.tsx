@@ -15,7 +15,7 @@ export function SignInGate({ children }: { children: ReactNode }) {
   return <SignIn />;
 }
 function SignInHero() {
-  return <><span className="brand sign-in-brand">slyce<span className="brand-dot">/</span></span>
+  return <><span className="brand sign-in-brand">slyyce<span className="brand-dot">/</span></span>
     <Image className="sign-in-art" src="/game/fruit-splash-v1.webp" alt="" width={1672} height={941} priority unoptimized />
     <h1>Swipe. Slice.<br /><span>Stack your G$.</span></h1></>;
 }

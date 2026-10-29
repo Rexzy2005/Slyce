@@ -1,4 +1,4 @@
-# Slyce Contracts
+# Slyyce Contracts
 
 UUPS-upgradeable `SlyceShop`, `SlyceTournament` and `SlyceArcade` on a shared `SlyceBase` (see `docs/decisions/ADR-0005-app-shell-signin-upgradeable.md`). Foundry, Solidity 0.8.28 (Cancun), OpenZeppelin 5.6.1. **Not externally audited. Keep pools small and use a multisig owner.**
 

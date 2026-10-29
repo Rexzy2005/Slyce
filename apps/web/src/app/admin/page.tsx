@@ -53,9 +53,9 @@ export default function AdminPage() {
           <Link
             href="/admin"
             className="brand admin-brand"
-            aria-label="Slyce admin home"
+            aria-label="Slyyce admin home"
           >
-            slyce<span className="brand-dot">/</span>
+            slyyce<span className="brand-dot">/</span>
           </Link>
           <p className="admin-console-label">OPERATIONS CONSOLE</p>
         </div>
@@ -79,7 +79,7 @@ export default function AdminPage() {
             <span>
               Protected by
               <br />
-              <strong>Slyce Admin Auth</strong>
+              <strong>Slyyce Admin Auth</strong>
             </span>
           </div>
           <button
@@ -96,7 +96,7 @@ export default function AdminPage() {
           <div>
             <p className="eyebrow">TUESDAY · SEASON 05</p>
             <h1>Good morning, operator.</h1>
-            <p className="admin-topbar-subtitle">A clear read on the Slyce player ecosystem.</p>
+            <p className="admin-topbar-subtitle">A clear read on the Slyyce player ecosystem.</p>
           </div>
           <div className="admin-top-actions">
             <span className="admin-season-label">SEASON 05 <span aria-hidden="true">/</span> LIVE</span>
@@ -211,7 +211,7 @@ export default function AdminPage() {
           </div>
         </section>
         <footer className="admin-footer">
-          <span>Slyce / Operator workspace</span>
+          <span>Slyyce / Operator workspace</span>
           <span>Build foundation · P5</span>
         </footer>
         </div>

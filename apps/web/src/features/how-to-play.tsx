@@ -8,7 +8,7 @@ import { useGameRecords, type Milestone } from '../game/game-records';
 export function HowToPlay() {
   const wallet = useWallet();
   return <article className="stats how-to-play">
-    <Link href="/play" className="brand">slyce<span className="brand-dot">/</span></Link>
+    <Link href="/play" className="brand">slyyce<span className="brand-dot">/</span></Link>
     <h1>How to play</h1>
     <h2>Slice</h2>
     <p>Swipe across fruit to slice it. Each fruit is 10 points, and slicing 3 or more in one swipe adds a combo bonus. Avoid bombs: one hit ends the round. Miss three fruit and it's game over. Playing is free.</p>

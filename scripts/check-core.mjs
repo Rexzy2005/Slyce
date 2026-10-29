@@ -9,7 +9,7 @@ async function load(relative) {
   const source = await readFile(new URL('../' + relative, import.meta.url), 'utf8');
   const output = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   if (/require\(/.test(output)) throw new Error('Unexpected runtime dependency in pure boundary');
-  const dir = await mkdtemp(path.join(tmpdir(), 'slyce-core-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'slyyce-core-'));
   const target = path.join(dir, 'boundary.cjs');
   try { await writeFile(target, output); return require(target); }
   finally { delete require.cache[target]; await unlink(target); await rmdir(dir); }

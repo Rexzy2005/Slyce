@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import type { SlyceApi } from './contracts';
+import type { SlyyceApi } from './contracts';
 import { ApiError } from './errors';
 export interface HttpRequest { url: string; method: 'GET' | 'POST'; body?: unknown }
 /** A backend-approved mapping must supply each URL, request and wire-to-view decoder. */
-export type HttpBindings = { [K in keyof SlyceApi]: {
-  request: (...args: Parameters<SlyceApi[K]>) => HttpRequest;
-  response: z.ZodType<Awaited<ReturnType<SlyceApi[K]>>>;
+export type HttpBindings = { [K in keyof SlyyceApi]: {
+  request: (...args: Parameters<SlyyceApi[K]>) => HttpRequest;
+  response: z.ZodType<Awaited<ReturnType<SlyyceApi[K]>>>;
 } };
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   return fetch(input, init);
@@ -37,7 +37,7 @@ export async function requestValidated<T>(request: HttpRequest, schema: z.ZodTyp
   if (!result.success) throw new ApiError('invalid-response', 'The service returned an unexpected response.');
   return result.data;
 }
-export function createHttpApi(bindings: HttpBindings): SlyceApi {
+export function createHttpApi(bindings: HttpBindings): SlyyceApi {
   return {
     session: signal => requestValidated(bindings.session.request(signal), bindings.session.response, signal),
     startRound: signal => requestValidated(bindings.startRound.request(signal), bindings.startRound.response, signal),

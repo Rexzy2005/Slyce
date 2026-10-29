@@ -1,12 +1,12 @@
-# SLYCE
+# SLYYCE
 # MASTER PLAN: BACKEND & ADMIN DASHBOARD ENGINEERING
 
 **Document:** `MASTER-PLAN.md`  
-**Project:** SLYCE  
+**Project:** SLYYCE
 **Scope:** Backend Infrastructure, Database, Admin Dashboard, Game Integration, Challenge and Bounty Management, Leaderboards, Rewards, and GoodDollar Verification  
 **Status:** Authoritative Engineering Specification  
 **Audience:** Software Engineers, System Engineers, Backend Developers, Frontend Developers, QA Engineers, DevOps Engineers, and AI Coding Agents  
-**Primary Repository:** Existing SLYCE monorepo  
+**Primary Repository:** Existing SLYYCE monorepo
 **Backend Deployment:** Render  
 **Database:** Supabase PostgreSQL  
 **ORM:** Prisma  
@@ -19,7 +19,7 @@
 
 ## 1.1 Background
 
-SLYCE is an existing game project that requires a persistent backend and an administrative dashboard to manage players, gameplay records, leaderboards, challenges, bounties, rewards, and related operational activities.
+SLYYCE is an existing game project that requires a persistent backend and an administrative dashboard to manage players, gameplay records, leaderboards, challenges, bounties, rewards, and related operational activities.
 
 The existing application includes game functionality and Web3 integration. However, the availability, completeness, and reliability of existing persistence mechanisms, gameplay records, tournament logic, and administrative capabilities must be established through a repository audit before implementation.
 
@@ -29,7 +29,7 @@ The implementation must preserve the existing application's architecture where p
 
 ## 1.2 Primary Objective
 
-Build an independently deployable backend within the existing repository, a secure administrative dashboard within the existing Next.js application, and a centralized Supabase PostgreSQL database that serves as the persistent source of truth for SLYCE application data.
+Build an independently deployable backend within the existing repository, a secure administrative dashboard within the existing Next.js application, and a centralized Supabase PostgreSQL database that serves as the persistent source of truth for SLYYCE application data.
 
 The backend must be deployed on Render and use Prisma for database access and version-controlled schema migrations.
 
@@ -687,7 +687,7 @@ A repeated request must not create duplicate reward approvals, duplicate complet
 
 The dashboard must be implemented within the existing Next.js application.
 
-It must provide a protected administrative interface for managing SLYCE operations.
+It must provide a protected administrative interface for managing SLYYCE operations.
 
 The interface must use the existing project's design system, components, styling conventions, and state-management approach wherever practical.
 
@@ -1290,7 +1290,7 @@ Controls must be proportional to the actual risk and existing game mechanics.
 
 ## 12.1 Integration Principle
 
-SLYCE must use the official GoodDollar identity-verification functionality rather than building an independent facial-verification system.
+SLYYCE must use the official GoodDollar identity-verification functionality rather than building an independent facial-verification system.
 
 The existing SDK integration must be audited before any implementation changes.
 
@@ -1327,11 +1327,11 @@ Unknown or unavailable states must be represented honestly and handled according
 
 Wallet addresses must not be treated as unique human identities.
 
-Where supported by the official GoodDollar integration, SLYCE should retrieve and persist the confirmed root-identity association or equivalent authoritative reference.
+Where supported by the official GoodDollar integration, SLYYCE should retrieve and persist the confirmed root-identity association or equivalent authoritative reference.
 
 The application must not invent its own identity-linking rules or claim that the official service prevents every possible duplicate verification attempt unless that behavior has been established by the relevant official documentation and testing.
 
-SLYCE may apply its own eligibility and abuse-prevention policies, but those policies must remain distinct from GoodDollar's identity-verification authority.
+SLYYCE may apply its own eligibility and abuse-prevention policies, but those policies must remain distinct from GoodDollar's identity-verification authority.
 
 ## 12.5 Privacy
 
@@ -1920,7 +1920,7 @@ The project is considered complete only when all applicable criteria below are v
 The following principles are mandatory throughout the project:
 
 **1. One authoritative application database.**  
-Supabase PostgreSQL is the persistent source of truth for SLYCE application records managed by this backend.
+Supabase PostgreSQL is the persistent source of truth for SLYYCE application records managed by this backend.
 
 **2. One controlled backend boundary.**  
 The dashboard and game communicate with the backend API rather than accessing PostgreSQL directly.
@@ -1941,7 +1941,7 @@ Global, game-mode, and bounty-specific leaderboards must be reproducible from au
 Challenge and bounty rewards require administrator approval and manual distribution tracking. Approval does not imply payment.
 
 **8. Official identity verification.**  
-GoodDollar remains the authority for its own verification state. SLYCE must not create a competing biometric-verification system.
+GoodDollar remains the authority for its own verification state. SLYYCE must not create a competing biometric-verification system.
 
 **9. Preserve the existing game.**  
 Existing gameplay, wallet connectivity, SDK integrations, and shared packages must be audited and reused wherever appropriate.

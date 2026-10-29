@@ -1,4 +1,4 @@
-# Slyce backend
+# Slyyce backend
 
 The backend is an independently runnable Node.js service providing authenticated player/admin APIs, persisted gameplay verification and leaderboards, challenges, bounties, rewards, and operational visibility.
 
@@ -7,9 +7,9 @@ The backend is an independently runnable Node.js service providing authenticated
 Run from the repository root with Node `24.21.0`:
 
 ```text
-pnpm --filter @slyce/backend dev
-pnpm --filter @slyce/backend build
-pnpm --filter @slyce/backend test
+pnpm --filter @slyyce/backend dev
+pnpm --filter @slyyce/backend build
+pnpm --filter @slyyce/backend test
 ```
 
 The default listener is `0.0.0.0:3001`. Set `PORT`, `HOST`, or `NODE_ENV` through the environment. `GET /healthz` returns a liveness response. `GET /readyz` remains `503` until the database integration is implemented in P2.
@@ -18,8 +18,8 @@ The default listener is `0.0.0.0:3001`. Set `PORT`, `HOST`, or `NODE_ENV` throug
 
 Configure a Render web service from the repository root with:
 
-- Build command: `pnpm install --frozen-lockfile && pnpm --filter @slyce/backend build`
-- Start command: `pnpm --filter @slyce/backend start`
+- Build command: `pnpm install --frozen-lockfile && pnpm --filter @slyyce/backend build`
+- Start command: `pnpm --filter @slyyce/backend start`
 - Pre-deploy command: deployment:check followed by db:migrate:deploy
 - Health check path: /readyz
 
@@ -34,7 +34,7 @@ Administrator authentication is backend-owned. Configure `SLYCE_ADMIN_EMAILS`, p
 Seed the initial account with:
 
 ```text
-pnpm --filter @slyce/backend admin:seed
+pnpm --filter @slyyce/backend admin:seed
 ```
 
 The seed command never prints or returns the password. It fails closed when the seed email is absent from `SLYCE_ADMIN_EMAILS` or the password is missing.
@@ -52,10 +52,10 @@ Copy `backend/.env.example` to a local, ignored environment file and replace the
 The initial schema is `backend/prisma/schema.prisma`, and the reviewed initial migration is under `backend/prisma/migrations/`. Run these commands from the repository root only against an authorized development database:
 
 ```text
-pnpm --filter @slyce/backend db:validate
-pnpm --filter @slyce/backend db:generate
-pnpm --filter @slyce/backend db:migrate:dev -- --name <descriptive_name>
-pnpm --filter @slyce/backend db:migrate:status
+pnpm --filter @slyyce/backend db:validate
+pnpm --filter @slyyce/backend db:generate
+pnpm --filter @slyyce/backend db:migrate:dev -- --name <descriptive_name>
+pnpm --filter @slyyce/backend db:migrate:status
 ```
 
 Production uses `db:migrate:deploy` with `DIRECT_URL`; it must not use `db push` or destructive reset commands. No database connection or migration was executed while creating P2 because no development database credentials were available.

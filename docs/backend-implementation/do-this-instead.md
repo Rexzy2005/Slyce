@@ -1,10 +1,10 @@
-# SLYCE Admin Panel Authentication Replacement
+# SLYYCE Admin Panel Authentication Replacement
 
 ## Objective
 
 Stop and supersede the previously requested administrator authentication implementation in `backend-fix.md` that requires migrating the admin panel to the main game's Reown authentication provider.
 
-Do not continue investigating or implementing Reown-based administrator authentication. Replace that approach with a dedicated, secure, seeded email-and-password authentication system for the SLYCE admin panel.
+Do not continue investigating or implementing Reown-based administrator authentication. Replace that approach with a dedicated, secure, seeded email-and-password authentication system for the SLYYCE admin panel.
 
 Before making changes, inspect the existing repository, the current admin panel implementation, `backend-fix.md`, the backend authentication middleware, session handling, environment configuration, and relevant tests. Then implement the replacement directly in the codebase.
 
@@ -57,7 +57,7 @@ Prepare the admin panel UI for this authentication system.
 
 The login page must include:
 
-- SLYCE branding consistent with the existing admin panel.
+- SLYYCE branding consistent with the existing admin panel.
 - An email input.
 - A password input with a show/hide password control.
 - A clearly visible Sign In button.
@@ -101,7 +101,7 @@ Additional requirements:
 - Do not use Supabase OTP or Reown identity as a prerequisite for this dedicated admin login.
 - Keep the game's existing Reown wallet and email connection flow unchanged.
 
-Choose a session implementation compatible with the current SLYCE backend and deployment environment. Do not introduce an unnecessarily complex authentication framework if the existing stack can support this securely.
+Choose a session implementation compatible with the current SLYYCE backend and deployment environment. Do not introduce an unnecessarily complex authentication framework if the existing stack can support this securely.
 
 ## 5. Remove the Superseded Implementation
 
@@ -109,7 +109,7 @@ Identify and remove or replace the old administrator-authentication code, includ
 
 Update the existing admin auth implementation, middleware, configuration, documentation, and tests accordingly.
 
-Before removing any Supabase package or configuration, verify that it is not used by other SLYCE features. Do not break unrelated functionality.
+Before removing any Supabase package or configuration, verify that it is not used by other SLYYCE features. Do not break unrelated functionality.
 
 Remove obsolete administrator-authentication environment variables and documentation references only after confirming they are no longer needed.
 
@@ -134,7 +134,7 @@ Implement and run tests covering at least the following scenarios:
 13. Expired or invalid sessions are rejected.
 14. Changing the allowlist takes effect according to the implemented configuration-reload policy.
 15. The frontend does not contain the seeded password or password hash.
-16. Existing SLYCE gameplay, wallet connections, and unrelated admin features continue to work.
+16. Existing SLYYCE gameplay, wallet connections, and unrelated admin features continue to work.
 
 Run the available linting, type checks, relevant unit and integration tests, and production build. Run browser acceptance tests against the configured project where the required environment is available. Do not claim a test passed unless it was actually executed.
 

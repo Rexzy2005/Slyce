@@ -6,7 +6,7 @@ import { arcadeAbi, tournamentAbi } from '../web3/abis';
 import { chainFor, contractsFor, explorerUrl, gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
 import { formatTokenAmount } from '../web3/units';
-/** Public, sign-in-free view of Slyce's on-chain activity for players, judges and funders. */
+/** Public, sign-in-free view of Slyyce's on-chain activity for players, judges and funders. */
 export function PublicStats() {
   const wallet = useWallet();
   if (wallet.status === 'unavailable') return <p className="muted">Live stats are not configured for this environment.</p>;
@@ -34,9 +34,9 @@ function Stats() {
     ? <li key={label}><a href={explorerUrl(network, 'address', address)} target="_blank" rel="noreferrer">{label} <code>{address.slice(0, 8)}…{address.slice(-6)}</code> ↗</a></li> : null;
   const g = (value: unknown) => typeof value === 'bigint' ? Number(formatTokenAmount(value, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' G$' : '—';
   return <div className="stats">
-    <Link href="/play" className="brand">slyce<span className="brand-dot">/</span></Link>
+    <Link href="/play" className="brand">slyyce<span className="brand-dot">/</span></Link>
     <h1>Live on Celo</h1>
-    <p className="muted">Every number below is read directly from Slyce's contracts on Celo mainnet{reads.isPending ? '…' : '.'}</p>
+    <p className="muted">Every number below is read directly from Slyyce's contracts on Celo mainnet{reads.isPending ? '…' : '.'}</p>
     {reads.isError && <p className="error-text" role="alert">On-chain data could not be read right now. <button className="text-button" onClick={() => void reads.refetch()}>Try again</button></p>}
     <dl className="stat-grid">
       <div><dt>Games recorded</dt><dd>{typeof games === 'bigint' ? games.toLocaleString() : '—'}</dd></div>
@@ -50,6 +50,6 @@ function Stats() {
     <h2>Contracts</h2>
     <ul className="stats-links">{link(arcade, 'SlyceArcade')}{link(tournament, 'SlyceTournament')}{link(shop, 'SlyceShop')}{link(gd, 'G$ token')}</ul>
     <p className="muted fine-print">Events: GameRecorded, MilestoneRewarded, Entered, ScoreSubmitted, ResultsPosted, PrizeClaimed, Purchased.</p>
-    <Link className="button" href="/play">Play Slyce</Link>
+    <Link className="button" href="/play">Play Slyyce</Link>
   </div>;
 }

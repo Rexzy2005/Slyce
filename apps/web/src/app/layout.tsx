@@ -6,11 +6,11 @@ import { PwaRegistration } from '../pwa/registration';
 import { publicConfig } from '../config/public';
 import { Providers } from '../components/providers';
 export const metadata: Metadata = {
-  title: { default: 'Slyce · Swipe. Slice. Stack your G$.', template: '%s · Slyce' },
+  title: { default: 'Slyyce · Swipe. Slice. Stack your G$.', template: '%s · Slyyce' },
   description: 'Your next slice starts here. Off-chain play, tournaments and GoodDollar rewards.',
-  applicationName: 'Slyce', manifest: '/manifest.webmanifest',
+  applicationName: 'Slyyce', manifest: '/manifest.webmanifest',
   ...(publicConfig.appUrl ? { metadataBase: new URL(publicConfig.appUrl) } : {}),
-  appleWebApp: { capable: true, title: 'Slyce', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Slyyce', statusBarStyle: 'black-translucent' },
   icons: { icon: '/icons/icon-192.png', apple: '/icons/icon-192.png' },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: tokens.night };

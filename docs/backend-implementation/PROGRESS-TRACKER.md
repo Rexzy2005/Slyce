@@ -1,6 +1,6 @@
-# SLYCE Development Progress Tracker
+# SLYYCE Development Progress Tracker
 
-**Project:** SLYCE  
+**Project:** SLYYCE
 **Document:** Progress Tracker  
 **Status:** P13 repository preparation complete; production deployment blocked by external access
 **Last Updated:** 2026-10-28
@@ -10,7 +10,7 @@
 
 ## 1. Purpose
 
-This document tracks the actual implementation status of the SLYCE backend, admin dashboard, database, game integrations, challenge and bounty systems, leaderboards, and reward management.
+This document tracks the actual implementation status of the SLYYCE backend, admin dashboard, database, game integrations, challenge and bounty systems, leaderboards, and reward management.
 
 All progress must reflect work that has actually been implemented and verified. Planned, partially implemented, and completed work must be clearly distinguished.
 
@@ -218,12 +218,12 @@ Record significant development work in chronological order.
 | Date | Phase / Task | Change Made | Verification / Evidence | Result |
 |---|---|---|---|---|
 | 2026-10-27 | P0 Repository audit | Inspected plans, workspace, frontend, game runtime, Web3/GoodDollar integrations, API surface, deployment files, and backend presence. | Source evidence recorded in Section 3; `git status --short` confirmed no existing backend implementation. | Verified |
-| 2026-10-27 | P1 Backend foundation | Added the independent `@slyce/backend` workspace package, validated configuration, structured logger, HTTP server, liveness/readiness routes, tests, Render blueprint, and backend documentation. | `pnpm.cmd --filter @slyce/backend build`; backend test suite: 2 passed; live `GET /healthz`: HTTP 200; `pnpm.cmd typecheck`; `git diff --check`. | Verified |
+| 2026-10-27 | P1 Backend foundation | Added the independent `@slyyce/backend` workspace package, validated configuration, structured logger, HTTP server, liveness/readiness routes, tests, Render blueprint, and backend documentation. | `pnpm.cmd --filter @slyyce/backend build`; backend test suite: 2 passed; live `GET /healthz`: HTTP 200; `pnpm.cmd typecheck`; `git diff --check`. | Verified |
 | 2026-10-27 | P2 Prisma schema and migration foundation | Added Prisma 7.10.1, Supabase runtime/migration URL configuration, relational schema for players, wallets, verification, gameplay, leaderboards, challenges, bounties, rewards, admins, audits, events, and idempotency, generated client, initial migration SQL, and database boundary tests. | `db:validate`; `db:generate`; backend build; backend test suite: 3 passed. Migration SQL generated from empty schema. No database connection or migration execution performed. | Implemented |
 | 2026-10-27 | P3 Security foundation | Added validated CORS/rate-limit/request-size configuration, server-side principal/role/ownership authorization primitives, safe authentication errors, security tests, and ADR-0006 documenting the unresolved provider/session boundary. | Backend build; backend test suite: 5 passed; workspace typecheck; `git diff --check`. Authentication integration intentionally not claimed because no approved verifier or MiniPay-compatible player protocol exists. | Implemented |
 | 2026-10-27 | P4 API contract foundation | Added `/api/v1` route groups, stable error and success envelopes, cursor/limit pagination conventions, server-side Zod validation, idempotency-key validation, route access inventory, and updated API documentation. | Backend build/tests and workspace typecheck verified; no domain handler was exposed without authentication. | Implemented |
 | 2026-10-27 | P4 authenticated session boundary | Wired Supabase bearer verification into the HTTP boundary, added `GET /api/v1/session`, and mapped verified player/admin principals to Prisma `Player`/`AdminAccount` records through an injected store boundary. Removed database credentials from `backend/.env.example`. | Backend build and 10 tests passed; workspace typecheck and `git diff --check` passed. | Verified |
-| 2026-10-27 | P5 admin dashboard foundation | Added the responsive `/admin` operations console with Slyce branding, Supabase email-link sign-in, backend administrator verification, responsive navigation, metric cards, operational queue, and explicit unavailable states. | Web typecheck passed; production Next.js and Serwist build passed; backend 10-test suite and diff checks passed. Browser/device acceptance remains unverified. | Verified |
+| 2026-10-27 | P5 admin dashboard foundation | Added the responsive `/admin` operations console with Slyyce branding, Supabase email-link sign-in, backend administrator verification, responsive navigation, metric cards, operational queue, and explicit unavailable states. | Web typecheck passed; production Next.js and Serwist build passed; backend 10-test suite and diff checks passed. Browser/device acceptance remains unverified. | Verified |
 | 2026-10-27 | P6 player records foundation | Added typed player profile/admin list contracts, protected player/admin routes, cursor pagination, Prisma player/wallet/GoodDollar-state repository mapping, and service boundaries. | Backend build and 11 tests passed; `git diff --check` passed. GoodDollar external verification, wallet ownership mutation, and device/MiniPay behavior remain unverified. | Implemented |
 | 2026-10-27 | Database and administrator authentication verification | Connected Prisma to the authorized development Supabase database, recovered and reapplied the initial migration after removing an invalid SQL BOM, and verified the schema is up to date. Added Supabase Auth bearer verification and `ADMIN_EMAILS` administrator allowlisting without requiring a service-role key. | `prisma migrate deploy` succeeded; `prisma migrate status` reports up to date; backend 8 tests passed; workspace typecheck and diff checks passed. | Verified |
 | 2026-10-27 | GoodDollar documentation recheck | Rechecked the official Citizen SDK identity, UBI claim, and MiniPay wallet-connection documentation. Confirmed the documented `generateFVLink` flow, package/API drift, and MiniPay no-sign-for-authentication rule. | Findings recorded in `docs/research/dependency-baseline.md`; no SDK installed and no unsupported verification behavior claimed. | Blocked |

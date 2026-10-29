@@ -8,5 +8,5 @@ describe('configuration boundary', () => {
 });
 it('requires an explicit app URL whenever wallet sign-in is configured', () => {
   expect(() => parsePublicConfig({ network: 'celo', rpcUrl: 'https://forno.celo.org', walletConnectProjectId: '0123456789abcdef0123456789abcdef' })).toThrow(/NEXT_PUBLIC_APP_URL/);
-  expect(parsePublicConfig({ network: 'celo', rpcUrl: 'https://forno.celo.org', walletConnectProjectId: '0123456789abcdef0123456789abcdef', appUrl: 'https://slyce.example' }).appUrl).toBe('https://slyce.example');
+  expect(parsePublicConfig({ network: 'celo', rpcUrl: 'https://forno.celo.org', walletConnectProjectId: '0123456789abcdef0123456789abcdef', appUrl: 'https://slyyce.example' }).appUrl).toBe('https://slyyce.example');
 });

@@ -63,7 +63,7 @@ export function createWalletChallenge(address: `0x${string}`, chainId: number, o
 
 export function walletAuthMessage(challenge: WalletChallenge): string {
   const issuedAt = new Date(challenge.expiresAt.getTime() - challengeLifetimeMs).toISOString();
-  return `Slyce wants you to sign in with your Celo account:\n${challenge.address}\n\nSign in to Slyce.\n\nURI: ${challenge.origin}\nChain ID: ${challenge.chainId}\nNonce: ${challenge.nonce}\nIssued At: ${issuedAt}\nExpiration Time: ${challenge.expiresAt.toISOString()}`;
+  return `Slyyce wants you to sign in with your Celo account:\n${challenge.address}\n\nSign in to Slyyce.\n\nURI: ${challenge.origin}\nChain ID: ${challenge.chainId}\nNonce: ${challenge.nonce}\nIssued At: ${issuedAt}\nExpiration Time: ${challenge.expiresAt.toISOString()}`;
 }
 
 export function createWalletSessionToken(principal: AuthenticatedPrincipal, secret: string, now = Date.now()): string {

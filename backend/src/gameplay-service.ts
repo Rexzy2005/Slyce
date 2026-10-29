@@ -1,8 +1,8 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { AuthenticatedPrincipal } from './security.js';
 import { PrismaClient, Prisma } from './generated/prisma/client.js';
-import type { ReplayInput } from '@slyce/shared';
-import { verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion } from '@slyce/shared/verified-game';
+import type { ReplayInput } from '@slyyce/shared';
+import { verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion } from '@slyyce/shared/verified-game';
 
 export interface SessionDescriptor {
   id: string;

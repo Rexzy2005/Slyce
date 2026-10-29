@@ -26,5 +26,5 @@ Verified: 2026-10-27. Package: `@goodsdks/citizen-sdk` 1.2.7 (npm latest, publis
 - The ESM build imports named exports from CommonJS `lz-string`. Bundlers (Next) handle this; Vitest needs `server.deps.inline: ['@goodsdks/citizen-sdk']`.
 - The docs page shows outdated import paths (`@goodsdks/identity-sdk/...`). The installed package exports everything from `@goodsdks/citizen-sdk`.
 - The official Identity contract exposes `getWhitelistedRoot(address)`, `lastAuthenticated(address)`, and `authenticationPeriod()`. A non-zero root is the authoritative root for a connected wallet; verification is current only while `now <= lastAuthenticated + authenticationPeriod * 86400`.
-- The official UBI contract requires entitlement checks against the root wallet for connected accounts. Slyce therefore records the root reference and never treats the browser redirect flag as authoritative.
+- The official UBI contract requires entitlement checks against the root wallet for connected accounts. Slyyce therefore records the root reference and never treats the browser redirect flag as authoritative.
 - The backend now performs a read-only Celo RPC check against the configured environment Identity contract, persists only wallet/environment/state/root/timestamps, and counts unique verified root identities for the admin dashboard. No facial or biometric data is stored.

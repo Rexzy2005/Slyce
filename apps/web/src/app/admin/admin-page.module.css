@@ -70,7 +70,7 @@
   :global(.admin-shell) :global(.admin-main) { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
 }
 
-/* Slyce control-room visual system. */
+/* Slyyce control-room visual system. */
 :global(.admin-shell) {
   background:
     radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--color-leaf) 7%, transparent), transparent 24%),

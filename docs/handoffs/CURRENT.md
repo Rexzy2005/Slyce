@@ -1,4 +1,4 @@
-# Slyce Current Handoff
+# Slyyce Current Handoff
 
 Updated: 2026-10-28
 

@@ -1,4 +1,4 @@
-# Slyce Architecture Decision Records
+# Slyyce Architecture Decision Records
 
 ## Decision Index
 
@@ -8,18 +8,19 @@
 | [ADR-0002 — pnpm Workspace Ownership](ADR-0002-workspace-package-manager.md) | Accepted | Explicit user choice of pnpm; user owns installation/server startup while source implementation proceeds. |
 | [ADR-0003 — Local Practice Rounds](ADR-0003-local-practice-rounds.md) | Accepted | Device-local, unverified practice scoring until authoritative rules and replay exist. |
 | [ADR-0004 — Contracts, GoodDollar SDK, PWA-only](ADR-0004-contracts-gooddollar-pwa.md) | Accepted (partly superseded by ADR-0005) | SlyceShop/SlyceTournament, operator-posted results, citizen-sdk 1.2.7, MiniPay removed; agent installs authorized. |
-| [ADR-0005 — Upgradeable contracts, sign-in, paid rounds, app shell](ADR-0005-app-shell-signin-upgradeable.md) | Accepted | UUPS + strict contracts, SlyceArcade play fee, Reown AppKit email/wallet sign-in, app-style shell, Slyce rename. |
+| [ADR-0005 — Upgradeable contracts, sign-in, paid rounds, app shell](ADR-0005-app-shell-signin-upgradeable.md) | Accepted | UUPS + strict contracts, SlyceArcade play fee, Reown AppKit email/wallet sign-in, app-style shell, Slyyce rename. |
 | [ADR-0006 — Drop balance-delta checks for G$](ADR-0006-gd-transfer-gas.md) | Accepted | Halves gas per payment (G$ balanceOf ≈160k gas); token fixed at init. |
 | [ADR-0007 — Play fees fund the daily prize pool](ADR-0007-play-fees-fund-prize-pool.md) | Accepted | Arcade routes each G$ round fee into the open prize tournament; winners claim it. |
 | [ADR-0008 — Verified humans only for prizes](ADR-0008-verified-humans-only-prizes.md) | Accepted | GoodDollar Identity gate on tournament entry; one entry per human. |
 | [ADR-0009 — Automatic prize tournaments](ADR-0009-automatic-tournaments.md) | Accepted | Paid rounds start the next tournament when none is open; no daily admin step. |
 | [ADR-0010 — Free play, game records, G$ milestones](ADR-0010-free-play-game-records.md) | Accepted | Arcade v2: on-chain games, XP, streaks, daily-capped milestone G$ for verified humans. |
+| [ADR-0011 — Slyyce product name](ADR-0011-slyyce-product-name.md) | Accepted | Rebrand product and workspace packages; preserve deployed contract identifiers and storage namespaces. |
 
 The statuses above match their ADRs exactly. The [active execution plan](../exec-plans/active/current.md) records the user-authorized implementation scope; agent installation/server startup remain prohibited. Supporting research is [dependency-baseline.md](../research/dependency-baseline.md), not the nonexistent `frontend-dependency-baseline.md` named in the ADR source field.
 
 ## 1. Purpose
 
-This directory stores durable architectural decisions for Slyce.
+This directory stores durable architectural decisions for Slyyce.
 
 Decision records exist so future developers and coding agents can understand:
 
@@ -188,14 +189,14 @@ Avoid long project summaries.
 
 ## 7. Decision
 
-The `Decision` section states exactly what Slyce will do.
+The `Decision` section states exactly what Slyyce will do.
 
 It must be specific enough that implementation does not need to guess.
 
 Good:
 
 ```text
-Slyce will use a runtime-specific wallet adapter. MiniPay will use the injected provider with automatic connection, while standard web will use the approved wallet UI and connector stack.
+Slyyce will use a runtime-specific wallet adapter. MiniPay will use the injected provider with automatic connection, while standard web will use the approved wallet UI and connector stack.
 ```
 
 Avoid:
@@ -270,7 +271,7 @@ Implementation
 
 Research determines what external systems support.
 
-ADRs determine what Slyce chooses to do.
+ADRs determine what Slyyce chooses to do.
 
 ---
 
@@ -295,7 +296,7 @@ Do not leave the architecture document and accepted decisions contradictory.
 
 Research files contain verified external facts.
 
-ADR files contain Slyce decisions based on those facts.
+ADR files contain Slyyce decisions based on those facts.
 
 Example:
 
@@ -304,7 +305,7 @@ Research:
 MiniPay requires automatic wallet connection.
 
 Decision:
-Slyce will use a dedicated MiniPay wallet adapter and will not render the standard wallet picker inside MiniPay.
+Slyyce will use a dedicated MiniPay wallet adapter and will not render the standard wallet picker inside MiniPay.
 ```
 
 Do not turn research findings directly into implementation without checking whether an architectural decision is required.
@@ -442,7 +443,7 @@ Do not assume an old architectural decision remains valid across major dependenc
 A useful ADR must let a future developer answer:
 
 - What problem existed?
-- What did Slyce choose?
+- What did Slyyce choose?
 - Why was this option selected?
 - What evidence supports it?
 - What trade-offs were accepted?

@@ -5,7 +5,7 @@ import { useSignMessage } from 'wagmi';
 import { publicConfig } from '../config/public';
 import { apiFetch } from '../api/http';
 import { useWallet } from '../web3/context';
-import { simulateVerifiedFruitSlice, verifiedFruitSliceTargets, verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion, type ReplayInput } from '@slyce/shared/verified-game';
+import { simulateVerifiedFruitSlice, verifiedFruitSliceTargets, verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion, type ReplayInput } from '@slyyce/shared/verified-game';
 
 type Session = { id: string; seed: string; expiresAt: string };
 type Result = { status: 'verified' | 'rejected'; score?: number; reason?: string };
@@ -115,7 +115,7 @@ export function VerifiedMode() {
   }
 
   if (!wallet.address) return null;
-  return <section className="admin-panel" aria-label="Verified Slyce mode">
+  return <section className="admin-panel" aria-label="Verified Slyyce mode">
     <p className="eyebrow">VERIFIED MODE</p>
     <h2>Fruit Slice · server checked</h2>
     {!token && <><p>Sign one short-lived wallet challenge to enter the verified leaderboard.</p><button className="button" disabled={busy} onClick={() => void enable()}>{busy ? 'Signing…' : 'Enable verified mode'}</button></>}

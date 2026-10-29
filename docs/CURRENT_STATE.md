@@ -1,6 +1,6 @@
-# Slyce Current State
+# Slyyce Current State
 
-Updated: 2026-10-28. Target: GoodDollar Season 5. Web + installable PWA on Vercel with an independently runnable backend (ADR-0004, ADR-0005). Repo/packages renamed to Slyce.
+Updated: 2026-10-29. Product name: Slyyce. Target: GoodDollar Season 5. Web + installable PWA on Vercel with an independently runnable backend (ADR-0004, ADR-0005, ADR-0011).
 
 ## Backend foundation
 

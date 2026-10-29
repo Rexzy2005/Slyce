@@ -1,8 +1,8 @@
- # SLYCE
+ # SLYYCE
 # DEVELOPMENT PLAN: BACKEND & ADMIN DASHBOARD
 
 **Document:** `DEVELOPMENT-PLAN.md`  
-**Project:** SLYCE  
+**Project:** SLYYCE
 **Status:** Implementation Roadmap  
 **Authority:** Governed by `MASTER-PLAN.md`  
 **Progress Tracking:** Governed by `PROGRESS-TRACKER.md`  
@@ -16,7 +16,7 @@
 
 # 1. PURPOSE
 
-This document defines the implementation sequence for the SLYCE backend, database, administrative dashboard, game integration, leaderboard system, challenge engine, bounty management, reward workflows, and GoodDollar verification integration.
+This document defines the implementation sequence for the SLYYCE backend, database, administrative dashboard, game integration, leaderboard system, challenge engine, bounty management, reward workflows, and GoodDollar verification integration.
 
 It converts the requirements in `MASTER-PLAN.md` into actionable engineering phases.
 
@@ -110,7 +110,7 @@ The phases may overlap only when their dependencies are satisfied and the overla
 
 ## 4.1 Objective
 
-Establish an accurate understanding of the existing SLYCE codebase before implementation.
+Establish an accurate understanding of the existing SLYYCE codebase before implementation.
 
 ## 4.2 Tasks
 

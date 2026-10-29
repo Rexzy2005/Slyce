@@ -1,22 +1,22 @@
-# Slyce Project Specification
+# Slyyce Project Specification
 
 ## 1. Purpose
 
-This repository contains **Slyce** (renamed from GoodSlice on 2026-10-15).
+This repository contains **Slyyce**, renamed from Slyce on 2026-10-29.
 
 Product tagline:
 
 > Swipe. Slice. Stack your G$.
 
-Use **Slyce** for the product, repository and workspace packages (`slyce`, `@slyce/web`, `@slyce/shared`).
+Use **Slyyce** as the product name and `@slyyce/` as the workspace package scope. The existing repository folder name is unchanged.
 
-Slyce is a mobile-first game where players slice objects through swipe-based gameplay, earn scores, compete in tournaments, acquire gameplay items, and interact with the GoodDollar G$ token.
+Slyyce is a mobile-first game where players slice objects through swipe-based gameplay, earn scores, compete in tournaments, acquire gameplay items, and interact with the GoodDollar G$ token.
 
 The application must combine conventional off-chain gameplay with limited, explicit blockchain interactions.
 
 ---
 
-## 0. Current Product Decisions (2026-10-15)
+## 0. Current Product Decisions (2026-10-29)
 
 See ADR-0005: players must sign in (email or wallet) before any app screen; every round costs an on-chain G$ play fee (SlyceArcade); the app opens directly into `/play` with app-style navigation (no landing page). Where this file says otherwise (e.g. §5 "playing a round" is off-chain, §7 public landing), ADR-0005 governs.
 
@@ -154,7 +154,7 @@ The initial product includes these application areas.
 
 ### Public Landing and Arcade Entry
 
-The / route is a dedicated public landing page, separate from the gaming interface. Its primary Launch game action opens the /play lobby. The lobby opens /play/arena, a separate wooden chopping-board canvas page with a HUD and display controls. The landing introduces Slyce without mounting wallet providers or displaying the arcade navigation.
+The / route is a dedicated public landing page, separate from the gaming interface. Its primary Launch game action opens the /play lobby. The lobby opens /play/arena, a separate wooden chopping-board canvas page with a HUD and display controls. The landing introduces Slyyce without mounting wallet providers or displaying the arcade navigation.
 
 The gaming interface exposes Play, Daily Tournament, Shop, Leaderboard, Rewards, Get G$ and Profile. Its header provides Connect wallet (RainbowKit). The arena is visually dominant. Account and G$ balance remain available through the wallet/profile interfaces.
 

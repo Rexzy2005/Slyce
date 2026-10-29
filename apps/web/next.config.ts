@@ -10,7 +10,7 @@ const derivedAppUrl = process.env.NEXT_PUBLIC_APP_URL
 
 const config: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@slyce/shared'],
+  transpilePackages: ['@slyyce/shared'],
   env: {
     ...(derivedAppUrl ? { NEXT_PUBLIC_APP_URL: derivedAppUrl } : {}),
   },

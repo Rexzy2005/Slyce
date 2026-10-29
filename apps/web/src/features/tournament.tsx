@@ -81,7 +81,7 @@ function CurrentTournament() {
           {submit.state.status !== 'idle' && <TransactionStatus state={submit.state} />}</>}
         {phase === 'results' && <Link className="button" href="/rewards">Check your rewards</Link>}</div>}
     {(phase === 'closed' || phase === 'results' || phase === 'cancelled') && <NextTournament address={address} onStarted={async () => { await Promise.all([count.refetch(), reads.refetch()]); }} />}
-    <p className="muted fine-print">Tournament play uses Normal difficulty. Scores are self-reported from your device and reviewed by the Slyce operator, who posts the winners on-chain after the tournament closes. Default split: 50% / 30% / 20% of the pool to the top three. One entry per GoodDollar-verified human. Prize pools are funded by Slyce and sponsors.</p>
+    <p className="muted fine-print">Tournament play uses Normal difficulty. Scores are self-reported from your device and reviewed by the Slyyce operator, who posts the winners on-chain after the tournament closes. Default split: 50% / 30% / 20% of the pool to the top three. One entry per GoodDollar-verified human. Prize pools are funded by Slyyce and sponsors.</p>
   </section>;
 }
 function Refund({ id, address, onDone }: { id: bigint; address: `0x${string}`; onDone: () => Promise<unknown> }) {

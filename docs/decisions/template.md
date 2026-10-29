@@ -10,7 +10,7 @@ Describe the architectural problem or decision that must be resolved.
 Include only the information required to understand:
 
 - why the decision exists
-- what part of Slyce is affected
+- what part of Slyyce is affected
 - what constraints matter
 - what would remain ambiguous if no decision were recorded
 
@@ -20,13 +20,13 @@ Do not repeat the full product or architecture documentation.
 
 ## Decision
 
-State exactly what Slyce will do.
+State exactly what Slyyce will do.
 
 The decision must be specific enough that implementation does not need to guess.
 
 Example:
 
-> Slyce will use a runtime-specific wallet adapter. MiniPay will use its injected provider with automatic connection, while standard web will use the approved wallet connector/UI stack.
+> Slyyce will use a runtime-specific wallet adapter. MiniPay will use its injected provider with automatic connection, while standard web will use the approved wallet connector/UI stack.
 
 Avoid vague language such as:
 

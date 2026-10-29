@@ -37,7 +37,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
 
 function BrandLockup() {
   return <div className={styles.brandLockup}>
-    <span className="brand">slyce<span className="brand-dot">/</span></span>
+    <span className="brand">slyyce<span className="brand-dot">/</span></span>
     <span className={styles.brandRule} aria-hidden="true" />
     <span className={styles.brandContext}>ADMIN ACCESS</span>
   </div>;
@@ -65,10 +65,10 @@ function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
 
   return <main className={`admin-access ${styles.access}`}>
     <div className={styles.accessGlow} aria-hidden="true" />
-    <section className={styles.accessLayout} aria-label="Slyce administrator sign in">
+    <section className={styles.accessLayout} aria-label="Slyyce administrator sign in">
       <div className={styles.accessIntro}>
         <BrandLockup />
-        <p className="eyebrow">SLYCE CONTROL ROOM</p>
+        <p className="eyebrow">SLYYCE CONTROL ROOM</p>
         <h2>Keep every<br /><span>slice fair.</span></h2>
         <p className={styles.introCopy}>A focused workspace for the people who protect the player experience, verify the signal, and keep the season moving.</p>
         <div className={styles.signal}><span className={styles.signalDot} /><span>Secure operator channel</span><Sparkles size={14} aria-hidden="true" /></div>
@@ -78,7 +78,7 @@ function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
           <span className={styles.formIcon}><LockKeyhole size={19} aria-hidden="true" /></span>
           <div><p className="eyebrow">OPERATOR SIGN-IN</p><span className={styles.formMeta}>Backend-authenticated access</span></div>
         </div>
-        <h1>Sign in to Slyce.</h1><p className="muted">Use your approved administrator credentials.</p>
+        <h1>Sign in to Slyyce.</h1><p className="muted">Use your approved administrator credentials.</p>
         <form onSubmit={event => void submit(event)} className={styles.form}>
           <label className="admin-email-label" htmlFor="admin-email">Email address</label>
           <input id="admin-email" className="admin-email-input" type="email" inputMode="email" autoComplete="username" autoFocus required value={email} onChange={event => setEmail(event.target.value)} disabled={submitting} />
@@ -92,7 +92,7 @@ function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
         </form>
       </div>
     </section>
-    <p className={styles.accessFooter}>Slyce / Operator workspace <span>•</span> Private system</p>
+    <p className={styles.accessFooter}>Slyyce / Operator workspace <span>•</span> Private system</p>
   </main>;
 }
 

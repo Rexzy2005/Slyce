@@ -1,4 +1,4 @@
-# Slyce Research Registry
+# Slyyce Research Registry
 
 ## Frontend baseline research
 
@@ -14,7 +14,7 @@ The ADR source field names `docs/research/frontend-dependency-baseline.md`; the 
 
 ## 1. Purpose
 
-This directory stores durable, verified research for third-party technologies and integrations used by Slyce.
+This directory stores durable, verified research for third-party technologies and integrations used by Slyyce.
 
 Research exists here so developers and coding agents do not repeatedly:
 
@@ -131,7 +131,7 @@ Recommended structure:
 
 ## Compatibility
 
-## Slyce Implementation Requirements
+## Slyyce Implementation Requirements
 
 ## Known Constraints
 
@@ -153,7 +153,7 @@ Before recording a finding:
 1. identify the technology and relevant version
 2. locate the current official documentation
 3. verify that the documentation applies to the selected version
-4. verify the exact behavior Slyce depends on
+4. verify the exact behavior Slyyce depends on
 5. record the source
 6. record the verification date
 
@@ -290,7 +290,7 @@ MiniPay is an exciting mobile wallet ecosystem with many useful capabilities...
 
 Research documentation exists to reduce implementation uncertainty, not to teach the technology from first principles.
 
-Record only information Slyce needs.
+Record only information Slyyce needs.
 
 ---
 
@@ -329,7 +329,7 @@ Research answers:
 
 Architecture decisions answer:
 
-> Given those facts, what will Slyce do?
+> Given those facts, what will Slyyce do?
 
 Do not confuse the two.
 
@@ -342,7 +342,7 @@ Framework A supports options X and Y.
 Example architectural decision:
 
 ```text
-Slyce will use option X because it satisfies MiniPay compatibility and reduces duplicate wallet configuration.
+Slyyce will use option X because it satisfies MiniPay compatibility and reduces duplicate wallet configuration.
 ```
 
 The first belongs in:
@@ -412,7 +412,7 @@ If new official documentation invalidates an existing architecture assumption:
 6. update `docs/CURRENT_STATE.md` if implementation is currently affected
 7. update the active execution plan when current work changes
 
-Research alone does not automatically override an accepted Slyce architectural decision.
+Research alone does not automatically override an accepted Slyyce architectural decision.
 
 The conflict must be resolved explicitly.
 
@@ -535,7 +535,7 @@ When researching an API or SDK, capture only implementation-critical information
 - supported environment
 - authentication requirements
 - required parameters
-- returned values relevant to Slyce
+- returned values relevant to Slyyce
 - known constraints
 - error behavior relevant to application handling
 - version compatibility
@@ -670,7 +670,7 @@ Official sources:
 
 - <relevant compatibility constraint>
 
-## Slyce Implementation Requirements
+## Slyyce Implementation Requirements
 
 - <what implementation must do because of the verified findings>
 
@@ -699,16 +699,16 @@ Use repository documents according to their responsibility:
 
 ```text
 docs/PROJECT.md
-→ What Slyce must do
+→ What Slyyce must do
 
 ARCHITECTURE.md
-→ How Slyce is structured
+→ How Slyyce is structured
 
 docs/research/
 → Verified facts about external technologies
 
 docs/decisions/
-→ Why Slyce selected a particular approach
+→ Why Slyyce selected a particular approach
 
 docs/exec-plans/
 → How current implementation work will be executed

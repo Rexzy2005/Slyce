@@ -143,8 +143,8 @@ export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number
     bridgeRef.current?.send({ type: 'preview', enabled: true });
     setCombo(null); setGameOver(null);
   }
-  return <section onClickCapture={event => { if (event.target instanceof Element && event.target.closest('button:not([data-sound-preview])')) audioRef.current?.play('click'); }} ref={session} className="game-session" aria-label="Slyce game session">
-    <div className="session-hud" aria-label="Round readings"><div className="hud-brand"><Link href="/play" aria-label="Slyce lobby"><Icon name="back" /><span>SLYCE</span></Link><div className="hud-title"><strong>The cutting floor</strong><span>Practice round</span></div></div>
+  return <section onClickCapture={event => { if (event.target instanceof Element && event.target.closest('button:not([data-sound-preview])')) audioRef.current?.play('click'); }} ref={session} className="game-session" aria-label="Slyyce game session">
+    <div className="session-hud" aria-label="Round readings"><div className="hud-brand"><Link href="/play" aria-label="Slyyce lobby"><Icon name="back" /><span>SLYYCE</span></Link><div className="hud-title"><strong>The cutting floor</strong><span>Practice round</span></div></div>
       <div className="hud-reading score-reading"><Icon name="chart" /><span>SCORE<strong>{score === null ? 'Not started' : score.toLocaleString()}</strong></span></div>
       <div className="hud-reading"><Icon name="heart" /><span>LIVES<strong>{lives === null ? 'Not set' : lives}</strong></span></div>
       <div className="hud-reading combo-reading"><span>COMBO<strong>{combo ? 'x' + combo.count + ' +' + combo.bonus : 'None yet'}</strong></span><span className="combo-track" aria-hidden="true" /></div>

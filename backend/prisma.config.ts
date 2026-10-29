@@ -22,7 +22,7 @@ function directUrlWithVerifiedCa(): string {
   }
 
   const fingerprint = crypto.createHash('sha256').update(ca).digest('hex').slice(0, 16);
-  const caPath = path.join(os.tmpdir(), `slyce-supabase-ca-${fingerprint}.crt`);
+  const caPath = path.join(os.tmpdir(), `slyyce-supabase-ca-${fingerprint}.crt`);
   if (!fs.existsSync(caPath)) fs.writeFileSync(caPath, `${ca}\n`, { mode: 0o600 });
 
   const url = new URL(directUrl);

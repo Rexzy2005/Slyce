@@ -33,7 +33,7 @@ it('handles fullscreen refusal without breaking the session', async () => {
   Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
   const request = vi.fn().mockRejectedValue(new Error('Unavailable'));
   render(<GameHost />);
-  Object.defineProperty(screen.getByRole('region', { name: 'Slyce game session' }), 'requestFullscreen', { configurable: true, value: request });
+  Object.defineProperty(screen.getByRole('region', { name: 'Slyyce game session' }), 'requestFullscreen', { configurable: true, value: request });
   fireEvent.click(screen.getByRole('button', { name: 'Full screen' }));
   await waitFor(() => expect(screen.getByText('Full screen is unavailable here. You can continue in this view.')).toBeTruthy());
   expect(request).toHaveBeenCalledOnce();

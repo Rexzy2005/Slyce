@@ -12,7 +12,7 @@ export async function adminRequest(path: string, init: RequestInit = {}): Promis
 
 export async function adminMutation(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
-  headers.set('X-Slyce-CSRF', '1');
+  headers.set('X-Slyyce-CSRF', '1');
   return adminRequest(path, { ...init, headers });
 }
 

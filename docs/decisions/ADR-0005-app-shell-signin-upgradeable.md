@@ -19,7 +19,7 @@ The user asked for upgradeable, stricter and better-tested contracts. They also 
 3. **Paid rounds.** `SlyceArcade.play(maxFee)` charges `playFee` (default 1 G$, owner-set, max 100 G$, may be 0) to the treasury. The arena starts a round only after that transaction confirms. Approval covers 10 rounds.
 4. **Sign-in.** Reown AppKit 1.8.24 replaces RainbowKit and offers email (embedded wallet) and external wallets. Every app route is behind `SignInGate`. With no backend, sign-in means a connected account on Celo; there is no server session.
 5. **App shell.** `/` redirects to `/play`, and the PWA `start_url` is `/play`. The landing page, sidebar and drawer are gone; the app uses a top bar (G$ balance, account) and a bottom tab bar.
-6. **Name.** The workspace and packages are `slyce`, `@slyce/web` and `@slyce/shared`. The local folder name `GoodSlice` is unchanged.
+6. **Name (superseded by ADR-0011).** The workspace and packages were named `slyce`, `@slyce/web` and `@slyce/shared`. The local folder name `GoodSlice` was unchanged.
 
 ## Consequences
 

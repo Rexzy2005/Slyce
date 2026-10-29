@@ -24,7 +24,7 @@ it('uses a product form for administrator email-password sign-in', async () => {
   auth.login.mockResolvedValue(new Response('{}', { status: 200 }));
   render(<AdminGate><p>Console</p></AdminGate>);
 
-  expect(await screen.findByRole('heading', { name: 'Sign in to Slyce.' })).toBeTruthy();
+  expect(await screen.findByRole('heading', { name: 'Sign in to Slyyce.' })).toBeTruthy();
   const email = screen.getByLabelText('Email address') as HTMLInputElement;
   const password = screen.getByLabelText('Password') as HTMLInputElement;
   fireEvent.change(email, { target: { value: ' ADMIN@Example.com ' } });

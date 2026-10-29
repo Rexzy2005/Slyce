@@ -9,7 +9,7 @@ function write(level: LogLevel, message: string, fields?: Record<string, string 
   const record = {
     timestamp: new Date().toISOString(),
     level,
-    service: 'slyce-backend',
+    service: 'slyyce-backend',
     message,
     ...fields,
   };

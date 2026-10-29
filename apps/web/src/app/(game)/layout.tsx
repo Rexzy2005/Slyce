@@ -7,7 +7,7 @@ import { SignInGate } from '../../web3/sign-in-gate';
 import { GasBanner } from '../../web3/gas-banner';
 export default function GameLayout({ children }: { children: ReactNode }) {
   return <div className="app-shell"><SignInGate>
-    <header className="app-bar"><Link href="/play" className="brand" aria-label="Slyce home">slyce<span className="brand-dot">/</span></Link><BalanceChip /><AccountButton /></header>
+    <header className="app-bar"><Link href="/play" className="brand" aria-label="Slyyce home">slyyce<span className="brand-dot">/</span></Link><BalanceChip /><AccountButton /></header>
     <main id="main" tabIndex={-1} className="app-main"><GasBanner />{children}</main>
     <TabBar />
   </SignInGate></div>;

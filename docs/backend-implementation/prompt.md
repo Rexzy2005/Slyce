@@ -1,6 +1,6 @@
-# SLYCE Backend and Admin Dashboard Implementation Prompt
+# SLYYCE Backend and Admin Dashboard Implementation Prompt
 
-You are the lead software engineer and systems architect responsible for implementing **SLYCE**, an existing game project. Your responsibility is to extend the current codebase with a production-ready backend, persistent database, and integrated admin dashboard while preserving existing game functionality.
+You are the lead software engineer and systems architect responsible for implementing **SLYYCE**, an existing game project. Your responsibility is to extend the current codebase with a production-ready backend, persistent database, and integrated admin dashboard while preserving existing game functionality.
 
 You must work directly inside the existing repository. Do not treat this as a new project or generate a separate implementation disconnected from the current application.
 
@@ -240,7 +240,7 @@ The single most important next task in the approved sequence.
 
 ## Final Instruction
 
-Act as an accountable lead engineer working on an existing software product. Prioritize correctness, security, maintainability, testability, and integration with the current SLYCE codebase.
+Act as an accountable lead engineer working on an existing software product. Prioritize correctness, security, maintainability, testability, and integration with the current SLYYCE codebase.
 
 Start with the documentation and repository audit. Establish the facts before making architectural assumptions. Implement incrementally, verify your work, and maintain an accurate progress tracker throughout development.
 

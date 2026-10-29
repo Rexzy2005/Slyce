@@ -1,11 +1,11 @@
-# Slyce / Slyce
+# Slyyce / Slyyce
 
 Mobile-first Next.js frontend foundation. Product rules live in [docs/PROJECT.md](docs/PROJECT.md), boundaries in [ARCHITECTURE.md](ARCHITECTURE.md), dependency choices in [ADR-0001](docs/decisions/ADR-0001-frontend-stack.md), and implementation status in [docs/CURRENT_STATE.md](docs/CURRENT_STATE.md).
 
 ## Workspace
 
-- apps/web: @slyce/web — App Router, UI, wallet, API, Phaser host and PWA.
-- packages/shared: @slyce/shared — framework-independent replay interfaces; game rules are not implemented.
+- apps/web: @slyyce/web — App Router, UI, wallet, API, Phaser host and PWA.
+- packages/shared: @slyyce/shared — framework-independent replay interfaces; game rules are not implemented.
 
 Use Node 24.21.0 and pnpm. The user runs pnpm install from the root to create the lockfile; the implementation agent must not install dependencies or start a server. Direct dependencies are exact. The lockfile/resolved graph must be reviewed before release. No GoodDollar SDK is included.
 
@@ -13,7 +13,7 @@ Copy .env.example to apps/web/.env.local only when configuring integrations. Emp
 
 ## Commands
 
-The user controls pnpm dev or pnpm --filter @slyce/web start. No test command automatically starts a server.
+The user controls pnpm dev or pnpm --filter @slyyce/web start. No test command automatically starts a server.
 
 - pnpm format:check — source whitespace checks; not a full formatter.
 - pnpm lint — project architecture/import/dependency checks; not ESLint.

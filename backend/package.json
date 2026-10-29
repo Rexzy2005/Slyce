@@ -1,5 +1,5 @@
 {
-  "name": "@slyce/backend",
+  "name": "@slyyce/backend",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -22,7 +22,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "@slyce/shared": "workspace:*",
+    "@slyyce/shared": "workspace:*",
     "pg": "8.23.1",
     "viem": "2.57.3",
     "zod": "4.6.5"

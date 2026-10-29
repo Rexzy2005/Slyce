@@ -1,5 +1,5 @@
 {
-  "name": "slyce",
+  "name": "slyyce",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,17 +7,17 @@
     "node": "24.21.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @slyce/web dev",
-    "build": "pnpm --filter @slyce/web build",
-    "start": "pnpm --filter @slyce/web start",
+    "dev": "pnpm --filter @slyyce/web dev",
+    "build": "pnpm --filter @slyyce/web build",
+    "start": "pnpm --filter @slyyce/web start",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter @slyce/web test",
-    "test:e2e": "pnpm --filter @slyce/web test:e2e",
+    "test": "pnpm --filter @slyyce/web test",
+    "test:e2e": "pnpm --filter @slyyce/web test:e2e",
     "lint": "node scripts/check-boundaries.mjs",
     "format:check": "node scripts/check-format.mjs",
     "test:core": "node scripts/check-core.mjs",
     "assets:generate": "node scripts/generate-assets.mjs",
-    "test:pwa": "pnpm --filter @slyce/web test:pwa"
+    "test:pwa": "pnpm --filter @slyyce/web test:pwa"
   },
   "devDependencies": {
     "typescript": "5.9.3"

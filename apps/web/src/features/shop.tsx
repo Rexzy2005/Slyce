@@ -54,5 +54,5 @@ function Market() {
               call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }} onConfirmed={() => reads.refetch()} />
           : <button className="button" disabled>Not for sale</button>}
     </li>)}</ul>
-    <p className="muted">Purchases are paid in G$ to the Slyce treasury and recorded on-chain. Equipped blades show in the arena.</p></section>;
+    <p className="muted">Purchases are paid in G$ to the Slyyce treasury and recorded on-chain. Equipped blades show in the arena.</p></section>;
 }

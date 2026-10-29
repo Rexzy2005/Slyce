@@ -1,6 +1,6 @@
-# Slyce Agent Instructions
+# Slyyce Agent Instructions
 
-This repository is the durable source of truth for Slyce.
+This repository is the durable source of truth for Slyyce.
 
 Do not depend on prior chat sessions, model memory, or undocumented assumptions. Any information required to continue development across developers, agents, or models must live in the repository.
 

@@ -68,7 +68,7 @@ function Claimer({ env }: { env: 'production' | 'staging' | 'development' }) {
         try {
           await recordGoodDollarVerification(publicConfig.backendUrl, account.address);
         } catch {
-          setAction({ status: 'failed', message: 'GoodDollar status was confirmed, but Slyce could not update its verification record.' });
+          setAction({ status: 'failed', message: 'GoodDollar status was confirmed, but Slyyce could not update its verification record.' });
         }
       }
       sdk.claim.getDailyStats().then(setStats, () => setStats(null));

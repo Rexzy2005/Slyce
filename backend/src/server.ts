@@ -131,7 +131,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
   const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
   if (pathname === '/healthz') {
     if (request.method !== 'GET') return methodNotAllowed(response);
-    return sendJson(response, 200, { status: 'ok', service: 'slyce-backend' });
+    return sendJson(response, 200, { status: 'ok', service: 'slyyce-backend' });
   }
   if (pathname === '/readyz') {
     if (request.method !== 'GET') return methodNotAllowed(response);
@@ -644,7 +644,8 @@ export function createApp(config: BackendConfig = loadConfig(), dependencies: Ap
       const isAdminMutation = request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'OPTIONS' && (pathname.startsWith(`${apiPrefix}/admin/`) || pathname === `${apiPrefix}/admin`);
       const usesAdminCookie = Boolean(request.headers.cookie?.split(';').some(part => part.trim().startsWith('slyce_admin_session=')));
       const requiresCsrf = (pathname === `${apiPrefix}/admin/auth/login` && request.method === 'POST') || (isAdminMutation && usesAdminCookie);
-      if (requiresCsrf && (!request.headers.origin || (!config.corsOrigins.includes('*') && !config.corsOrigins.includes(request.headers.origin)) || request.headers['x-slyce-csrf'] !== '1')) {
+      const hasCsrfHeader = request.headers['x-slyyce-csrf'] === '1' || request.headers['x-slyce-csrf'] === '1';
+      if (requiresCsrf && (!request.headers.origin || (!config.corsOrigins.includes('*') && !config.corsOrigins.includes(request.headers.origin)) || !hasCsrfHeader)) {
         return sendJson(response, 403, { error: { code: 'csrf_rejected', message: 'The request origin could not be verified.' } } satisfies ErrorResponse);
       }
       if (pathname === `${apiPrefix}/admin/auth/login` && request.method === 'POST' && !loginLimiter.allow(clientKey)) {

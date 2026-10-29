@@ -1,4 +1,4 @@
-# Slyce API contracts
+# Slyyce API contracts
 
 Status: Backend contracts implemented through P10; practice mode remains local and unverified.
 

@@ -8,7 +8,7 @@ import {
   verifiedFruitSliceGameMode,
   verifiedFruitSliceRulesVersion,
   type ReplayInput,
-} from '@slyce/shared/verified-game';
+} from '@slyyce/shared/verified-game';
 
 export interface VerificationContext {
   readonly sessionId: string;

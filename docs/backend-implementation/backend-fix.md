@@ -1,14 +1,14 @@
-# SLYCE: Complete Codebase Remediation and Admin Authentication Specification
+# SLYYCE: Complete Codebase Remediation and Admin Authentication Specification
 
 > **Superseded authentication decision (2026-10-29):** The repository owner replaced the Reown administrator-auth migration requirement with the dedicated backend-only administrator email/password design in `do-this-instead.md`. The admin panel now uses the seeded `AdminAccount` password hash and opaque `AdminSession` cookie described there. Reown remains the player-facing wallet/email connection provider; it is not an administrator-auth prerequisite.
 
 ## 1. Project Objective
 
-Perform a comprehensive review and remediation of the existing SLYCE codebase, covering gameplay integrity, backend security, wallet authentication, challenge and bounty management, reward distribution, leaderboards, admin authentication, admin dashboard functionality, database integrity, and production readiness.
+Perform a comprehensive review and remediation of the existing SLYYCE codebase, covering gameplay integrity, backend security, wallet authentication, challenge and bounty management, reward distribution, leaderboards, admin authentication, admin dashboard functionality, database integrity, and production readiness.
 
-The coding agent is embedded directly in the SLYCE codebase. It must inspect the repository, implement fixes, run the available tests, and verify the results. This is an implementation task, not merely an audit or a request for recommendations.
+The coding agent is embedded directly in the SLYYCE codebase. It must inspect the repository, implement fixes, run the available tests, and verify the results. This is an implementation task, not merely an audit or a request for recommendations.
 
-The objective is to make SLYCE secure, consistent, reliable, maintainable, and ready for production without unnecessarily rebuilding working features.
+The objective is to make SLYYCE secure, consistent, reliable, maintainable, and ready for production without unnecessarily rebuilding working features.
 
 ## 2. Mandatory Implementation Rules
 
@@ -29,7 +29,7 @@ The objective is to make SLYCE secure, consistent, reliable, maintainable, and r
 
 ### 3.1 Objective
 
-Replace the current admin-specific OTP login flow with the existing authentication methods used by the SLYCE main game, including wallet connection and email authentication where supported by the current provider.
+Replace the current admin-specific OTP login flow with the existing authentication methods used by the SLYYCE main game, including wallet connection and email authentication where supported by the current provider.
 
 Do not create a separate authentication system unnecessarily. First inspect how the main game authenticates users, verifies identities, manages sessions, and communicates with the backend.
 
@@ -63,7 +63,7 @@ If a public frontend variable is useful for displaying an admin-specific interfa
 
 Implement the following sequence:
 
-1. The administrator opens the SLYCE admin panel.
+1. The administrator opens the SLYYCE admin panel.
 2. The administrator authenticates through the existing main-game wallet or email authentication flow.
 3. The server validates the provider session or token using the provider's trusted verification mechanism.
 4. The server obtains the authenticated identity from the verified provider response or trusted server-side session.
@@ -472,7 +472,7 @@ State whether the application is ready for further testing, staging, or producti
 
 ## Final Instruction
 
-Start by examining the existing SLYCE codebase and implement the remediation directly. Do not stop after producing an audit, checklist, or recommendations. Do not ask me to supply files already accessible in the environment.
+Start by examining the existing SLYYCE codebase and implement the remediation directly. Do not stop after producing an audit, checklist, or recommendations. Do not ask me to supply files already accessible in the environment.
 
 Preserve working functionality, avoid unnecessary rewrites, and verify every change using the tools and tests available in the repository.
 

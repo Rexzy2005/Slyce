@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { RoundDescriptor, RoundSubmission } from '@slyce/shared';
+import type { RoundDescriptor, RoundSubmission } from '@slyyce/shared';
 // Provisional frontend view contracts; NOT an approved backend wire format.
 export const sessionSchema = z.union([
   z.object({ status: z.literal('anonymous') }),
@@ -14,7 +14,7 @@ export const roundSchema: z.ZodType<RoundDescriptor> = z.object({ roundId: z.str
 export const finishSchema = z.union([z.object({ status: z.literal('verified'), score: z.number().int().nonnegative() }), z.object({ status: z.literal('rejected'), reason: z.string().min(1) })]);
 export const useItemSchema = z.object({ status: z.literal('accepted'), inventory: inventorySchema });
 export type LeaderboardScope = 'today' | 'week' | 'all';
-export interface SlyceApi {
+export interface SlyyceApi {
   session(signal?: AbortSignal): Promise<z.infer<typeof sessionSchema>>;
   startRound(signal?: AbortSignal): Promise<RoundDescriptor>;
   finishRound(submission: RoundSubmission, signal?: AbortSignal): Promise<z.infer<typeof finishSchema>>;

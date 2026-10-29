@@ -41,7 +41,7 @@ export function TokenSpend<abi extends Abi, name extends ContractFunctionName<ab
   return <div className="token-spend">
     {wallet.gas === 'low' && <p className="error-text" role="status">Low on CELO for network fees. <Link href="/get-gd">Get free gas</Link></p>}
     {needsApproval
-      ? <><p className="spend-step"><strong>Step 1 of 2 · Allow Slyce to use your G$</strong><br /><span className="muted">A one-time permission for up to {formatTokenAmount(allowAmount, gdDecimals)} G$. Nothing is spent yet, and you still confirm each payment.</span></p>
+      ? <><p className="spend-step"><strong>Step 1 of 2 · Allow Slyyce to use your G$</strong><br /><span className="muted">A one-time permission for up to {formatTokenAmount(allowAmount, gdDecimals)} G$. Nothing is spent yet, and you still confirm each payment.</span></p>
         <button className="button" disabled={disabled || pending || allowance.isPending} onClick={() => void approve.execute({ address: token, abi: erc20Abi, functionName: 'approve', args: [spender, allowAmount] }, { check: checkBalance, onConfirmed: () => allowance.refetch() })}>{allowance.isPending ? 'Checking…' : 'Allow ' + formatTokenAmount(allowAmount, gdDecimals) + ' G$'}</button></>
       : <>{allowAmount > amount && <p className="spend-step"><strong>Step 2 of 2</strong></p>}
         <button className="button" disabled={disabled || pending} onClick={() => void action.execute(call, { check: checkBalance, onConfirmed: async () => { await Promise.all([onConfirmed(), allowance.refetch()]); wallet.refreshBalance?.(); } })}>{label}</button></>}
