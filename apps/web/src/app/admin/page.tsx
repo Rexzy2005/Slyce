@@ -5,8 +5,12 @@ import { createElement as h, useEffect, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
+  ArrowLeftRight,
   BarChart3,
+  BadgeCheck,
   ClipboardList,
+  Gamepad2,
+  Gift,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -93,8 +97,10 @@ export default function AdminPage() {
           <div>
             <p className="eyebrow">TUESDAY · SEASON 05</p>
             <h1>Good morning, operator.</h1>
+            <p className="admin-topbar-subtitle">A clear read on the Slyce player ecosystem.</p>
           </div>
           <div className="admin-top-actions">
+            <span className="admin-season-label">SEASON 05 <span aria-hidden="true">/</span> LIVE</span>
             <span className="admin-live">
               <Activity size={14} /> Systems nominal
             </span>
@@ -125,30 +131,35 @@ export default function AdminPage() {
                   ? "Awaiting on-chain checks"
                   : "Recorded from Celo Identity"
               }
+              icon={Users}
               tone="mango"
             />
             <Metric
               label="Active rounds"
               value="—"
               detail="Awaiting gameplay service"
+              icon={Gamepad2}
               tone="leaf"
             />
             <Metric
               label="Verified scores"
               value="—"
               detail="Awaiting leaderboard service"
+              icon={BadgeCheck}
               tone="sky"
             />
             <Metric
               label="Rewards pending"
               value="—"
               detail="Awaiting rewards service"
+              icon={Gift}
               tone="melon"
             />
             <Metric
               label="Total transactions"
               value="—"
               detail="Awaiting transaction service"
+              icon={ArrowLeftRight}
               tone="sky"
             />
           </div>
@@ -160,7 +171,7 @@ export default function AdminPage() {
                 <p className="eyebrow">NEXT UP</p>
                 <h2>Operational queue</h2>
               </div>
-              <span className="admin-panel-status">No items</span>
+              <span className="admin-panel-status">CLEAR</span>
             </div>
             <div className="admin-empty">
               <ClipboardList size={28} />
@@ -210,11 +221,13 @@ export function Metric({
   label,
   value,
   detail,
+  icon: Icon = Activity,
   tone,
 }: {
   label: string;
   value: string;
   detail: string;
+  icon?: typeof Activity;
   tone: string;
 }) {
   return h(
@@ -223,7 +236,7 @@ export function Metric({
     h(
       "span",
       { className: "admin-metric-icon", "aria-hidden": true },
-      h(Activity, { size: 17 }),
+      h(Icon, { size: 17 }),
     ),
     h("p", null, label),
     h("strong", null, value),
