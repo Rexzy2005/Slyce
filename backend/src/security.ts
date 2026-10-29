@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { adminSessionToken } from './admin-auth.js';
 
 export type AdminRole = 'reviewer' | 'admin' | 'super_admin';
 
@@ -32,7 +33,7 @@ export function bearerToken(request: IncomingMessage): string | null {
 }
 
 export async function authenticate(request: IncomingMessage, verifier: TokenVerifier): Promise<AuthenticatedPrincipal> {
-  const token = bearerToken(request);
+  const token = bearerToken(request) ?? adminSessionToken(request);
   if (!token) throw new SecurityError('unauthenticated', 'Authentication is required.', 401);
   try {
     const principal = await verifier.verify(token);
@@ -41,6 +42,18 @@ export async function authenticate(request: IncomingMessage, verifier: TokenVeri
   } catch (error) {
     if (error instanceof SecurityError) throw error;
     throw new SecurityError('invalid_token', 'The authentication credential is invalid.', 401);
+  }
+}
+
+export class CompositeTokenVerifier implements TokenVerifier {
+  constructor(private readonly verifiers: readonly TokenVerifier[]) {}
+
+  async verify(token: string): Promise<AuthenticatedPrincipal | null> {
+    for (const verifier of this.verifiers) {
+      const principal = await verifier.verify(token);
+      if (principal) return principal;
+    }
+    return null;
   }
 }
 
@@ -72,7 +85,7 @@ export function applyCors(response: ServerResponse, origin: string | undefined, 
   response.setHeader('Access-Control-Allow-Origin', origin);
   response.setHeader('Vary', 'Origin');
   response.setHeader('Access-Control-Allow-Credentials', 'true');
-  response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Idempotency-Key');
+  response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Idempotency-Key, X-Slyce-CSRF');
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
 }
 

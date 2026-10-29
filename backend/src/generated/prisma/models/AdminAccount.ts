@@ -28,6 +28,7 @@ export type AdminAccountMinAggregateOutputType = {
   id: string | null
   externalSubject: string | null
   email: string | null
+  passwordHash: string | null
   displayName: string | null
   role: $Enums.AdminRole | null
   active: boolean | null
@@ -39,6 +40,7 @@ export type AdminAccountMaxAggregateOutputType = {
   id: string | null
   externalSubject: string | null
   email: string | null
+  passwordHash: string | null
   displayName: string | null
   role: $Enums.AdminRole | null
   active: boolean | null
@@ -50,6 +52,7 @@ export type AdminAccountCountAggregateOutputType = {
   id: number
   externalSubject: number
   email: number
+  passwordHash: number
   displayName: number
   role: number
   active: number
@@ -63,6 +66,7 @@ export type AdminAccountMinAggregateInputType = {
   id?: true
   externalSubject?: true
   email?: true
+  passwordHash?: true
   displayName?: true
   role?: true
   active?: true
@@ -74,6 +78,7 @@ export type AdminAccountMaxAggregateInputType = {
   id?: true
   externalSubject?: true
   email?: true
+  passwordHash?: true
   displayName?: true
   role?: true
   active?: true
@@ -85,6 +90,7 @@ export type AdminAccountCountAggregateInputType = {
   id?: true
   externalSubject?: true
   email?: true
+  passwordHash?: true
   displayName?: true
   role?: true
   active?: true
@@ -169,6 +175,7 @@ export type AdminAccountGroupByOutputType = {
   id: string
   externalSubject: string
   email: string | null
+  passwordHash: string | null
   displayName: string | null
   role: $Enums.AdminRole
   active: boolean
@@ -201,6 +208,7 @@ export type AdminAccountWhereInput = {
   id?: Prisma.UuidFilter<"AdminAccount"> | string
   externalSubject?: Prisma.StringFilter<"AdminAccount"> | string
   email?: Prisma.StringNullableFilter<"AdminAccount"> | string | null
+  passwordHash?: Prisma.StringNullableFilter<"AdminAccount"> | string | null
   displayName?: Prisma.StringNullableFilter<"AdminAccount"> | string | null
   role?: Prisma.EnumAdminRoleFilter<"AdminAccount"> | $Enums.AdminRole
   active?: Prisma.BoolFilter<"AdminAccount"> | boolean
@@ -211,12 +219,14 @@ export type AdminAccountWhereInput = {
   distributions?: Prisma.RewardDistributionListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   idempotencyKeys?: Prisma.IdempotencyKeyListRelationFilter
+  sessions?: Prisma.AdminSessionListRelationFilter
 }
 
 export type AdminAccountOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   externalSubject?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -227,6 +237,7 @@ export type AdminAccountOrderByWithRelationInput = {
   distributions?: Prisma.RewardDistributionOrderByRelationAggregateInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   idempotencyKeys?: Prisma.IdempotencyKeyOrderByRelationAggregateInput
+  sessions?: Prisma.AdminSessionOrderByRelationAggregateInput
 }
 
 export type AdminAccountWhereUniqueInput = Prisma.AtLeast<{
@@ -236,6 +247,7 @@ export type AdminAccountWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AdminAccountWhereInput[]
   NOT?: Prisma.AdminAccountWhereInput | Prisma.AdminAccountWhereInput[]
   email?: Prisma.StringNullableFilter<"AdminAccount"> | string | null
+  passwordHash?: Prisma.StringNullableFilter<"AdminAccount"> | string | null
   displayName?: Prisma.StringNullableFilter<"AdminAccount"> | string | null
   role?: Prisma.EnumAdminRoleFilter<"AdminAccount"> | $Enums.AdminRole
   active?: Prisma.BoolFilter<"AdminAccount"> | boolean
@@ -246,12 +258,14 @@ export type AdminAccountWhereUniqueInput = Prisma.AtLeast<{
   distributions?: Prisma.RewardDistributionListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   idempotencyKeys?: Prisma.IdempotencyKeyListRelationFilter
+  sessions?: Prisma.AdminSessionListRelationFilter
 }, "id" | "externalSubject">
 
 export type AdminAccountOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   externalSubject?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -269,6 +283,7 @@ export type AdminAccountScalarWhereWithAggregatesInput = {
   id?: Prisma.UuidWithAggregatesFilter<"AdminAccount"> | string
   externalSubject?: Prisma.StringWithAggregatesFilter<"AdminAccount"> | string
   email?: Prisma.StringNullableWithAggregatesFilter<"AdminAccount"> | string | null
+  passwordHash?: Prisma.StringNullableWithAggregatesFilter<"AdminAccount"> | string | null
   displayName?: Prisma.StringNullableWithAggregatesFilter<"AdminAccount"> | string | null
   role?: Prisma.EnumAdminRoleWithAggregatesFilter<"AdminAccount"> | $Enums.AdminRole
   active?: Prisma.BoolWithAggregatesFilter<"AdminAccount"> | boolean
@@ -280,6 +295,7 @@ export type AdminAccountCreateInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -290,12 +306,14 @@ export type AdminAccountCreateInput = {
   distributions?: Prisma.RewardDistributionCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountUncheckedCreateInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -306,12 +324,14 @@ export type AdminAccountUncheckedCreateInput = {
   distributions?: Prisma.RewardDistributionUncheckedCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -322,12 +342,14 @@ export type AdminAccountUpdateInput = {
   distributions?: Prisma.RewardDistributionUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -338,12 +360,14 @@ export type AdminAccountUncheckedUpdateInput = {
   distributions?: Prisma.RewardDistributionUncheckedUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountCreateManyInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -355,6 +379,7 @@ export type AdminAccountUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -366,6 +391,7 @@ export type AdminAccountUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -387,6 +413,7 @@ export type AdminAccountCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   externalSubject?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -398,6 +425,7 @@ export type AdminAccountMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   externalSubject?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -409,6 +437,7 @@ export type AdminAccountMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   externalSubject?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   role?: Prisma.SortOrder
   active?: Prisma.SortOrder
@@ -468,6 +497,20 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type AdminAccountCreateNestedOneWithoutSessionsInput = {
+  create?: Prisma.XOR<Prisma.AdminAccountCreateWithoutSessionsInput, Prisma.AdminAccountUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.AdminAccountCreateOrConnectWithoutSessionsInput
+  connect?: Prisma.AdminAccountWhereUniqueInput
+}
+
+export type AdminAccountUpdateOneRequiredWithoutSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminAccountCreateWithoutSessionsInput, Prisma.AdminAccountUncheckedCreateWithoutSessionsInput>
+  connectOrCreate?: Prisma.AdminAccountCreateOrConnectWithoutSessionsInput
+  upsert?: Prisma.AdminAccountUpsertWithoutSessionsInput
+  connect?: Prisma.AdminAccountWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminAccountUpdateToOneWithWhereWithoutSessionsInput, Prisma.AdminAccountUpdateWithoutSessionsInput>, Prisma.AdminAccountUncheckedUpdateWithoutSessionsInput>
+}
+
 export type AdminAccountCreateNestedOneWithoutAuditLogsInput = {
   create?: Prisma.XOR<Prisma.AdminAccountCreateWithoutAuditLogsInput, Prisma.AdminAccountUncheckedCreateWithoutAuditLogsInput>
   connectOrCreate?: Prisma.AdminAccountCreateOrConnectWithoutAuditLogsInput
@@ -502,6 +545,7 @@ export type AdminAccountCreateWithoutReviewedSubmissionsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -511,12 +555,14 @@ export type AdminAccountCreateWithoutReviewedSubmissionsInput = {
   distributions?: Prisma.RewardDistributionCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountUncheckedCreateWithoutReviewedSubmissionsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -526,6 +572,7 @@ export type AdminAccountUncheckedCreateWithoutReviewedSubmissionsInput = {
   distributions?: Prisma.RewardDistributionUncheckedCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountCreateOrConnectWithoutReviewedSubmissionsInput = {
@@ -548,6 +595,7 @@ export type AdminAccountUpdateWithoutReviewedSubmissionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -557,12 +605,14 @@ export type AdminAccountUpdateWithoutReviewedSubmissionsInput = {
   distributions?: Prisma.RewardDistributionUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountUncheckedUpdateWithoutReviewedSubmissionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -572,12 +622,14 @@ export type AdminAccountUncheckedUpdateWithoutReviewedSubmissionsInput = {
   distributions?: Prisma.RewardDistributionUncheckedUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountCreateWithoutRewardApprovalsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -587,12 +639,14 @@ export type AdminAccountCreateWithoutRewardApprovalsInput = {
   distributions?: Prisma.RewardDistributionCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountUncheckedCreateWithoutRewardApprovalsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -602,6 +656,7 @@ export type AdminAccountUncheckedCreateWithoutRewardApprovalsInput = {
   distributions?: Prisma.RewardDistributionUncheckedCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountCreateOrConnectWithoutRewardApprovalsInput = {
@@ -624,6 +679,7 @@ export type AdminAccountUpdateWithoutRewardApprovalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -633,12 +689,14 @@ export type AdminAccountUpdateWithoutRewardApprovalsInput = {
   distributions?: Prisma.RewardDistributionUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountUncheckedUpdateWithoutRewardApprovalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -648,12 +706,14 @@ export type AdminAccountUncheckedUpdateWithoutRewardApprovalsInput = {
   distributions?: Prisma.RewardDistributionUncheckedUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountCreateWithoutDistributionsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -663,12 +723,14 @@ export type AdminAccountCreateWithoutDistributionsInput = {
   rewardApprovals?: Prisma.RewardApprovalCreateNestedManyWithoutAdminInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountUncheckedCreateWithoutDistributionsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -678,6 +740,7 @@ export type AdminAccountUncheckedCreateWithoutDistributionsInput = {
   rewardApprovals?: Prisma.RewardApprovalUncheckedCreateNestedManyWithoutAdminInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountCreateOrConnectWithoutDistributionsInput = {
@@ -700,6 +763,7 @@ export type AdminAccountUpdateWithoutDistributionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -709,12 +773,14 @@ export type AdminAccountUpdateWithoutDistributionsInput = {
   rewardApprovals?: Prisma.RewardApprovalUpdateManyWithoutAdminNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountUncheckedUpdateWithoutDistributionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -724,12 +790,98 @@ export type AdminAccountUncheckedUpdateWithoutDistributionsInput = {
   rewardApprovals?: Prisma.RewardApprovalUncheckedUpdateManyWithoutAdminNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUncheckedUpdateManyWithoutAdminNestedInput
+}
+
+export type AdminAccountCreateWithoutSessionsInput = {
+  id?: string
+  externalSubject: string
+  email?: string | null
+  passwordHash?: string | null
+  displayName?: string | null
+  role?: $Enums.AdminRole
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reviewedSubmissions?: Prisma.BountySubmissionCreateNestedManyWithoutReviewedByInput
+  rewardApprovals?: Prisma.RewardApprovalCreateNestedManyWithoutAdminInput
+  distributions?: Prisma.RewardDistributionCreateNestedManyWithoutAttemptedByInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
+  idempotencyKeys?: Prisma.IdempotencyKeyCreateNestedManyWithoutAdminInput
+}
+
+export type AdminAccountUncheckedCreateWithoutSessionsInput = {
+  id?: string
+  externalSubject: string
+  email?: string | null
+  passwordHash?: string | null
+  displayName?: string | null
+  role?: $Enums.AdminRole
+  active?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reviewedSubmissions?: Prisma.BountySubmissionUncheckedCreateNestedManyWithoutReviewedByInput
+  rewardApprovals?: Prisma.RewardApprovalUncheckedCreateNestedManyWithoutAdminInput
+  distributions?: Prisma.RewardDistributionUncheckedCreateNestedManyWithoutAttemptedByInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
+  idempotencyKeys?: Prisma.IdempotencyKeyUncheckedCreateNestedManyWithoutAdminInput
+}
+
+export type AdminAccountCreateOrConnectWithoutSessionsInput = {
+  where: Prisma.AdminAccountWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminAccountCreateWithoutSessionsInput, Prisma.AdminAccountUncheckedCreateWithoutSessionsInput>
+}
+
+export type AdminAccountUpsertWithoutSessionsInput = {
+  update: Prisma.XOR<Prisma.AdminAccountUpdateWithoutSessionsInput, Prisma.AdminAccountUncheckedUpdateWithoutSessionsInput>
+  create: Prisma.XOR<Prisma.AdminAccountCreateWithoutSessionsInput, Prisma.AdminAccountUncheckedCreateWithoutSessionsInput>
+  where?: Prisma.AdminAccountWhereInput
+}
+
+export type AdminAccountUpdateToOneWithWhereWithoutSessionsInput = {
+  where?: Prisma.AdminAccountWhereInput
+  data: Prisma.XOR<Prisma.AdminAccountUpdateWithoutSessionsInput, Prisma.AdminAccountUncheckedUpdateWithoutSessionsInput>
+}
+
+export type AdminAccountUpdateWithoutSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reviewedSubmissions?: Prisma.BountySubmissionUpdateManyWithoutReviewedByNestedInput
+  rewardApprovals?: Prisma.RewardApprovalUpdateManyWithoutAdminNestedInput
+  distributions?: Prisma.RewardDistributionUpdateManyWithoutAttemptedByNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
+  idempotencyKeys?: Prisma.IdempotencyKeyUpdateManyWithoutAdminNestedInput
+}
+
+export type AdminAccountUncheckedUpdateWithoutSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
+  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reviewedSubmissions?: Prisma.BountySubmissionUncheckedUpdateManyWithoutReviewedByNestedInput
+  rewardApprovals?: Prisma.RewardApprovalUncheckedUpdateManyWithoutAdminNestedInput
+  distributions?: Prisma.RewardDistributionUncheckedUpdateManyWithoutAttemptedByNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
+  idempotencyKeys?: Prisma.IdempotencyKeyUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountCreateWithoutAuditLogsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -739,12 +891,14 @@ export type AdminAccountCreateWithoutAuditLogsInput = {
   rewardApprovals?: Prisma.RewardApprovalCreateNestedManyWithoutAdminInput
   distributions?: Prisma.RewardDistributionCreateNestedManyWithoutAttemptedByInput
   idempotencyKeys?: Prisma.IdempotencyKeyCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountUncheckedCreateWithoutAuditLogsInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -754,6 +908,7 @@ export type AdminAccountUncheckedCreateWithoutAuditLogsInput = {
   rewardApprovals?: Prisma.RewardApprovalUncheckedCreateNestedManyWithoutAdminInput
   distributions?: Prisma.RewardDistributionUncheckedCreateNestedManyWithoutAttemptedByInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountCreateOrConnectWithoutAuditLogsInput = {
@@ -776,6 +931,7 @@ export type AdminAccountUpdateWithoutAuditLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -785,12 +941,14 @@ export type AdminAccountUpdateWithoutAuditLogsInput = {
   rewardApprovals?: Prisma.RewardApprovalUpdateManyWithoutAdminNestedInput
   distributions?: Prisma.RewardDistributionUpdateManyWithoutAttemptedByNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountUncheckedUpdateWithoutAuditLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -800,12 +958,14 @@ export type AdminAccountUncheckedUpdateWithoutAuditLogsInput = {
   rewardApprovals?: Prisma.RewardApprovalUncheckedUpdateManyWithoutAdminNestedInput
   distributions?: Prisma.RewardDistributionUncheckedUpdateManyWithoutAttemptedByNestedInput
   idempotencyKeys?: Prisma.IdempotencyKeyUncheckedUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountCreateWithoutIdempotencyKeysInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -815,12 +975,14 @@ export type AdminAccountCreateWithoutIdempotencyKeysInput = {
   rewardApprovals?: Prisma.RewardApprovalCreateNestedManyWithoutAdminInput
   distributions?: Prisma.RewardDistributionCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountUncheckedCreateWithoutIdempotencyKeysInput = {
   id?: string
   externalSubject: string
   email?: string | null
+  passwordHash?: string | null
   displayName?: string | null
   role?: $Enums.AdminRole
   active?: boolean
@@ -830,6 +992,7 @@ export type AdminAccountUncheckedCreateWithoutIdempotencyKeysInput = {
   rewardApprovals?: Prisma.RewardApprovalUncheckedCreateNestedManyWithoutAdminInput
   distributions?: Prisma.RewardDistributionUncheckedCreateNestedManyWithoutAttemptedByInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutAdminInput
+  sessions?: Prisma.AdminSessionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type AdminAccountCreateOrConnectWithoutIdempotencyKeysInput = {
@@ -852,6 +1015,7 @@ export type AdminAccountUpdateWithoutIdempotencyKeysInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -861,12 +1025,14 @@ export type AdminAccountUpdateWithoutIdempotencyKeysInput = {
   rewardApprovals?: Prisma.RewardApprovalUpdateManyWithoutAdminNestedInput
   distributions?: Prisma.RewardDistributionUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUpdateManyWithoutAdminNestedInput
 }
 
 export type AdminAccountUncheckedUpdateWithoutIdempotencyKeysInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   externalSubject?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumAdminRoleFieldUpdateOperationsInput | $Enums.AdminRole
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -876,6 +1042,7 @@ export type AdminAccountUncheckedUpdateWithoutIdempotencyKeysInput = {
   rewardApprovals?: Prisma.RewardApprovalUncheckedUpdateManyWithoutAdminNestedInput
   distributions?: Prisma.RewardDistributionUncheckedUpdateManyWithoutAttemptedByNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutAdminNestedInput
+  sessions?: Prisma.AdminSessionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 
@@ -889,6 +1056,7 @@ export type AdminAccountCountOutputType = {
   distributions: number
   auditLogs: number
   idempotencyKeys: number
+  sessions: number
 }
 
 export type AdminAccountCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -897,6 +1065,7 @@ export type AdminAccountCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   distributions?: boolean | AdminAccountCountOutputTypeCountDistributionsArgs
   auditLogs?: boolean | AdminAccountCountOutputTypeCountAuditLogsArgs
   idempotencyKeys?: boolean | AdminAccountCountOutputTypeCountIdempotencyKeysArgs
+  sessions?: boolean | AdminAccountCountOutputTypeCountSessionsArgs
 }
 
 /**
@@ -944,11 +1113,19 @@ export type AdminAccountCountOutputTypeCountIdempotencyKeysArgs<ExtArgs extends 
   where?: Prisma.IdempotencyKeyWhereInput
 }
 
+/**
+ * AdminAccountCountOutputType without action
+ */
+export type AdminAccountCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AdminSessionWhereInput
+}
+
 
 export type AdminAccountSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   externalSubject?: boolean
   email?: boolean
+  passwordHash?: boolean
   displayName?: boolean
   role?: boolean
   active?: boolean
@@ -959,6 +1136,7 @@ export type AdminAccountSelect<ExtArgs extends runtime.Types.Extensions.Internal
   distributions?: boolean | Prisma.AdminAccount$distributionsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.AdminAccount$auditLogsArgs<ExtArgs>
   idempotencyKeys?: boolean | Prisma.AdminAccount$idempotencyKeysArgs<ExtArgs>
+  sessions?: boolean | Prisma.AdminAccount$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.AdminAccountCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["adminAccount"]>
 
@@ -966,6 +1144,7 @@ export type AdminAccountSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   externalSubject?: boolean
   email?: boolean
+  passwordHash?: boolean
   displayName?: boolean
   role?: boolean
   active?: boolean
@@ -977,6 +1156,7 @@ export type AdminAccountSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   externalSubject?: boolean
   email?: boolean
+  passwordHash?: boolean
   displayName?: boolean
   role?: boolean
   active?: boolean
@@ -988,6 +1168,7 @@ export type AdminAccountSelectScalar = {
   id?: boolean
   externalSubject?: boolean
   email?: boolean
+  passwordHash?: boolean
   displayName?: boolean
   role?: boolean
   active?: boolean
@@ -995,13 +1176,14 @@ export type AdminAccountSelectScalar = {
   updatedAt?: boolean
 }
 
-export type AdminAccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "externalSubject" | "email" | "displayName" | "role" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["adminAccount"]>
+export type AdminAccountOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "externalSubject" | "email" | "passwordHash" | "displayName" | "role" | "active" | "createdAt" | "updatedAt", ExtArgs["result"]["adminAccount"]>
 export type AdminAccountInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reviewedSubmissions?: boolean | Prisma.AdminAccount$reviewedSubmissionsArgs<ExtArgs>
   rewardApprovals?: boolean | Prisma.AdminAccount$rewardApprovalsArgs<ExtArgs>
   distributions?: boolean | Prisma.AdminAccount$distributionsArgs<ExtArgs>
   auditLogs?: boolean | Prisma.AdminAccount$auditLogsArgs<ExtArgs>
   idempotencyKeys?: boolean | Prisma.AdminAccount$idempotencyKeysArgs<ExtArgs>
+  sessions?: boolean | Prisma.AdminAccount$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.AdminAccountCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AdminAccountIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1015,11 +1197,13 @@ export type $AdminAccountPayload<ExtArgs extends runtime.Types.Extensions.Intern
     distributions: Prisma.$RewardDistributionPayload<ExtArgs>[]
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     idempotencyKeys: Prisma.$IdempotencyKeyPayload<ExtArgs>[]
+    sessions: Prisma.$AdminSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     externalSubject: string
     email: string | null
+    passwordHash: string | null
     displayName: string | null
     role: $Enums.AdminRole
     active: boolean
@@ -1424,6 +1608,7 @@ export interface Prisma__AdminAccountClient<T, Null = never, ExtArgs extends run
   distributions<T extends Prisma.AdminAccount$distributionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminAccount$distributionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RewardDistributionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   auditLogs<T extends Prisma.AdminAccount$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminAccount$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   idempotencyKeys<T extends Prisma.AdminAccount$idempotencyKeysArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminAccount$idempotencyKeysArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sessions<T extends Prisma.AdminAccount$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminAccount$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1456,6 +1641,7 @@ export interface AdminAccountFieldRefs {
   readonly id: Prisma.FieldRef<"AdminAccount", 'String'>
   readonly externalSubject: Prisma.FieldRef<"AdminAccount", 'String'>
   readonly email: Prisma.FieldRef<"AdminAccount", 'String'>
+  readonly passwordHash: Prisma.FieldRef<"AdminAccount", 'String'>
   readonly displayName: Prisma.FieldRef<"AdminAccount", 'String'>
   readonly role: Prisma.FieldRef<"AdminAccount", 'AdminRole'>
   readonly active: Prisma.FieldRef<"AdminAccount", 'Boolean'>
@@ -1971,6 +2157,30 @@ export type AdminAccount$idempotencyKeysArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.IdempotencyKeyScalarFieldEnum | Prisma.IdempotencyKeyScalarFieldEnum[]
+}
+
+/**
+ * AdminAccount.sessions
+ */
+export type AdminAccount$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AdminSession
+   */
+  select?: Prisma.AdminSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AdminSession
+   */
+  omit?: Prisma.AdminSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AdminSessionInclude<ExtArgs> | null
+  where?: Prisma.AdminSessionWhereInput
+  orderBy?: Prisma.AdminSessionOrderByWithRelationInput | Prisma.AdminSessionOrderByWithRelationInput[]
+  cursor?: Prisma.AdminSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AdminSessionScalarFieldEnum | Prisma.AdminSessionScalarFieldEnum[]
 }
 
 /**

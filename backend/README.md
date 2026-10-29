@@ -29,7 +29,15 @@ Security configuration is provided through `CORS_ORIGINS`, `MAX_REQUEST_BYTES`, 
 
 API contracts and the route inventory are documented in docs/API_CONTRACTS.md.
 
-Authentication configuration uses Supabase Auth bearer tokens and an explicit, lowercased `ADMIN_EMAILS` allowlist. The backend verifies the token with Supabase Auth before assigning an administrator principal. The existing Reown/AppKit wallet UX remains the player-facing sign-in experience, but player-to-backend session mapping is still required before player mutations are enabled.
+Administrator authentication is backend-owned. Configure `SLYCE_ADMIN_EMAILS`, provide `SLYCE_ADMIN_SEED_EMAIL` and `SLYCE_ADMIN_SEED_PASSWORD` only for the one-time seed command, then remove the seed password from the environment. The seed creates an idempotent active `ADMIN` account with a salted scrypt password hash. Login creates a rotated 30-day HttpOnly session cookie; logout revokes it, and every protected request rechecks account status, role, and the current allowlist. The existing Reown/AppKit wallet and email UX remains unchanged for players.
+
+Seed the initial account with:
+
+```text
+pnpm --filter @slyce/backend admin:seed
+```
+
+The seed command never prints or returns the password. It fails closed when the seed email is absent from `SLYCE_ADMIN_EMAILS` or the password is missing.
 
 ## Database and Prisma
 
@@ -50,3 +58,4 @@ pnpm --filter @slyce/backend db:migrate:status
 ```
 
 Production uses `db:migrate:deploy` with `DIRECT_URL`; it must not use `db push` or destructive reset commands. No database connection or migration was executed while creating P2 because no development database credentials were available.
+codex resume 01a18117-4c12-7693-951b-db2269458d8c

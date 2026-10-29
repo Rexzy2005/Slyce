@@ -41,6 +41,11 @@ export const sessionResponseSchema = z.union([
   }),
 ]);
 
+export const adminLoginRequestSchema = z.object({
+  email: z.string().trim().email().max(320),
+  password: z.string().min(1).max(1024),
+});
+
 export const playerProfileSchema = z.object({
   id: uuid,
   displayName: z.string().nullable(),
@@ -90,6 +95,7 @@ export const leaderboardResponseSchema = z.object({
 
 export const gameModeSchema = z.string().trim().min(1).max(40);
 export const rulesVersionSchema = z.string().trim().min(1).max(80);
+const exactPositiveIntegerAmountSchema = z.string().regex(/^[1-9]\d{0,77}$/, 'Amount must be a positive base-10 integer with at most 78 digits');
 export const inputDigestSchema = z.string().regex(/^[0-9a-f]{64}$/i);
 export const replayInputSchema = z.object({
   kind: z.literal('pointer'),
@@ -206,7 +212,7 @@ export const createChallengeSchema = z.object({
   endsAt: z.string().datetime().optional(),
   rulesVersion: rulesVersionSchema.default('verified-fruit-slice-v1'),
   rewardAsset: z.string().trim().min(1).max(80).default('G$'),
-  rewardAmount: z.number().positive(),
+  rewardAmount: exactPositiveIntegerAmountSchema,
   rules: z.array(challengeRuleInputSchema).min(1).max(10),
 });
 
@@ -223,7 +229,7 @@ export const challengeVersionSchema = z.object({
   status: z.enum(['DRAFT', 'SCHEDULED', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
   rulesVersion: z.string(),
   rewardAsset: z.string(),
-  rewardAmount: z.number(),
+  rewardAmount: exactPositiveIntegerAmountSchema,
   rules: z.array(challengeRuleSchema),
   createdAt: z.string().datetime(),
   publishedAt: z.string().datetime().nullable(),
@@ -261,7 +267,7 @@ export const challengeParticipationSchema = z.object({
   progress: z.record(z.string(), z.number()),
   rules: z.array(challengeRuleSchema),
   rewardAsset: z.string(),
-  rewardAmount: z.number(),
+  rewardAmount: exactPositiveIntegerAmountSchema,
   enrolledAt: z.string().datetime(),
   completedAt: z.string().datetime().nullable(),
 });
@@ -286,7 +292,7 @@ export const createBountySchema = z.object({
   endsAt: z.string().datetime().optional(),
   maxParticipants: z.number().int().positive().nullable().optional(),
   rewardAsset: z.string().trim().min(1).max(80).default('G$'),
-  rewardAmount: z.number().positive(),
+  rewardAmount: exactPositiveIntegerAmountSchema,
   leaderboardMode: z.string().trim().min(1).max(40).nullable().optional(),
   requirements: z.record(z.string(), z.unknown()).optional(),
 });
@@ -324,7 +330,7 @@ export const bountySchema = z.object({
   archivedAt: z.string().datetime().nullable(),
   maxParticipants: z.number().int().positive().nullable(),
   rewardAsset: z.string(),
-  rewardAmount: z.number(),
+  rewardAmount: exactPositiveIntegerAmountSchema,
   leaderboardMode: z.string().nullable(),
   requirements: z.record(z.string(), z.unknown()),
   participationsCount: z.number().int().nonnegative().optional(),

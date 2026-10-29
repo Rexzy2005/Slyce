@@ -29,9 +29,13 @@ export class PrismaWalletChallengeStore implements WalletChallengeStore {
 
   async consume(nonce: string, now: Date): Promise<WalletChallenge | null> {
     return this.database.$transaction(async transaction => {
+      const claim = await transaction.walletAuthChallenge.updateMany({
+        where: { nonce, consumedAt: null, expiresAt: { gt: now } },
+        data: { consumedAt: now },
+      });
+      if (claim.count !== 1) return null;
       const challenge = await transaction.walletAuthChallenge.findUnique({ where: { nonce } });
-      if (!challenge || challenge.consumedAt || challenge.expiresAt <= now) return null;
-      await transaction.walletAuthChallenge.update({ where: { id: challenge.id }, data: { consumedAt: now } });
+      if (!challenge) throw new Error('Claimed wallet challenge could not be loaded.');
       return { id: challenge.id, address: challenge.address as `0x${string}`, chainId: challenge.chainId, nonce: challenge.nonce, origin: challenge.origin, expiresAt: challenge.expiresAt };
     });
   }
@@ -69,7 +73,11 @@ export function createWalletSessionToken(principal: AuthenticatedPrincipal, secr
 }
 
 export class WalletSessionTokenVerifier implements TokenVerifier {
-  constructor(private readonly secret: string, private readonly playerLookup: (address: string) => Promise<string | null>, private readonly now = Date.now) {}
+  constructor(
+    private readonly secret: string,
+    private readonly playerLookup: (address: string) => Promise<{ playerId: string; status: 'ACTIVE' | 'SUSPENDED' | 'DELETED' } | null>,
+    private readonly now = Date.now,
+  ) {}
 
   async verify(token: string): Promise<AuthenticatedPrincipal | null> {
     const [payload, signature] = token.split('.');
@@ -80,8 +88,8 @@ export class WalletSessionTokenVerifier implements TokenVerifier {
     let data: { sub?: string; address?: string; playerId?: string; exp?: number };
     try { data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as typeof data; } catch { return null; }
     if (!data.sub || !data.address || !data.playerId || !data.exp || data.exp <= this.now()) return null;
-    const playerId = await this.playerLookup(data.address);
-    if (playerId !== data.playerId) return null;
+    const player = await this.playerLookup(data.address);
+    if (!player || player.playerId !== data.playerId || player.status !== 'ACTIVE') return null;
     return { subject: data.sub, kind: 'player', playerId: data.playerId, roles: [] };
   }
 }

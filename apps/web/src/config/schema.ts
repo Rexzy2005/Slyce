@@ -5,8 +5,6 @@ const address = z.preprocess(value => value === '' ? undefined : value, z.string
 export const publicConfigSchema = z.object({
   appUrl: optionalUrl,
   backendUrl: optionalUrl,
-  supabaseUrl: optionalUrl,
-  supabaseAnonKey: optionalText,
   network: z.preprocess(value => value === '' ? undefined : value, z.enum(['celo', 'celo-sepolia']).optional()),
   rpcUrl: optionalUrl,
   walletConnectProjectId: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^[a-fA-F0-9]{32}$/, 'Expected a Reown project ID').optional()),

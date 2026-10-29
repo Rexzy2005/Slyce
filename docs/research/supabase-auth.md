@@ -7,7 +7,7 @@
 
 The backend can validate a presented Supabase Auth bearer token with the Supabase JavaScript client's `auth.getUser(token)` call. The backend uses `SUPABASE_URL` and `SUPABASE_ANON_KEY`; a service-role key is not required for this verification boundary and is intentionally not configured.
 
-Administrator authorization is separate from authentication: verified user email addresses are normalized to lowercase and must match the server-only `ADMIN_EMAILS` allowlist. Wallet connection state is not accepted as a backend credential.
+Administrator authorization is separate from authentication: provider-confirmed email addresses are normalized to lowercase and must match the server-only `SLYCE_ADMIN_EMAILS` allowlist. Wallet connection state is not accepted as a backend credential.
 
 ## Sources
 

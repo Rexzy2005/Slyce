@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from './generated/prisma/client.js';
 import type { AuthenticatedPrincipal } from './security.js';
 import { requireAdministrator } from './security.js';
+import { isWithinActiveWindow } from './active-window.js';
 
 export type BountyStatusType = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'PAUSED' | 'CLOSED' | 'ARCHIVED';
 export type BountyParticipationStatusType = 'ACTIVE' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'DISQUALIFIED' | 'EXPIRED';
@@ -19,7 +20,7 @@ export interface BountyView {
   archivedAt: string | null;
   maxParticipants: number | null;
   rewardAsset: string;
-  rewardAmount: number;
+  rewardAmount: string;
   leaderboardMode: string | null;
   requirements: Record<string, unknown>;
   participationsCount?: number;
@@ -68,7 +69,7 @@ export interface CreateBountyInput {
   endsAt?: string | undefined;
   maxParticipants?: number | null | undefined;
   rewardAsset?: string | undefined;
-  rewardAmount: number;
+  rewardAmount: string;
   leaderboardMode?: string | null | undefined;
   requirements?: Record<string, unknown> | undefined;
 }
@@ -149,7 +150,7 @@ function rowToView(row: {
   archivedAt: Date | null;
   maxParticipants: number | null;
   rewardAsset: string;
-  rewardAmount: { toNumber(): number };
+  rewardAmount: { toString(): string };
   leaderboardMode: string | null;
   requirements: Prisma.JsonValue;
   createdAt: Date;
@@ -169,7 +170,7 @@ function rowToView(row: {
     archivedAt: row.archivedAt?.toISOString() ?? null,
     maxParticipants: row.maxParticipants ?? null,
     rewardAsset: row.rewardAsset,
-    rewardAmount: row.rewardAmount.toNumber(),
+    rewardAmount: row.rewardAmount.toString(),
     leaderboardMode: row.leaderboardMode ?? null,
     requirements: row.requirements as Record<string, unknown>,
     ...(row._count ? { participationsCount: row._count.participations } : {}),
@@ -293,8 +294,15 @@ export class PrismaBountyRepository implements BountyRepository {
   }
 
   async list(opts: { cursor?: string | undefined; limit: number; status?: BountyStatusType | undefined }): Promise<{ items: BountyView[]; nextCursor: string | null }> {
+    const now = new Date();
     const rows = await this.db.bounty.findMany({
-      ...(opts.status ? { where: { status: opts.status } } : {}),
+      ...(opts.status ? { where: {
+        status: opts.status,
+        ...(opts.status === 'PUBLISHED' ? {
+          OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+          AND: [{ OR: [{ endsAt: null }, { endsAt: { gt: now } }] }],
+        } : {}),
+      } } : {}),
       include: { _count: { select: { participations: true } } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: opts.limit + 1,
@@ -361,6 +369,9 @@ export class PrismaBountyRepository implements BountyRepository {
         },
       });
       if (bounty.status !== 'PUBLISHED') throw new Error('This bounty is not currently open for participation.');
+      if (!isWithinActiveWindow(bounty.startsAt, bounty.endsAt, new Date())) {
+        throw new Error('This bounty is not currently open for participation.');
+      }
       if (bounty.maxParticipants !== null && bounty._count.participations >= bounty.maxParticipants) {
         throw new Error('This bounty has reached its maximum participant limit.');
       }
@@ -419,8 +430,8 @@ export class PrismaBountyRepository implements BountyRepository {
         include: { participation: true },
       });
       if (submission.status !== 'PENDING') throw new Error('This submission has already been reviewed.');
-      const reviewedSubmission = await tx.bountySubmission.update({
-        where: { id: submissionId },
+      const claim = await tx.bountySubmission.updateMany({
+        where: { id: submissionId, status: 'PENDING' },
         data: {
           status: input.status,
           reviewNotes: input.reviewNotes ?? null,
@@ -428,6 +439,8 @@ export class PrismaBountyRepository implements BountyRepository {
           reviewedAt: new Date(),
         },
       });
+      if (claim.count !== 1) throw new Error('This submission has already been reviewed.');
+      const reviewedSubmission = await tx.bountySubmission.findUniqueOrThrow({ where: { id: submissionId } });
       // Update participation status
       const participationUpdate = input.status === 'APPROVED' ? 'APPROVED' : 'REJECTED';
       const now = new Date();
@@ -467,11 +480,32 @@ export class PrismaBountyRepository implements BountyRepository {
   }
 
   async leaderboard(bountyId: string, opts: { limit: number; cursor?: string | undefined }): Promise<{ items: BountyLeaderboardEntry[]; nextCursor: string | null }> {
-    // Leaderboard ranks APPROVED participants by completedAt ascending (earliest completion = highest rank)
+    // Only completed, approved participations are eligible. Rank is global, not page-relative.
+    let rankOffset = 0;
+    if (opts.cursor) {
+      const cursorRow = await this.db.bountyParticipation.findFirst({
+        where: { id: opts.cursor, bountyId, status: 'APPROVED', completedAt: { not: null } },
+        select: { id: true, completedAt: true, joinedAt: true },
+      });
+      if (!cursorRow?.completedAt) throw new Error('The bounty leaderboard cursor is invalid.');
+      rankOffset = await this.db.bountyParticipation.count({
+        where: {
+          bountyId,
+          status: 'APPROVED',
+          completedAt: { not: null },
+          OR: [
+            { completedAt: { lt: cursorRow.completedAt } },
+            { completedAt: cursorRow.completedAt, joinedAt: { lt: cursorRow.joinedAt } },
+            { completedAt: cursorRow.completedAt, joinedAt: cursorRow.joinedAt, id: { lte: cursorRow.id } },
+          ],
+        },
+      });
+    }
     const rows = await this.db.bountyParticipation.findMany({
       where: {
         bountyId,
-        status: { in: ['APPROVED', 'ACTIVE', 'SUBMITTED'] },
+        status: 'APPROVED',
+        completedAt: { not: null },
       },
       include: { player: { select: { displayName: true } } },
       orderBy: [
@@ -486,7 +520,7 @@ export class PrismaBountyRepository implements BountyRepository {
     const items = hasMore ? rows.slice(0, opts.limit) : rows;
     return {
       items: items.map((row, index) => ({
-        rank: index + 1, // Note: rank is relative to page; caller must offset by cursor position
+        rank: rankOffset + index + 1,
         playerId: row.playerId,
         displayName: row.player.displayName,
         participationId: row.id,

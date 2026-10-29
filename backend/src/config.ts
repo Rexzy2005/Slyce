@@ -42,14 +42,17 @@ function parseOrigins(value: string | undefined, environment: Environment): read
 }
 
 function parseAdminEmails(value: string | undefined): readonly string[] {
-  return [...new Set((value ?? '').split(',').map(email => email.trim().toLowerCase()).filter(Boolean))];
+  const emails = [...new Set((value ?? '').split(',').map(email => email.trim().toLowerCase()).filter(Boolean))];
+  const invalid = emails.find(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  if (invalid) throw new Error('SLYCE_ADMIN_EMAILS must contain only valid comma-separated email addresses');
+  return emails;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig {
   const environment = parseEnvironment(env.NODE_ENV);
-  const adminEmails = parseAdminEmails(env.ADMIN_EMAILS);
+  const adminEmails = parseAdminEmails(env.SLYCE_ADMIN_EMAILS);
   const authSessionSecret = parseSecret(env.AUTH_SESSION_SECRET, 'AUTH_SESSION_SECRET');
-  if (environment === 'production' && adminEmails.length === 0) throw new Error('ADMIN_EMAILS is required in production');
+  if (environment === 'production' && adminEmails.length === 0) throw new Error('SLYCE_ADMIN_EMAILS is required in production');
   if (environment === 'production' && !authSessionSecret) throw new Error('AUTH_SESSION_SECRET is required in production');
   return {
     environment,

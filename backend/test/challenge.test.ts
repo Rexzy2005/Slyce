@@ -207,7 +207,7 @@ test('challenge service enforces administrator permissions and full lifecycle', 
     slug: 'slice-master',
     title: 'Slice Master',
     description: 'Cut 50 fruits',
-    rewardAmount: 10,
+    rewardAmount: '10',
     rules: [{ eventType: 'targets_cut', operator: 'gte', counter: 'targets_cut', threshold: 50 }],
   }));
 
@@ -216,7 +216,7 @@ test('challenge service enforces administrator permissions and full lifecycle', 
     slug: 'slice-master',
     title: 'Slice Master',
     description: 'Cut 50 fruits',
-    rewardAmount: 10,
+    rewardAmount: '10',
     rules: [{ eventType: 'targets_cut', operator: 'gte', counter: 'targets_cut', threshold: 50 }],
   });
   assert.equal(created.status, 'DRAFT');
@@ -293,7 +293,7 @@ test('HTTP challenge routes serve admin and player operations', async () => {
       description: 'Slice 100 fruits across your rounds',
       rulesVersion: 'verified-fruit-slice-v1',
       rewardAsset: 'G$',
-      rewardAmount: 25,
+      rewardAmount: '25',
       rules: [
         { eventType: 'targets_cut', operator: 'gte', counter: 'targets_cut', threshold: 100 },
       ],

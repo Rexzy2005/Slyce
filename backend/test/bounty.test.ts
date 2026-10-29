@@ -24,6 +24,82 @@ const MOCK_PLAYER_ID = '00000000-0000-4000-8000-000000000072';
 const MOCK_PART_ID = '00000000-0000-4000-8000-000000000073';
 const MOCK_SUB_ID = '00000000-0000-4000-8000-000000000074';
 
+it('allows only one concurrent approval and one bounty reward', async () => {
+  const now = new Date('2026-10-29T12:00:00.000Z');
+  const submission = {
+    id: MOCK_SUB_ID,
+    participationId: MOCK_PART_ID,
+    status: 'PENDING',
+    evidence: { proof: 'valid' },
+    reviewNotes: null as string | null,
+    submittedAt: now,
+    reviewedAt: null as Date | null,
+    reviewedById: null as string | null,
+    participation: { id: MOCK_PART_ID, playerId: MOCK_PLAYER_ID, bountyId: MOCK_BOUNTY_ID },
+  };
+  let rewardsCreated = 0;
+  const tx = {
+    adminAccount: { findUniqueOrThrow: async () => ({ id: '00000000-0000-4000-8000-000000000075' }) },
+    bountySubmission: {
+      findUniqueOrThrow: async () => submission,
+      updateMany: async ({ where, data }: { where: { status: string }; data: Record<string, unknown> }) => {
+        if (submission.status !== where.status) return { count: 0 };
+        Object.assign(submission, data);
+        return { count: 1 };
+      },
+    },
+    bountyParticipation: { update: async () => undefined },
+    bounty: { findUniqueOrThrow: async () => ({ rewardAsset: 'G$', rewardAmount: 10 }) },
+    reward: { create: async () => { rewardsCreated += 1; } },
+  };
+  const repository = new PrismaBountyRepository({
+    $transaction: async (operation: (transaction: typeof tx) => Promise<unknown>) => operation(tx),
+  } as never);
+
+  const outcomes = await Promise.allSettled([
+    repository.reviewSubmission(MOCK_SUB_ID, 'admin-subject', { status: 'APPROVED' }),
+    repository.reviewSubmission(MOCK_SUB_ID, 'admin-subject', { status: 'APPROVED' }),
+  ]);
+  assert.equal(outcomes.filter(outcome => outcome.status === 'fulfilled').length, 1);
+  assert.equal(outcomes.filter(outcome => outcome.status === 'rejected').length, 1);
+  assert.equal(rewardsCreated, 1);
+});
+
+it('keeps bounty ranks global across pagination and excludes ineligible rows', async () => {
+  const completedAt = new Date('2026-10-29T12:00:00.000Z');
+  const joinedAt = new Date('2026-10-29T10:00:00.000Z');
+  const eligibleRows = ['a', 'b', 'c'].map(id => ({
+    id,
+    playerId: `player-${id}`,
+    status: 'APPROVED',
+    joinedAt,
+    completedAt,
+    player: { displayName: id.toUpperCase() },
+  }));
+  const seenWhere: unknown[] = [];
+  const repository = new PrismaBountyRepository({
+    bountyParticipation: {
+      findFirst: async () => ({ id: 'b', joinedAt, completedAt }),
+      count: async () => 2,
+      findMany: async (input: { where: unknown; cursor?: { id: string }; take: number }) => {
+        seenWhere.push(input.where);
+        return input.cursor ? eligibleRows.slice(2) : eligibleRows.slice(0, input.take);
+      },
+    },
+  } as never);
+
+  const first = await repository.leaderboard(MOCK_BOUNTY_ID, { limit: 2 });
+  assert.deepEqual(first.items.map(item => item.rank), [1, 2]);
+  assert.equal(first.nextCursor, 'b');
+  const second = await repository.leaderboard(MOCK_BOUNTY_ID, { limit: 2, cursor: 'b' });
+  assert.deepEqual(second.items.map(item => item.rank), [3]);
+  assert.equal(second.nextCursor, null);
+  assert.deepEqual(seenWhere, [
+    { bountyId: MOCK_BOUNTY_ID, status: 'APPROVED', completedAt: { not: null } },
+    { bountyId: MOCK_BOUNTY_ID, status: 'APPROVED', completedAt: { not: null } },
+  ]);
+});
+
 function makeBountyView(overrides: Partial<BountyView> = {}): BountyView {
   return {
     id: MOCK_BOUNTY_ID,
@@ -38,7 +114,7 @@ function makeBountyView(overrides: Partial<BountyView> = {}): BountyView {
     archivedAt: null,
     maxParticipants: null,
     rewardAsset: 'G$',
-    rewardAmount: 100,
+    rewardAmount: '100',
     leaderboardMode: null,
     requirements: {},
     participationsCount: 0,
@@ -187,7 +263,7 @@ await it('bounty service enforces administrator permissions for create', async (
       slug: 'test-bounty',
       title: 'Test',
       description: 'Desc',
-      rewardAmount: 50,
+      rewardAmount: '50',
     }),
     /administrator/i,
   );
@@ -202,7 +278,7 @@ await it('bounty service creates, publishes, and allows player to join', async (
     slug: 'weekly-slice',
     title: 'Weekly Slice',
     description: 'Cut 50 fruits.',
-    rewardAmount: 100,
+    rewardAmount: '100',
   });
   assert.equal(created.slug, 'weekly-slice');
   assert.equal(created.status, 'DRAFT');
@@ -228,7 +304,7 @@ await it('bounty service prevents player from joining non-published bounty', asy
     slug: 'draft-bounty',
     title: 'Draft',
     description: 'Not published.',
-    rewardAmount: 10,
+    rewardAmount: '10',
   });
 
   await assert.rejects(
@@ -243,7 +319,7 @@ await it('bounty service allows evidence submission and admin review', async () 
   const admin = makeAdminPrincipal();
   const player = makePlayerPrincipal();
 
-  await service.createBounty(admin, { slug: 'evidence-bounty', title: 'E', description: 'D', rewardAmount: 25 });
+  await service.createBounty(admin, { slug: 'evidence-bounty', title: 'E', description: 'D', rewardAmount: '25' });
   await service.publishBounty(admin, MOCK_BOUNTY_ID);
   const participation = await service.joinBounty(player, MOCK_BOUNTY_ID);
 
@@ -261,7 +337,7 @@ await it('bounty service rejects evidence submission for another player particip
   const service = new BountyService(repo);
   const admin = makeAdminPrincipal();
   const owner = makePlayerPrincipal();
-  await service.createBounty(admin, { slug: 'ownership', title: 'Ownership', description: 'D', rewardAmount: 25 });
+  await service.createBounty(admin, { slug: 'ownership', title: 'Ownership', description: 'D', rewardAmount: '25' });
   await service.publishBounty(admin, MOCK_BOUNTY_ID);
   const participation = await service.joinBounty(owner, MOCK_BOUNTY_ID);
   const attacker: AuthenticatedPrincipal = { kind: 'player', subject: 'other', playerId: '00000000-0000-4000-8000-000000000099', roles: [] };
@@ -273,7 +349,7 @@ await it('bounty service full lifecycle: draft -> published -> closed -> archive
   const service = new BountyService(repo);
   const admin = makeAdminPrincipal();
 
-  await service.createBounty(admin, { slug: 'lifecycle', title: 'L', description: 'D', rewardAmount: 5 });
+  await service.createBounty(admin, { slug: 'lifecycle', title: 'L', description: 'D', rewardAmount: '5' });
   assert.equal((await service.getBounty(MOCK_BOUNTY_ID)).status, 'DRAFT');
 
   await service.publishBounty(admin, MOCK_BOUNTY_ID);
@@ -301,7 +377,7 @@ await it('HTTP bounty routes serve admin and player operations', async () => {
     slug: 'http-bounty',
     title: 'HTTP Bounty',
     description: 'For HTTP tests.',
-    rewardAmount: 20,
+    rewardAmount: '20',
   });
   await bountyService.publishBounty(admin, seedBounty.id);
 
@@ -347,7 +423,7 @@ await it('HTTP bounty routes serve admin and player operations', async () => {
     const createRes = await fetch(`${base}/api/v1/admin/bounties`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer admin-token' },
-      body: JSON.stringify({ slug: 'new-bounty', title: 'New', description: 'New Bounty', rewardAmount: 75 }),
+      body: JSON.stringify({ slug: 'new-bounty', title: 'New', description: 'New Bounty', rewardAmount: '75' }),
     });
     assert.equal(createRes.status, 201);
 

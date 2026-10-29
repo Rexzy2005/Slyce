@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from './generated/prisma/client.js';
 import type { AuthenticatedPrincipal } from './security.js';
 import { requireAdministrator } from './security.js';
+import { isWithinActiveWindow } from './active-window.js';
 
 export type ChallengeStatusType = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'PAUSED' | 'ARCHIVED';
 export type ParticipationStatusType = 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'DISQUALIFIED' | 'EXPIRED';
@@ -21,7 +22,7 @@ export interface ChallengeVersionView {
   status: ChallengeStatusType;
   rulesVersion: string;
   rewardAsset: string;
-  rewardAmount: number;
+  rewardAmount: string;
   rules: ChallengeRuleView[];
   createdAt: string;
   publishedAt: string | null;
@@ -54,7 +55,7 @@ export interface ChallengeParticipationView {
   progress: Record<string, number>;
   rules: ChallengeRuleView[];
   rewardAsset: string;
-  rewardAmount: number;
+  rewardAmount: string;
   enrolledAt: string;
   completedAt: string | null;
 }
@@ -67,7 +68,7 @@ export interface CreateChallengeInput {
   endsAt?: string | undefined;
   rulesVersion?: string | undefined;
   rewardAsset?: string | undefined;
-  rewardAmount: number;
+  rewardAmount: string;
   rules: Array<{
     eventType: string;
     operator: string;
@@ -175,7 +176,7 @@ function mapVersion(version: {
     status: version.status,
     rulesVersion: version.rulesVersion,
     rewardAsset: version.rewardAsset,
-    rewardAmount: Number(version.rewardAmount),
+    rewardAmount: version.rewardAmount.toString(),
     rules: (version.rules ?? []).map(mapRule),
     createdAt: version.createdAt.toISOString(),
     publishedAt: version.publishedAt?.toISOString() ?? null,
@@ -237,6 +238,20 @@ export interface ChallengeRepository {
 
 export class PrismaChallengeRepository implements ChallengeRepository {
   constructor(private readonly database: PrismaClient) {}
+
+  private async withSerializableRetry<T>(operation: Parameters<PrismaClient['$transaction']>[0]): Promise<T> {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        return await this.database.$transaction(operation, {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        }) as T;
+      } catch (error) {
+        const retryable = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034';
+        if (!retryable || attempt === 3) throw error;
+      }
+    }
+    throw new Error('Serializable challenge transaction exhausted its retry budget.');
+  }
 
   async create(input: CreateChallengeInput): Promise<ChallengeView> {
     const challenge = await this.database.challenge.create({
@@ -411,7 +426,7 @@ export class PrismaChallengeRepository implements ChallengeRepository {
       where: {
         status: 'PUBLISHED',
         OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-        AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
+        AND: [{ OR: [{ endsAt: null }, { endsAt: { gt: now } }] }],
       },
       ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
       take: input.limit + 1,
@@ -441,7 +456,7 @@ export class PrismaChallengeRepository implements ChallengeRepository {
         },
       },
     });
-    if (!challenge || challenge.status !== 'PUBLISHED') {
+    if (!challenge || challenge.status !== 'PUBLISHED' || !isWithinActiveWindow(challenge.startsAt, challenge.endsAt, new Date())) {
       throw new Error('This challenge is not currently active for participation.');
     }
     const version = challenge.versions[0];
@@ -467,7 +482,7 @@ export class PrismaChallengeRepository implements ChallengeRepository {
         progress: (existing.progress ?? {}) as Record<string, number>,
         rules: existing.version.rules.map(mapRule),
         rewardAsset: existing.version.rewardAsset,
-        rewardAmount: Number(existing.version.rewardAmount),
+        rewardAmount: existing.version.rewardAmount.toString(),
         enrolledAt: existing.enrolledAt.toISOString(),
         completedAt: existing.completedAt?.toISOString() ?? null,
       };
@@ -499,7 +514,7 @@ export class PrismaChallengeRepository implements ChallengeRepository {
       progress: (created.progress ?? {}) as Record<string, number>,
       rules: created.version.rules.map(mapRule),
       rewardAsset: created.version.rewardAsset,
-      rewardAmount: Number(created.version.rewardAmount),
+      rewardAmount: created.version.rewardAmount.toString(),
       enrolledAt: created.enrolledAt.toISOString(),
       completedAt: created.completedAt?.toISOString() ?? null,
     };
@@ -525,7 +540,7 @@ export class PrismaChallengeRepository implements ChallengeRepository {
       progress: (row.progress ?? {}) as Record<string, number>,
       rules: row.version.rules.map(mapRule),
       rewardAsset: row.version.rewardAsset,
-      rewardAmount: Number(row.version.rewardAmount),
+      rewardAmount: row.version.rewardAmount.toString(),
       enrolledAt: row.enrolledAt.toISOString(),
       completedAt: row.completedAt?.toISOString() ?? null,
     }));
@@ -553,61 +568,63 @@ export class PrismaChallengeRepository implements ChallengeRepository {
     }> = [];
 
     for (const participation of activeParticipations) {
-      if (participation.challenge.status !== 'PUBLISHED') continue;
-      const currentProgress = (participation.progress ?? {}) as Record<string, number>;
-      const nextProgress = updateParticipationProgress(currentProgress, event);
-      const rules = participation.version.rules.map(r => ({
-        operator: r.operator,
-        counter: r.counter ?? '',
-        threshold: r.threshold ? Number(r.threshold) : 0,
-      }));
-      const complete = isChallengeComplete(rules, nextProgress);
+      const result = await this.withSerializableRetry<{
+        participationId: string;
+        challengeTitle: string;
+        completed: boolean;
+        rewardCreated: boolean;
+      } | null>(async tx => {
+        const current = await tx.challengeParticipation.findUnique({
+          where: { id: participation.id },
+          include: {
+            challenge: true,
+            version: { include: { rules: { orderBy: { position: 'asc' } } } },
+          },
+        });
+        const evaluatedAt = new Date();
+        if (!current || current.status !== 'ACTIVE' || current.challenge.status !== 'PUBLISHED'
+          || !isWithinActiveWindow(current.challenge.startsAt, current.challenge.endsAt, evaluatedAt)) return null;
 
-      if (complete) {
-        await this.database.$transaction(async tx => {
-          await tx.challengeParticipation.update({
-            where: { id: participation.id },
-            data: {
-              status: 'COMPLETED',
-              progress: nextProgress,
-              completedAt: new Date(),
-            },
-          });
+        const nextProgress = updateParticipationProgress((current.progress ?? {}) as Record<string, number>, event);
+        const complete = isChallengeComplete(current.version.rules.map(rule => ({
+          operator: rule.operator,
+          counter: rule.counter ?? '',
+          threshold: rule.threshold ? Number(rule.threshold) : 0,
+        })), nextProgress);
+
+        await tx.challengeParticipation.update({
+          where: { id: current.id },
+          data: {
+            progress: nextProgress,
+            ...(complete ? { status: 'COMPLETED', completedAt: evaluatedAt } : {}),
+          },
+        });
+        if (complete) {
           await tx.reward.create({
             data: {
               playerId,
               sourceType: 'CHALLENGE',
-              challengeId: participation.challengeId,
-              challengeParticipationId: participation.id,
-              asset: participation.version.rewardAsset,
-              amount: participation.version.rewardAmount,
+              challengeId: current.challengeId,
+              challengeParticipationId: current.id,
+              asset: current.version.rewardAsset,
+              amount: current.version.rewardAmount,
               status: 'ELIGIBLE',
               eligibilityEvidence: {
-                completedAt: new Date().toISOString(),
+                completedAt: evaluatedAt.toISOString(),
                 progress: nextProgress,
-                rulesVersion: participation.version.rulesVersion,
+                rulesVersion: current.version.rulesVersion,
               },
             },
           });
-        });
-        results.push({
-          participationId: participation.id,
-          challengeTitle: participation.challenge.title,
-          completed: true,
-          rewardCreated: true,
-        });
-      } else {
-        await this.database.challengeParticipation.update({
-          where: { id: participation.id },
-          data: { progress: nextProgress },
-        });
-        results.push({
-          participationId: participation.id,
-          challengeTitle: participation.challenge.title,
-          completed: false,
-          rewardCreated: false,
-        });
-      }
+        }
+        return {
+          participationId: current.id,
+          challengeTitle: current.challenge.title,
+          completed: complete,
+          rewardCreated: complete,
+        };
+      });
+      if (result) results.push(result);
     }
 
     return results;

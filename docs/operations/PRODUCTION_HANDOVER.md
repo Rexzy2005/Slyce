@@ -8,11 +8,11 @@ The repository is deployment-ready, but no production deployment is recorded. Re
 
 - Frontend: Next.js with public build-time configuration.
 - Backend: Render Node service defined by render.yaml.
-- Data and authentication: Supabase PostgreSQL and Supabase Auth.
+- Data: Supabase PostgreSQL. Administrator authentication: backend-owned password hashes and opaque HttpOnly sessions.
 - Runtime data access uses DATABASE_URL; migrations use DIRECT_URL.
 - /healthz is liveness; /readyz verifies database readiness and is the Render health check.
 
-Required backend values are NODE_ENV=production, DATABASE_URL, DIRECT_URL, SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAILS, CORS_ORIGINS, and a random AUTH_SESSION_SECRET of at least 32 characters. GoodDollar production observation additionally requires GOODDOLLAR_ENV=production plus a verified GOODDOLLAR_RPC_URL and GOODDOLLAR_IDENTITY_ADDRESS pair. Render supplies PORT.
+Required backend values are NODE_ENV=production, DATABASE_URL, DIRECT_URL, SLYCE_ADMIN_EMAILS, CORS_ORIGINS, and a random AUTH_SESSION_SECRET of at least 32 characters. For initial provisioning only, set SLYCE_ADMIN_SEED_EMAIL and SLYCE_ADMIN_SEED_PASSWORD, run `pnpm --filter @slyce/backend admin:seed`, then remove the password variable. GoodDollar production observation additionally requires GOODDOLLAR_ENV=production plus a verified GOODDOLLAR_RPC_URL and GOODDOLLAR_IDENTITY_ADDRESS pair. Render supplies PORT.
 
 Set NEXT_PUBLIC_BACKEND_URL to the deployed HTTPS backend origin. Configure all other frontend values from .env.example with production-matching Supabase, network, RPC, Reown, GoodDollar, and contract values. Public variables are embedded at build time and require a frontend redeploy when changed.
 
@@ -25,7 +25,7 @@ Set NEXT_PUBLIC_BACKEND_URL to the deployed HTTPS backend origin. Configure all 
 5. Run pnpm --filter @slyce/backend deployment:check.
 6. Deploy. Render generates Prisma Client and builds, then runs prisma migrate deploy before promotion.
 7. Confirm /healthz and /readyz return 200 over HTTPS.
-8. Configure the frontend backend URL and matching Supabase/CORS values, then redeploy it.
+8. Configure the frontend backend URL and matching CORS value, then redeploy it.
 9. Complete and retain the production verification record.
 
 ## Production verification
@@ -45,13 +45,13 @@ Set NEXT_PUBLIC_BACKEND_URL to the deployed HTTPS backend origin. Configure all 
 
 ## Administration, recovery, and troubleshooting
 
-Add a verified, lowercased administrator email to ADMIN_EMAILS, redeploy, and confirm Supabase Auth returns the same email. Use the least application role required. Removing an email and redeploying revokes new administrator sessions.
+Add a seeded administrator email to SLYCE_ADMIN_EMAILS and redeploy. The backend trims and lowercases entries and rechecks membership on every request. Use the least application role required. Removing an email and redeploying removes authorization on subsequent requests. Rotate a password through the reviewed backend-only seed/account process; never place it in frontend variables or logs.
 
 - Confirm Supabase backup retention before every schema release.
 - Roll back application code by deploying the last known-good commit.
 - Treat database migrations as forward-only. Restore an approved backup or deploy a reviewed corrective migration rather than improvising a reverse migration.
 - If /readyz fails, stop promotion, inspect Render and Supabase, verify pooler limits and connection values, and do not route traffic until readiness recovers.
-- For authentication failures, compare the frontend/backend Supabase project, redirect allowlists, ADMIN_EMAILS, and network health.
+- For authentication failures, compare the frontend/backend identity provider, redirect allowlists, SLYCE_ADMIN_EMAILS, and network health.
 - For CORS failures, compare the browser Origin exactly with CORS_ORIGINS; never use a wildcard for authenticated production traffic.
 - For GoodDollar failures, preserve core availability and inspect RPC health plus environment/address pairing.
 

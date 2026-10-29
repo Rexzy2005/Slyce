@@ -72,6 +72,7 @@ export const ModelName = {
   RewardApproval: 'RewardApproval',
   RewardDistribution: 'RewardDistribution',
   AdminAccount: 'AdminAccount',
+  AdminSession: 'AdminSession',
   AuditLog: 'AuditLog',
   ChallengeEvent: 'ChallengeEvent',
   IdempotencyKey: 'IdempotencyKey'
@@ -406,6 +407,7 @@ export const AdminAccountScalarFieldEnum = {
   id: 'id',
   externalSubject: 'externalSubject',
   email: 'email',
+  passwordHash: 'passwordHash',
   displayName: 'displayName',
   role: 'role',
   active: 'active',
@@ -414,6 +416,19 @@ export const AdminAccountScalarFieldEnum = {
 } as const
 
 export type AdminAccountScalarFieldEnum = (typeof AdminAccountScalarFieldEnum)[keyof typeof AdminAccountScalarFieldEnum]
+
+
+export const AdminSessionScalarFieldEnum = {
+  id: 'id',
+  adminId: 'adminId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  lastSeenAt: 'lastSeenAt'
+} as const
+
+export type AdminSessionScalarFieldEnum = (typeof AdminSessionScalarFieldEnum)[keyof typeof AdminSessionScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

@@ -9,8 +9,6 @@ const resolvedAppUrl = process.env.NEXT_PUBLIC_APP_URL
 export const publicConfig = parsePublicConfig({
   appUrl: resolvedAppUrl,
   backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL,
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   network: process.env.NEXT_PUBLIC_NETWORK,
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL,
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,

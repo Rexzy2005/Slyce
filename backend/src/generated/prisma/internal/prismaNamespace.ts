@@ -418,6 +418,7 @@ export const ModelName = {
   RewardApproval: 'RewardApproval',
   RewardDistribution: 'RewardDistribution',
   AdminAccount: 'AdminAccount',
+  AdminSession: 'AdminSession',
   AuditLog: 'AuditLog',
   ChallengeEvent: 'ChallengeEvent',
   IdempotencyKey: 'IdempotencyKey'
@@ -436,7 +437,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "player" | "wallet" | "walletAuthChallenge" | "goodDollarVerification" | "goodDollarVerificationRecord" | "gameSession" | "scoreRecord" | "leaderboardSnapshot" | "leaderboardEntry" | "challenge" | "challengeVersion" | "challengeRule" | "challengeParticipation" | "bounty" | "bountyVersion" | "bountyParticipation" | "bountySubmission" | "reward" | "rewardApproval" | "rewardDistribution" | "adminAccount" | "auditLog" | "challengeEvent" | "idempotencyKey"
+    modelProps: "player" | "wallet" | "walletAuthChallenge" | "goodDollarVerification" | "goodDollarVerificationRecord" | "gameSession" | "scoreRecord" | "leaderboardSnapshot" | "leaderboardEntry" | "challenge" | "challengeVersion" | "challengeRule" | "challengeParticipation" | "bounty" | "bountyVersion" | "bountyParticipation" | "bountySubmission" | "reward" | "rewardApproval" | "rewardDistribution" | "adminAccount" | "adminSession" | "auditLog" | "challengeEvent" | "idempotencyKey"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1994,6 +1995,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AdminSession: {
+      payload: Prisma.$AdminSessionPayload<ExtArgs>
+      fields: Prisma.AdminSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AdminSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AdminSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.AdminSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AdminSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>
+        }
+        findMany: {
+          args: Prisma.AdminSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>[]
+        }
+        create: {
+          args: Prisma.AdminSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>
+        }
+        createMany: {
+          args: Prisma.AdminSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AdminSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.AdminSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>
+        }
+        update: {
+          args: Prisma.AdminSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.AdminSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AdminSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AdminSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.AdminSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.AdminSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAdminSession>
+        }
+        groupBy: {
+          args: Prisma.AdminSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AdminSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AdminSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AdminSessionCountAggregateOutputType> | number
+        }
+      }
+    }
     AuditLog: {
       payload: Prisma.$AuditLogPayload<ExtArgs>
       fields: Prisma.AuditLogFieldRefs
@@ -2568,6 +2643,7 @@ export const AdminAccountScalarFieldEnum = {
   id: 'id',
   externalSubject: 'externalSubject',
   email: 'email',
+  passwordHash: 'passwordHash',
   displayName: 'displayName',
   role: 'role',
   active: 'active',
@@ -2576,6 +2652,19 @@ export const AdminAccountScalarFieldEnum = {
 } as const
 
 export type AdminAccountScalarFieldEnum = (typeof AdminAccountScalarFieldEnum)[keyof typeof AdminAccountScalarFieldEnum]
+
+
+export const AdminSessionScalarFieldEnum = {
+  id: 'id',
+  adminId: 'adminId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  lastSeenAt: 'lastSeenAt'
+} as const
+
+export type AdminSessionScalarFieldEnum = (typeof AdminSessionScalarFieldEnum)[keyof typeof AdminSessionScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {
@@ -3189,6 +3278,7 @@ export type GlobalOmitConfig = {
   rewardApproval?: Prisma.RewardApprovalOmit
   rewardDistribution?: Prisma.RewardDistributionOmit
   adminAccount?: Prisma.AdminAccountOmit
+  adminSession?: Prisma.AdminSessionOmit
   auditLog?: Prisma.AuditLogOmit
   challengeEvent?: Prisma.ChallengeEventOmit
   idempotencyKey?: Prisma.IdempotencyKeyOmit

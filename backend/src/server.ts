@@ -7,6 +7,7 @@ import { applyCors, authenticate, FixedWindowRateLimiter, requestContentLength, 
 import {
   apiPrefix,
   auditLogListResponseSchema,
+  adminLoginRequestSchema,
   auditLogQuerySchema,
   adminPlayerListResponseSchema,
   bountyLeaderboardResponseSchema,
@@ -48,7 +49,6 @@ import {
   walletVerifyResponseSchema,
 } from './api/contracts.js';
 import { createPrismaClient } from './database.js';
-import { createSupabaseTokenVerifier } from './supabase-auth.js';
 import { PrismaPrincipalStore, type PrincipalStore } from './principal-store.js';
 import { PrismaPlayerRecordRepository, PlayerService } from './player-service.js';
 import { requireAdministrator } from './security.js';
@@ -62,6 +62,8 @@ import { ChallengeService, PrismaChallengeRepository } from './challenge-service
 import { BountyService, PrismaBountyRepository } from './bounty-service.js';
 import { PrismaRewardRepository, RewardService } from './reward-service.js';
 import { OperationsService, PrismaOperationsRepository } from './operations-service.js';
+import { AdminAuthService, adminSessionToken, clearAdminSessionCookie, setAdminSessionCookie } from './admin-auth.js';
+import { CompositeTokenVerifier } from './security.js';
 
 interface ErrorResponse {
   error: {
@@ -90,6 +92,7 @@ function validationError(response: ServerResponse, error: ZodError): void {
 
 interface AppDependencies {
   verifier?: TokenVerifier;
+  adminAuth?: AdminAuthService;
   principalStore?: PrincipalStore;
   playerService?: PlayerService;
   goodDollarClient?: Parameters<typeof checkGoodDollarAddress>[0];
@@ -135,6 +138,23 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     if (!dependencies.operationsService) return sendJson(response, 503, { status: 'not_ready', checks: { database: 'not_configured' } });
     try { await dependencies.operationsService.ping(); return sendJson(response, 200, { status: 'ready', checks: { database: 'reachable' } }); }
     catch { return sendJson(response, 503, { status: 'not_ready', checks: { database: 'unreachable' } }); }
+  }
+  if (pathname === `${apiPrefix}/admin/auth/login`) {
+    if (request.method !== 'POST') return methodNotAllowed(response);
+    if (!dependencies.adminAuth) return sendJson(response, 503, { error: { code: 'auth_not_configured', message: 'Authentication is not configured.' } } satisfies ErrorResponse);
+    const input = adminLoginRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
+    const result = await dependencies.adminAuth.login(input.email, input.password);
+    if (!result) return sendJson(response, 401, { error: { code: 'invalid_credentials', message: 'The email or password is incorrect.' } } satisfies ErrorResponse);
+    setAdminSessionCookie(response, result.token, process.env.NODE_ENV === 'production');
+    return sendJson(response, 200, { data: sessionResponseSchema.parse({ status: 'authenticated', kind: 'administrator', subject: result.principal.subject, email: result.principal.email }) });
+  }
+  if (pathname === `${apiPrefix}/admin/auth/logout`) {
+    if (request.method !== 'POST') return methodNotAllowed(response);
+    if (!dependencies.adminAuth) return sendJson(response, 503, { error: { code: 'auth_not_configured', message: 'Authentication is not configured.' } } satisfies ErrorResponse);
+    const token = adminSessionToken(request);
+    if (token) await dependencies.adminAuth.logout(token);
+    clearAdminSessionCookie(response, process.env.NODE_ENV === 'production');
+    return sendJson(response, 200, { data: { status: 'signed_out' } });
   }
   if (pathname === `${apiPrefix}/session`) {
     if (request.method !== 'GET') return methodNotAllowed(response);
@@ -291,7 +311,6 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     const result = await dependencies.gameplayService.submitScore(principal, finishMatch[1]!, createVerifiedFruitSliceRules(), {
       inputDigest: input.inputDigest,
       score: input.score,
-      ...(input.breakdown ? { breakdown: input.breakdown } : {}),
       ...(input.replayInputs ? { replayInputs: input.replayInputs } : {}),
     }, idempotencyKey);
     if (result.status === 'verified') return sendJson(response, 200, { data: scoreSubmissionResultSchema.parse(result) });
@@ -302,7 +321,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       const verification = await dependencies.scoreVerificationService.verifyPending(result.scoreId);
       if (verification.status === 'verified') {
         if (dependencies.challengeService && principal.playerId) {
-          const breakdown = input.breakdown ?? {};
+          const breakdown = verification.breakdown ?? {};
           await dependencies.challengeService.evaluateGameplay(principal.playerId, {
             targetsCut: breakdown.targetsCut ?? 0,
             bestCombo: breakdown.bestCombo ?? 0,
@@ -611,6 +630,7 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
 
 export function createApp(config: BackendConfig = loadConfig(), dependencies: AppDependencies = {}): Server {
   const limiter = new FixedWindowRateLimiter(config.rateLimitWindowMs, config.rateLimitMaxRequests);
+  const loginLimiter = new FixedWindowRateLimiter(15 * 60_000, 5);
   return createServer((request, response) => {
     try {
       applyCors(response, request.headers.origin, config.corsOrigins);
@@ -620,6 +640,17 @@ export function createApp(config: BackendConfig = loadConfig(), dependencies: Ap
       }
       const forwardedFor = request.headers['x-forwarded-for'];
       const clientKey = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor?.split(',')[0])?.trim() || request.socket.remoteAddress || 'unknown';
+      const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+      const isAdminMutation = request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'OPTIONS' && (pathname.startsWith(`${apiPrefix}/admin/`) || pathname === `${apiPrefix}/admin`);
+      const usesAdminCookie = Boolean(request.headers.cookie?.split(';').some(part => part.trim().startsWith('slyce_admin_session=')));
+      const requiresCsrf = (pathname === `${apiPrefix}/admin/auth/login` && request.method === 'POST') || (isAdminMutation && usesAdminCookie);
+      if (requiresCsrf && (!request.headers.origin || (!config.corsOrigins.includes('*') && !config.corsOrigins.includes(request.headers.origin)) || request.headers['x-slyce-csrf'] !== '1')) {
+        return sendJson(response, 403, { error: { code: 'csrf_rejected', message: 'The request origin could not be verified.' } } satisfies ErrorResponse);
+      }
+      if (pathname === `${apiPrefix}/admin/auth/login` && request.method === 'POST' && !loginLimiter.allow(clientKey)) {
+        response.setHeader('Retry-After', '900');
+        return sendJson(response, 429, { error: { code: 'rate_limited', message: 'Too many sign-in attempts. Try again later.' } } satisfies ErrorResponse);
+      }
       if (!limiter.allow(clientKey)) {
         response.setHeader('Retry-After', Math.ceil(config.rateLimitWindowMs / 1000));
         return sendJson(response, 429, { error: { code: 'rate_limited', message: 'Too many requests. Try again later.' } } satisfies ErrorResponse);
@@ -646,8 +677,17 @@ export function createApp(config: BackendConfig = loadConfig(), dependencies: Ap
 export function startServer(config: BackendConfig = loadConfig()): Server {
   const prisma = createPrismaClient();
   const goodDollarClient = createGoodDollarPublicClient(config);
+  const adminAuth = new AdminAuthService(prisma, config.adminEmails);
+  const walletVerifier = config.authSessionSecret ? new WalletSessionTokenVerifier(config.authSessionSecret, async address => {
+    const wallet = await prisma.wallet.findFirst({
+      where: { address: address.toLowerCase(), status: 'ACTIVE' },
+      select: { playerId: true, player: { select: { status: true } } },
+    });
+    return wallet ? { playerId: wallet.playerId, status: wallet.player.status } : null;
+  }) : undefined;
   const server = createApp(config, {
-    verifier: createSupabaseTokenVerifier(config),
+    verifier: new CompositeTokenVerifier([adminAuth, ...(walletVerifier ? [walletVerifier] : [])]),
+    adminAuth,
     principalStore: new PrismaPrincipalStore(prisma),
     playerService: new PlayerService(new PrismaPlayerRecordRepository(prisma), new PrismaPrincipalStore(prisma)),
     ...(goodDollarClient && goodDollarIdentityAddress(config) ? {
@@ -663,7 +703,7 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     walletPlayers: new PrismaWalletPlayerStore(prisma),
     ...(config.authSessionSecret ? {
       walletVerifierSecret: config.authSessionSecret,
-      walletVerifier: new WalletSessionTokenVerifier(config.authSessionSecret, async address => (await prisma.wallet.findFirst({ where: { address: address.toLowerCase() }, select: { playerId: true } }))?.playerId ?? null),
+      walletVerifier: walletVerifier as WalletSessionTokenVerifier,
     } : {}),
     challengeService: new ChallengeService(new PrismaChallengeRepository(prisma)),
     bountyService: new BountyService(new PrismaBountyRepository(prisma)),

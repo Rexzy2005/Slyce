@@ -16,15 +16,15 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:status": "prisma migrate status",
-    "deployment:check": "node dist/src/deployment-preflight.js"
+    "deployment:check": "node dist/src/deployment-preflight.js",
+    "admin:seed": "pnpm run build && node dist/src/seed-admin.js"
   },
   "dependencies": {
-    "@slyce/shared": "workspace:*",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "@supabase/supabase-js": "2.118.0",
-    "viem": "2.57.3",
+    "@slyce/shared": "workspace:*",
     "pg": "8.23.1",
+    "viem": "2.57.3",
     "zod": "4.6.5"
   },
   "devDependencies": {

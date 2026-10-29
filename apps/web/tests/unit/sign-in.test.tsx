@@ -5,6 +5,7 @@ import { WalletContext, type WalletState } from '../../src/web3/context';
 import { SignInGate } from '../../src/web3/sign-in-gate';
 import { AccountButton } from '../../src/web3/account-button';
 import { TabBar } from '../../src/components/tab-bar';
+import { sessionStatus } from '../../src/web3/connected-state';
 const open = vi.hoisted(() => vi.fn());
 vi.mock('@reown/appkit/react', () => ({ useAppKit: () => ({ open }) }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/shop' }));
@@ -50,8 +51,7 @@ it('tab bar marks the current destination', () => {
   expect(screen.getByRole('link', { name: 'Play' }).getAttribute('aria-current')).toBeNull();
   expect(screen.getAllByRole('link')).toHaveLength(5);
 });
-it('keeps a signed-in player on a loading screen while their session is restored', async () => {
-  const { sessionStatus } = await import('../../src/web3/connected-state');
+it('keeps a signed-in player on a loading screen while their session is restored', () => {
   expect(sessionStatus({ status: 'disconnected' }, true)).toBe('connecting');
   expect(sessionStatus({ status: 'reconnecting' }, false)).toBe('connecting');
   expect(sessionStatus({ status: 'connected' }, true)).toBe('connected');

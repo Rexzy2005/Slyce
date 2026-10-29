@@ -516,6 +516,7 @@ model AdminAccount {
   id                  String               @id @default(uuid()) @db.Uuid
   externalSubject     String               @unique @db.VarChar(255)
   email               String?              @db.VarChar(320)
+  passwordHash        String?              @db.VarChar(512)
   displayName         String?              @db.VarChar(160)
   role                AdminRole            @default(REVIEWER)
   active              Boolean              @default(true)
@@ -526,8 +527,24 @@ model AdminAccount {
   distributions       RewardDistribution[]
   auditLogs           AuditLog[]
   idempotencyKeys     IdempotencyKey[]
+  sessions            AdminSession[]
 
   @@index([active, role])
+  @@index([email])
+}
+
+model AdminSession {
+  id         String       @id @default(uuid()) @db.Uuid
+  adminId    String       @db.Uuid
+  tokenHash  String       @unique @db.Char(64)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime     @default(now())
+  lastSeenAt DateTime     @default(now())
+  admin      AdminAccount @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, revokedAt, expiresAt])
+  @@index([expiresAt])
 }
 
 model AuditLog {

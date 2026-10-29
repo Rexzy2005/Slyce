@@ -16,7 +16,7 @@ interface AdminRecordStore {
   upsert(args: {
     where: { externalSubject: string };
     create: { externalSubject: string; email?: string; role: 'ADMIN' };
-    update: { email?: string; active: boolean };
+    update: { email?: string };
   }): Promise<unknown>;
 }
 
@@ -48,7 +48,6 @@ export class PrismaPrincipalStore implements PrincipalStore {
       },
       update: {
         ...(principal.email ? { email: principal.email } : {}),
-        active: true,
       },
     });
   }

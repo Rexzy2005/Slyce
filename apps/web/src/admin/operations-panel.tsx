@@ -2,17 +2,13 @@
 
 import { createElement as h, useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Activity, ClipboardList, RefreshCw, Search, ShieldCheck } from 'lucide-react';
-import { apiFetch } from '../api/http';
-import { publicConfig } from '../config/public';
-import { getAdminAuthClient } from './supabase';
+import { adminRequest } from './auth-client';
 
 type Metrics = { generatedAt: string; players: { total: number; active: number }; goodDollar: { verifiedRootIdentities: number }; gameplay: { activeSessions: number; verifiedScores: number }; content: { publishedChallenges: number; publishedBounties: number }; rewards: { pendingReview: number; approved: number; distributionPending: number; distributed: number; failed: number }; health: { database: 'reachable' } };
 type Audit = { id: string; action: string; entityType: string; entityId: string; reason: string | null; createdAt: string; administrator: { email: string | null; displayName: string | null } };
 
 async function adminGet(path: string) {
-  const { data: { session } } = await getAdminAuthClient().auth.getSession();
-  if (!session || !publicConfig.backendUrl) throw new Error('Administrator session is unavailable.');
-  const response = await apiFetch(`${publicConfig.backendUrl}${path}`, { headers: { Authorization: `Bearer ${session.access_token}` }, cache: 'no-store' });
+  const response = await adminRequest(path);
   if (!response.ok) throw new Error(`Operational service returned ${response.status}.`);
   return response.json() as Promise<unknown>;
 }

@@ -3,11 +3,10 @@ import { once } from 'node:events';
 import test from 'node:test';
 import { loadConfig } from '../src/config.js';
 import { requireDatabaseUrl } from '../src/database.js';
-import { adminPlayerListResponseSchema, apiErrorSchema, leaderboardQuerySchema, playerProfileSchema, sessionResponseSchema } from '../src/api/contracts.js';
+import { adminPlayerListResponseSchema, apiErrorSchema, createBountySchema, createChallengeSchema, leaderboardQuerySchema, playerProfileSchema, sessionResponseSchema } from '../src/api/contracts.js';
 import { routePlan } from '../src/api/route-plan.js';
 import { parseRequest, requireIdempotencyKey, RequestValidationError } from '../src/api/validation.js';
 import { FixedWindowRateLimiter, requireAdminRole, requireAllowedAdministratorEmail, requirePlayerOwnership, SecurityError } from '../src/security.js';
-import { requireSupabaseAuthConfig, SupabaseTokenVerifier } from '../src/supabase-auth.js';
 import { createApp } from '../src/server.js';
 import { PrismaPrincipalStore } from '../src/principal-store.js';
 import { PlayerService } from '../src/player-service.js';
@@ -16,6 +15,9 @@ import { compareLeaderboardCandidates, digestReplayInputs, paginateLeaderboardCa
 import { verifyDeploymentEnvironment } from '../src/deployment-preflight.js';
 import { simulateVerifiedFruitSlice, verifiedFruitSliceGameMode, verifiedFruitSliceRulesVersion } from '@slyce/shared/verified-game';
 import { LeaderboardService } from '../src/leaderboard-service.js';
+import { PrismaWalletChallengeStore } from '../src/wallet-auth.js';
+import { createWalletSessionToken, WalletSessionTokenVerifier } from '../src/wallet-auth.js';
+import { isWithinActiveWindow } from '../src/active-window.js';
 
 test('rejects invalid ports before startup', () => {
   assert.throws(() => loadConfig({ PORT: '70000' }), /PORT must be an integer/);
@@ -27,15 +29,15 @@ test('validates the complete production deployment environment', () => {
     NODE_ENV: 'production',
     DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app?sslmode=require',
     DIRECT_URL: 'postgresql://user:pass@db.example.com:5432/app?sslmode=require',
-    SUPABASE_URL: 'https://example.supabase.co',
-    SUPABASE_ANON_KEY: 'anon-key',
-    ADMIN_EMAILS: 'admin@example.com',
+    SLYCE_ADMIN_EMAILS: ' Admin@Example.com, operator@example.com, ADMIN@example.com ',
     CORS_ORIGINS: 'https://app.example.com',
     AUTH_SESSION_SECRET: 'a'.repeat(32),
   };
   assert.doesNotThrow(() => verifyDeploymentEnvironment(valid));
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, DIRECT_URL: '' }), /DIRECT_URL/);
-  assert.throws(() => verifyDeploymentEnvironment({ ...valid, ADMIN_EMAILS: '' }), /ADMIN_EMAILS/);
+  assert.deepEqual(loadConfig(valid).adminEmails, ['admin@example.com', 'operator@example.com']);
+  assert.throws(() => verifyDeploymentEnvironment({ ...valid, SLYCE_ADMIN_EMAILS: '' }), /SLYCE_ADMIN_EMAILS/);
+  assert.throws(() => loadConfig({ SLYCE_ADMIN_EMAILS: 'admin@example.com,not-an-email' }), /valid comma-separated/);
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, CORS_ORIGINS: '' }), /CORS_ORIGINS/);
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, AUTH_SESSION_SECRET: '' }), /AUTH_SESSION_SECRET/);
 });
@@ -43,6 +45,96 @@ test('validates the complete production deployment environment', () => {
 test('requires a runtime database URL without exposing its value', () => {
   assert.throws(() => requireDatabaseUrl({}), /DATABASE_URL is required/);
   assert.equal(requireDatabaseUrl({ DATABASE_URL: 'postgresql://example' }), 'postgresql://example');
+});
+
+test('claims a wallet authentication nonce only once under concurrent consumption', async () => {
+  const now = new Date('2026-10-29T00:00:00.000Z');
+  const challenge = {
+    id: '00000000-0000-4000-8000-000000000099',
+    address: '0x0000000000000000000000000000000000000001',
+    chainId: 42220,
+    nonce: 'single-use-nonce',
+    origin: 'https://good-slice.vercel.app',
+    expiresAt: new Date(now.getTime() + 60_000),
+    consumedAt: null as Date | null,
+  };
+  let claimed = false;
+  const walletAuthChallenge = {
+    updateMany: async ({ where, data }: {
+      where: { nonce: string; consumedAt: null; expiresAt: { gt: Date } };
+      data: { consumedAt: Date };
+    }) => {
+      const eligible = !claimed
+        && where.nonce === challenge.nonce
+        && where.consumedAt === null
+        && challenge.expiresAt > where.expiresAt.gt;
+      if (!eligible) return { count: 0 };
+      claimed = true;
+      challenge.consumedAt = data.consumedAt;
+      return { count: 1 };
+    },
+    findUnique: async ({ where }: { where: { nonce: string } }) => where.nonce === challenge.nonce ? challenge : null,
+  };
+  const store = new PrismaWalletChallengeStore({
+    $transaction: async (operation: (transaction: { walletAuthChallenge: typeof walletAuthChallenge }) => Promise<unknown>) => operation({ walletAuthChallenge }),
+  } as never);
+
+  const results = await Promise.all([store.consume(challenge.nonce, now), store.consume(challenge.nonce, now)]);
+  assert.equal(results.filter(Boolean).length, 1);
+  assert.equal(results.filter(result => result === null).length, 1);
+  assert.equal(challenge.consumedAt, now);
+});
+
+test('rejects stale wallet sessions immediately after player suspension or deletion', async () => {
+  const principal = {
+    subject: '0x0000000000000000000000000000000000000001',
+    kind: 'player' as const,
+    playerId: '00000000-0000-4000-8000-000000000001',
+    roles: [] as const,
+  };
+  const token = createWalletSessionToken(principal, 's'.repeat(32), 1_000);
+  let status: 'ACTIVE' | 'SUSPENDED' | 'DELETED' = 'ACTIVE';
+  const verifier = new WalletSessionTokenVerifier('s'.repeat(32), async () => ({ playerId: principal.playerId, status }), () => 2_000);
+  assert.equal((await verifier.verify(token))?.playerId, principal.playerId);
+  status = 'SUSPENDED';
+  assert.equal(await verifier.verify(token), null);
+  status = 'DELETED';
+  assert.equal(await verifier.verify(token), null);
+});
+
+test('uses half-open activity windows at exact schedule boundaries', () => {
+  const startsAt = new Date('2026-10-29T10:00:00.000Z');
+  const endsAt = new Date('2026-10-29T11:00:00.000Z');
+  assert.equal(isWithinActiveWindow(startsAt, endsAt, new Date(startsAt.getTime() - 1)), false);
+  assert.equal(isWithinActiveWindow(startsAt, endsAt, startsAt), true);
+  assert.equal(isWithinActiveWindow(startsAt, endsAt, new Date(endsAt.getTime() - 1)), true);
+  assert.equal(isWithinActiveWindow(startsAt, endsAt, endsAt), false);
+  assert.equal(isWithinActiveWindow(null, null, endsAt), true);
+});
+
+test('preserves exact 78-digit reward amounts and rejects numeric JSON amounts', () => {
+  const amount = '9'.repeat(78);
+  const challenge = createChallengeSchema.parse({
+    slug: 'precision-challenge',
+    title: 'Precision challenge',
+    description: 'Exact amount',
+    rewardAmount: amount,
+    rules: [{ eventType: 'targets_cut', operator: 'gte', counter: 'targets_cut', threshold: 1 }],
+  });
+  const bounty = createBountySchema.parse({
+    slug: 'precision-bounty',
+    title: 'Precision bounty',
+    description: 'Exact amount',
+    rewardAmount: amount,
+  });
+  assert.equal(challenge.rewardAmount, amount);
+  assert.equal(bounty.rewardAmount, amount);
+  assert.throws(() => createBountySchema.parse({
+    slug: 'unsafe-number', title: 'Unsafe', description: 'Unsafe number', rewardAmount: Number.MAX_SAFE_INTEGER + 1,
+  }));
+  assert.throws(() => createBountySchema.parse({
+    slug: 'too-large', title: 'Too large', description: 'Too many digits', rewardAmount: `1${'0'.repeat(78)}`,
+  }));
 });
 
 test('enforces principal ownership and administrator roles', () => {
@@ -54,31 +146,6 @@ test('enforces principal ownership and administrator roles', () => {
   assert.throws(() => requireAdminRole(reviewer, 'admin'), (error: unknown) => error instanceof SecurityError && error.statusCode === 403);
   assert.doesNotThrow(() => requireAllowedAdministratorEmail({ ...reviewer, email: 'Admin@Example.com' }, ['admin@example.com']));
   assert.throws(() => requireAllowedAdministratorEmail({ ...reviewer, email: 'other@example.com' }, ['admin@example.com']), (error: unknown) => error instanceof SecurityError && error.statusCode === 403);
-});
-
-test('loads Supabase Auth configuration without requiring a service-role key', () => {
-  assert.deepEqual(requireSupabaseAuthConfig({ SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: 'anon' }), {
-    url: 'https://example.supabase.co',
-    anonKey: 'anon',
-  });
-  assert.throws(() => requireSupabaseAuthConfig({ SUPABASE_URL: 'https://example.supabase.co' }), /SUPABASE_URL and SUPABASE_ANON_KEY/);
-});
-
-test('maps verified Supabase users to player or administrator principals', async () => {
-  const client = {
-    auth: {
-      getUser: async (token: string) => token === 'admin-token'
-        ? { data: { user: { id: 'admin-id', email: 'ADMIN@example.com' } }, error: null }
-        : { data: { user: { id: 'player-id', email: 'player@example.com' } }, error: null },
-    },
-  };
-  const verifier = new SupabaseTokenVerifier(client, ['admin@example.com']);
-  assert.deepEqual(await verifier.verify('admin-token'), {
-    subject: 'admin-id', kind: 'administrator', email: 'admin@example.com', roles: ['admin'],
-  });
-  assert.deepEqual(await verifier.verify('player-token'), {
-    subject: 'player-id', kind: 'player', email: 'player@example.com', roles: [], playerId: 'player-id',
-  });
 });
 
 test('maps authenticated principals to persistent records', async () => {
@@ -94,7 +161,7 @@ test('maps authenticated principals to persistent records', async () => {
   assert.deepEqual(calls[1], {
     where: { externalSubject: 'admin-id' },
     create: { externalSubject: 'admin-id', email: 'admin@example.com', role: 'ADMIN' },
-    update: { email: 'admin@example.com', active: true },
+    update: { email: 'admin@example.com' },
   });
 });
 
@@ -390,6 +457,7 @@ test('protects and serves the authenticated session endpoint', async () => {
 
 test('creates and verifies an authenticated deterministic gameplay round', async () => {
     const sessions = new Map<string, Awaited<ReturnType<GameplayService['createSession']>>>();
+    const challengeEvents: Array<Record<string, number | boolean>> = [];
     const scoreId = '00000000-0000-4000-8000-000000000009';
     const replayInputs = [
       { kind: 'pointer' as const, phase: 'down' as const, elapsedMs: 0, x: 0, y: 0 },
@@ -433,6 +501,12 @@ test('creates and verifies an authenticated deterministic gameplay round', async
       walletVerifier: { verify: async token => token === 'valid' ? { subject: 'player-id', kind: 'player', playerId: '00000000-0000-4000-8000-000000000001', roles: [] } : null },
       gameplayService: gameplay,
       scoreVerificationService: verification,
+      challengeService: {
+        evaluateGameplay: async (_playerId: string, event: Record<string, number | boolean>) => {
+          challengeEvents.push(event);
+          return [];
+        },
+      } as never,
     }).listen(0, '127.0.0.1');
     await once(server, 'listening');
     const address = server.address();
@@ -449,11 +523,23 @@ test('creates and verifies an authenticated deterministic gameplay round', async
     const finish = await fetch(`${baseUrl}/${started.id}/finish`, {
       method: 'POST',
       headers: { Authorization: 'Bearer valid', 'Content-Type': 'application/json', 'Idempotency-Key': 'verified-round-123456' },
-      body: JSON.stringify({ inputDigest: digestReplayInputs(replayInputs), score: 0, replayInputs }),
+      body: JSON.stringify({
+        inputDigest: digestReplayInputs(replayInputs),
+        score: 0,
+        replayInputs,
+        breakdown: { targetsCut: 999, bestCombo: 999, bombsCut: 0 },
+      }),
     });
     assert.equal(finish.status, 200);
     const finished = (await finish.json() as { data: { status: string; verificationStatus: string } }).data;
     assert.deepEqual(finished, { status: 'verified', scoreId, score: 0, verificationStatus: 'VERIFIED' });
+    assert.deepEqual(challengeEvents, [{
+      targetsCut: 0,
+      bestCombo: 0,
+      bombsCut: 0,
+      score: 0,
+      roundCompleted: true,
+    }]);
     server.close();
     await once(server, 'close');
 });

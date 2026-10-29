@@ -3,10 +3,8 @@
 import Link from 'next/link';
 import { createElement as h, useEffect, useState } from 'react';
 import { Activity, ArrowUpRight, BarChart3, ClipboardList, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from 'lucide-react';
-import { clearAdminSessionStart, getAdminAuthClient } from '../../admin/supabase';
-import { publicConfig } from '../../config/public';
-import { apiFetch } from '../../api/http';
-import { OperationsPanel } from '../../admin/operations-panel';
+import { signOutAdministrator } from '../../admin/admin-gate';
+import { adminRequest } from '../../admin/auth-client';
 
 const navigation = [
   { label: 'Overview', icon: LayoutDashboard, active: true },
@@ -16,17 +14,11 @@ const navigation = [
 ];
 export default function AdminPage() {
   const [verifiedUsers, setVerifiedUsers] = useState<number | null>(null);
-  const signOut = async () => { await getAdminAuthClient().auth.signOut(); clearAdminSessionStart(); window.location.reload(); };
+  const signOut = signOutAdministrator;
   useEffect(() => {
     let active = true;
     void (async () => {
-      const { data: { session } } = await getAdminAuthClient().auth.getSession();
-      if (!session || !publicConfig.backendUrl) return;
-      const headers = { Authorization: `Bearer ${session.access_token}` };
-      const response = await apiFetch(`${publicConfig.backendUrl}/api/v1/admin/gooddollar/verification-count`, {
-        headers,
-        cache: 'no-store',
-      });
+      const response = await adminRequest('/api/v1/admin/gooddollar/verification-count');
       if (!response.ok || !active) return;
       const body = await response.json() as { data?: { verifiedCount?: number } };
       if (typeof body.data?.verifiedCount === 'number') setVerifiedUsers(body.data.verifiedCount);
@@ -39,7 +31,7 @@ export default function AdminPage() {
       <nav className="admin-nav" aria-label="Admin navigation">
         {navigation.map(({ label, icon: Icon, active }) => <button key={label} className="admin-nav-item" aria-current={active ? 'page' : undefined} disabled={!active}><Icon size={18} /><span>{label}</span>{!active && <span className="admin-soon">Soon</span>}</button>)}
       </nav>
-      <div className="admin-sidebar-footer"><div className="admin-secure-note"><ShieldCheck size={16} /><span>Protected by<br /><strong>Supabase Auth</strong></span></div><button className="admin-nav-item admin-signout" onClick={() => void signOut()}><LogOut size={17} /><span>Sign out</span></button></div>
+      <div className="admin-sidebar-footer"><div className="admin-secure-note"><ShieldCheck size={16} /><span>Protected by<br /><strong>Slyce Admin Auth</strong></span></div><button className="admin-nav-item admin-signout" onClick={() => void signOut()}><LogOut size={17} /><span>Sign out</span></button></div>
     </aside>
     <main className="admin-main" id="main">
       <header className="admin-topbar"><div><p className="eyebrow">TUESDAY · SEASON 05</p><h1>Good morning, operator.</h1></div><div className="admin-top-actions"><span className="admin-live"><Activity size={14} /> Systems nominal</span><button className="admin-icon-button" aria-label="Settings"><Settings size={18} /></button></div></header>
@@ -56,6 +48,11 @@ export default function AdminPage() {
   </div>;
 }
 
-function Metric({ label }: { label: string; value: string; detail: string; tone: string }) {
-  return label === 'Verified GoodDollar users' ? h(OperationsPanel) : null;
+export function Metric({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: string }) {
+  return h('article', { className: `admin-metric admin-tone-${tone}` },
+    h('span', { className: 'admin-metric-icon', 'aria-hidden': true }, h(Activity, { size: 17 })),
+    h('p', null, label),
+    h('strong', null, value),
+    h('small', null, detail),
+  );
 }
