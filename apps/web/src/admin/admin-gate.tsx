@@ -90,7 +90,6 @@ function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
           {error && <p className="admin-modal-error" id="admin-signin-error" role="alert">{error}</p>}
           <button className={`button admin-primary-action ${styles.submit}`} type="submit" disabled={submitting || !email.trim() || !password}>{submitting ? 'Signing in...' : <>Sign in <ArrowRight size={16} aria-hidden="true" /></>}</button>
         </form>
-        <p className="admin-modal-footnote"><ShieldCheck size={14} aria-hidden="true" /> Authentication and authorization are enforced by the Slyce backend.</p>
       </div>
     </section>
     <p className={styles.accessFooter}>Slyce / Operator workspace <span>•</span> Private system</p>
