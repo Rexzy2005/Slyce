@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { adminLogin, adminLogout, adminRequest } from './auth-client';
+import styles from './admin-gate.module.css';
 
-const INITIAL_ADMIN_EMAIL = 'timothypererat2004@gmail.com';
+const INITIAL_ADMIN_EMAIL = '';
 
 export function AdminGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<'loading' | 'signed-out' | 'authenticated' | 'error'>('loading');
@@ -22,13 +23,24 @@ export function AdminGate({ children }: { children: ReactNode }) {
   }, []);
 
   if (state === 'authenticated') return children;
-  if (state === 'loading' || state === 'error') return <main className="admin-access"><div className="admin-access-card">
-    <span className="brand">slyce<span className="brand-dot">/</span></span><p className="eyebrow">OPERATIONS CONSOLE</p>
-    <h1>{state === 'loading' ? 'Checking administrator access.' : 'Admin console unavailable.'}</h1><p className="muted">{message}</p>
-    {state === 'loading' && <div className="admin-loading-bar" aria-label="Loading" />}
-    {state === 'error' && <button className="button secondary" onClick={() => window.location.reload()}>Try again</button>}
-  </div></main>;
+  if (state === 'loading' || state === 'error') return <main className={`admin-access ${styles.access}`}>
+    <div className={`admin-access-card ${styles.statusCard}`} role={state === 'error' ? 'alert' : undefined}>
+      <BrandLockup />
+      <p className="eyebrow">OPERATIONS CONSOLE</p>
+      <h1>{state === 'loading' ? 'Checking administrator access.' : 'Admin console unavailable.'}</h1><p className="muted">{message}</p>
+      {state === 'loading' && <div className="admin-loading-bar" aria-label="Loading" />}
+      {state === 'error' && <button className="button secondary" onClick={() => window.location.reload()}>Try again</button>}
+    </div>
+  </main>;
   return <AdminLogin onAuthenticated={() => setState('authenticated')} />;
+}
+
+function BrandLockup() {
+  return <div className={styles.brandLockup}>
+    <span className="brand">slyce<span className="brand-dot">/</span></span>
+    <span className={styles.brandRule} aria-hidden="true" />
+    <span className={styles.brandContext}>ADMIN ACCESS</span>
+  </div>;
 }
 
 function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
@@ -51,22 +63,38 @@ function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
     finally { setSubmitting(false); }
   };
 
-  return <main className="admin-access"><div className="admin-access-card">
-    <span className="brand">slyce<span className="brand-dot">/</span></span><p className="eyebrow">OPERATIONS CONSOLE</p>
-    <h1>Sign in to Slyce.</h1><p className="muted">Use your approved administrator credentials.</p>
-    <form onSubmit={event => void submit(event)}>
-      <label className="admin-email-label" htmlFor="admin-email">Email address</label>
-      <input id="admin-email" className="admin-email-input" type="email" inputMode="email" autoComplete="username" required value={email} onChange={event => setEmail(event.target.value)} disabled={submitting} />
-      <label className="admin-email-label" htmlFor="admin-password">Password</label>
-      <div className="admin-password-field">
-        <input id="admin-password" className="admin-email-input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} disabled={submitting} aria-describedby={error ? 'admin-signin-error' : undefined} />
-        <button type="button" className="admin-password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)} disabled={submitting}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+  return <main className={`admin-access ${styles.access}`}>
+    <div className={styles.accessGlow} aria-hidden="true" />
+    <section className={styles.accessLayout} aria-label="Slyce administrator sign in">
+      <div className={styles.accessIntro}>
+        <BrandLockup />
+        <p className="eyebrow">SLYCE CONTROL ROOM</p>
+        <h2>Keep every<br /><span>slice fair.</span></h2>
+        <p className={styles.introCopy}>A focused workspace for the people who protect the player experience, verify the signal, and keep the season moving.</p>
+        <div className={styles.signal}><span className={styles.signalDot} /><span>Secure operator channel</span><Sparkles size={14} aria-hidden="true" /></div>
       </div>
-      {error && <p className="admin-modal-error" id="admin-signin-error" role="alert">{error}</p>}
-      <button className="button admin-primary-action" type="submit" disabled={submitting || !email.trim() || !password}>{submitting ? 'Signing in...' : 'Sign in'}</button>
-    </form>
-    <p className="admin-modal-footnote"><ShieldCheck size={14} aria-hidden="true" /> Authentication and authorization are enforced by the Slyce backend.</p>
-  </div></main>;
+      <div className={`admin-access-card ${styles.formCard}`}>
+        <div className={styles.formHeading}>
+          <span className={styles.formIcon}><LockKeyhole size={19} aria-hidden="true" /></span>
+          <div><p className="eyebrow">OPERATOR SIGN-IN</p><span className={styles.formMeta}>Backend-authenticated access</span></div>
+        </div>
+        <h1>Sign in to Slyce.</h1><p className="muted">Use your approved administrator credentials.</p>
+        <form onSubmit={event => void submit(event)} className={styles.form}>
+          <label className="admin-email-label" htmlFor="admin-email">Email address</label>
+          <input id="admin-email" className="admin-email-input" type="email" inputMode="email" autoComplete="username" autoFocus required value={email} onChange={event => setEmail(event.target.value)} disabled={submitting} />
+          <label className="admin-email-label" htmlFor="admin-password">Password</label>
+          <div className={`admin-password-field ${styles.passwordField}`}>
+            <input id="admin-password" className="admin-email-input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} disabled={submitting} aria-describedby={error ? 'admin-signin-error' : undefined} />
+            <button type="button" className="admin-password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)} disabled={submitting}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+          </div>
+          {error && <p className="admin-modal-error" id="admin-signin-error" role="alert">{error}</p>}
+          <button className={`button admin-primary-action ${styles.submit}`} type="submit" disabled={submitting || !email.trim() || !password}>{submitting ? 'Signing in...' : <>Sign in <ArrowRight size={16} aria-hidden="true" /></>}</button>
+        </form>
+        <p className="admin-modal-footnote"><ShieldCheck size={14} aria-hidden="true" /> Authentication and authorization are enforced by the Slyce backend.</p>
+      </div>
+    </section>
+    <p className={styles.accessFooter}>Slyce / Operator workspace <span>•</span> Private system</p>
+  </main>;
 }
 
 export async function signOutAdministrator(): Promise<void> {

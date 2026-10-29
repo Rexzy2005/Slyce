@@ -1,0 +1,98 @@
+.access {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: #07110d;
+}
+
+.access::before,
+.access::after {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  border-radius: 999px;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.access::before {
+  width: min(48vw, 650px);
+  height: min(48vw, 650px);
+  top: -24%;
+  left: -12%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-leaf) 18%, transparent), transparent 68%);
+}
+
+.access::after {
+  width: min(42vw, 520px);
+  height: min(42vw, 520px);
+  right: -15%;
+  bottom: -20%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-mango) 13%, transparent), transparent 68%);
+}
+
+.accessGlow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: .18;
+  background-image: linear-gradient(color-mix(in srgb, var(--color-vine) 50%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--color-vine) 50%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 72%);
+}
+
+.accessLayout {
+  display: grid;
+  grid-template-columns: minmax(260px, .9fr) minmax(360px, 440px);
+  align-items: center;
+  gap: clamp(44px, 8vw, 130px);
+  width: min(100%, 1050px);
+}
+
+.brandLockup { display: flex; align-items: center; gap: 12px; margin-bottom: 58px; }
+.brandLockup :global(.brand) { margin: 0; font-size: 31px; }
+.brandRule { width: 1px; height: 23px; background: var(--color-vine); }
+.brandContext { color: var(--color-mist); font-size: 9px; font-weight: 700; letter-spacing: .16em; }
+
+.accessIntro { max-width: 430px; }
+.accessIntro h2 { margin: 14px 0 18px; color: var(--color-cream); font-size: clamp(42px, 6vw, 74px); line-height: .93; letter-spacing: -.055em; }
+.accessIntro h2 span { color: var(--color-mango); }
+.introCopy { max-width: 360px; margin: 0; color: var(--color-mist); font-size: 14px; line-height: 1.7; }
+.signal { display: inline-flex; align-items: center; gap: 9px; margin-top: 36px; padding: 9px 12px; border: 1px solid var(--color-vine); border-radius: 999px; color: var(--color-mist); background: color-mix(in srgb, var(--color-canopy) 72%, transparent); font-size: 10px; }
+.signal svg { color: var(--color-mango); }
+.signalDot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-leaf); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-leaf) 15%, transparent); }
+
+.formCard { width: 100%; padding: clamp(27px, 4vw, 40px); border-color: color-mix(in srgb, var(--color-mist) 17%, var(--color-vine)); background: linear-gradient(145deg, color-mix(in srgb, var(--color-canopy) 96%, var(--color-leaf)), var(--color-canopy)); box-shadow: 0 26px 90px color-mix(in srgb, var(--color-night) 78%, transparent), inset 0 1px 0 color-mix(in srgb, white 5%, transparent); }
+.formHeading { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+.formIcon { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid color-mix(in srgb, var(--color-mango) 42%, var(--color-vine)); border-radius: 11px; color: var(--color-mango); background: color-mix(in srgb, var(--color-mango) 10%, var(--color-canopy)); }
+.formMeta { display: block; margin-top: 4px; color: var(--color-mist); font-size: 10px; }
+.formCard h1 { margin: 0 0 10px; font-size: 32px; letter-spacing: -.03em; }
+.formCard > .muted { margin: 0; font-size: 12px; line-height: 1.5; }
+.form { margin-top: 28px; }
+.passwordField { position: relative; }
+.passwordField :global(.admin-email-input) { padding-right: 48px; }
+.passwordField :global(.admin-password-toggle) { position: absolute; top: 50%; right: 8px; display: grid; place-items: center; width: 36px; height: 36px; transform: translateY(-50%); border: 0; border-radius: 8px; color: var(--color-mist); background: transparent; }
+.passwordField :global(.admin-password-toggle:hover:not(:disabled)) { color: var(--color-cream); background: color-mix(in srgb, var(--color-vine) 70%, transparent); }
+.passwordField :global(.admin-password-toggle:focus-visible) { outline: 2px solid var(--color-sky); outline-offset: 2px; }
+.submit { gap: 10px; margin-top: 24px; min-height: 52px; }
+.submit svg { transition: transform .2s ease; }
+.submit:hover:not(:disabled) svg { transform: translateX(3px); }
+.statusCard { position: relative; }
+.statusCard .brandLockup { margin-bottom: 36px; }
+.accessFooter { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); margin: 0; color: color-mix(in srgb, var(--color-mist) 70%, transparent); font-size: 9px; letter-spacing: .08em; white-space: nowrap; text-transform: uppercase; }
+.accessFooter span { margin: 0 8px; color: var(--color-mango); }
+
+@media (max-width: 760px) {
+  .accessLayout { grid-template-columns: 1fr; gap: 32px; width: min(100%, 470px); padding-bottom: 30px; }
+  .accessIntro { text-align: center; }
+  .accessIntro .brandLockup { justify-content: center; margin-bottom: 37px; }
+  .accessIntro h2 { font-size: 46px; }
+  .introCopy { margin-inline: auto; font-size: 13px; }
+  .signal { margin-top: 23px; }
+  .formCard { padding: 27px 22px; }
+  .accessFooter { position: static; transform: none; margin-top: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submit svg { transition: none; }
+}

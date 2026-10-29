@@ -387,6 +387,34 @@ test('reflects request origins when the CORS wildcard is explicitly configured',
   await once(server, 'close');
 });
 
+test('completes administrator login through the CSRF-protected cookie route', async () => {
+  const server = createApp({
+    environment: 'test', port: 0, host: '127.0.0.1', corsOrigins: ['https://console.example'],
+    maxRequestBytes: 100_000, rateLimitWindowMs: 60_000, rateLimitMaxRequests: 20, adminEmails: [], goodDollarEnvironment: 'development',
+  }, {
+    adminAuth: {
+      login: async () => ({ token: 'opaque-admin-token', principal: { subject: 'admin-subject', kind: 'administrator', email: 'admin@example.com', roles: ['admin'] } }),
+      logout: async () => undefined,
+      verify: async () => null,
+    },
+  } as never).listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Test server did not bind');
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/v1/admin/auth/login`, {
+    method: 'POST',
+    headers: { Origin: 'https://console.example', 'Content-Type': 'application/json', 'X-Slyce-CSRF': '1' },
+    body: JSON.stringify({ email: 'admin@example.com', password: 'a secure password' }),
+  });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('set-cookie') ?? '', /slyce_admin_session=/);
+  assert.deepEqual((await response.json() as { data: unknown }).data, {
+    status: 'authenticated', kind: 'administrator', subject: 'admin-subject', email: 'admin@example.com',
+  });
+  server.close();
+  await once(server, 'close');
+});
+
 test('validates versioned API query and idempotency contracts', () => {
   assert.deepEqual(leaderboardQuerySchema.parse({ scope: 'today', limit: '10' }), { scope: 'today', limit: 10 });
   assert.throws(() => parseRequest(leaderboardQuerySchema, { scope: 'invalid' }), RequestValidationError);

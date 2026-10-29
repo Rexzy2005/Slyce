@@ -38,6 +38,7 @@ it('shows generic invalid-credentials errors in the form', async () => {
   auth.request.mockResolvedValue(new Response(null, { status: 401 }));
   auth.login.mockResolvedValue(new Response('{}', { status: 401 }));
   render(<AdminGate><p>Console</p></AdminGate>);
+  fireEvent.change(await screen.findByLabelText('Email address'), { target: { value: 'admin@example.com' } });
   fireEvent.change(await screen.findByLabelText('Password'), { target: { value: 'wrong password' } });
   fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
   expect((await screen.findByRole('alert')).textContent).toBe('The email or password is incorrect.');
