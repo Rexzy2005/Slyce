@@ -4,7 +4,7 @@ Draft following the Season 5 application structure. **(proposed)** numbers are t
 
 ## 1. Product
 
-**Slyce** is a mobile-first fruit-slicing arcade, an installable PWA on Celo mainnet built for everyday people, not crypto users. Players sign in with **email** (an embedded wallet is created automatically) or any wallet, play 30-second rounds, and compete in a **daily G$ prize tournament**.
+**Slyce** is a mobile-first fruit-slicing arcade, an installable PWA on Celo mainnet built for everyday people, not crypto users. Players sign in with **email** (an embedded wallet is created automatically) or any wallet, play for free, save each game on Celo for XP, earn G$ for score milestones once verified, and compete in G$ bounties.
 
 - Live app: _TODO: Vercel URL_
 - Live on-chain stats (no sign-in): _TODO: Vercel URL_/stats
@@ -12,39 +12,38 @@ Draft following the Season 5 application structure. **(proposed)** numbers are t
 
 ## 2. G$ integration
 
-Slyce uses four of the six Season 5 integration paths:
-
 | Integration | How it works in Slyce |
 | --- | --- |
-| **Face verification + UBI claim button** | The `/get-gd` tab runs the GoodDollar verification flow and a daily UBI claim inside the app (`@goodsdks/citizen-sdk`). New wallets get CELO for gas from the GoodDollar faucet. |
-| **Identity SDK, used meaningfully** | Only GoodDollar-verified humans can enter prize tournaments, checked on-chain via the Identity contract. Each identity gets one entry per tournament, even across linked wallets, so bots and farmers can't drain pools. |
-| **Pay in G$, with a purpose** | Every round costs 1 G$, and that G$ goes straight into today's prize pool, not to us. Players pay into a pot they can win. |
-| **Rewards in G$** | Daily winners claim the pool on-chain (Merkle claims). Anyone can sponsor a pool in G$. Cosmetic blade trails are sold in G$. |
+| **Face verification + UBI claim button** | The `/get-gd` tab runs GoodDollar verification and the daily UBI claim in-app (`@goodsdks/citizen-sdk`). New wallets get gas from the GoodDollar faucet. |
+| **Identity SDK, used meaningfully** | G$ rewards and bounty entry are only for GoodDollar-verified humans, checked on-chain. Each identity is counted once, even across linked wallets. |
+| **Rewards in G$ (play-to-earn)** | Free to play. Every round saved on Celo earns XP, and score milestones pay G$ (500 → 5, 1,000 → 15, 2,500 → 40, 5,000 → 100 G$), once per day per verified human, from a sponsor-funded pot. |
+| **Bounties in G$** | Time-limited competitions that restart automatically, with G$ prize pools funded by Slyce and sponsors. Winners claim on-chain. Blade cosmetics are sold in G$. |
 
 ## 3. Your product in action — one player's week
 
-1. **Monday:** Ada signs in with her email, verifies with GoodDollar in under a minute, and claims her first daily G$. She also gets free gas.
-2. **Tue–Sat:** each day she claims UBI and plays a few rounds (1 G$ each), watching today's prize pool grow with every round anyone plays. She posts her best score.
-3. **Thursday:** she finishes 2nd and claims 30% of that day's pool in G$.
-4. **Weekend:** she spends G$ on a blade trail to show off.
+1. **Monday:** Ada signs in with her email and plays a free round. She saves it on Celo and earns her first XP.
+2. **Tuesday:** she verifies with GoodDollar in under a minute, claims her daily G$, and hits the 1,000-point milestone for 20 G$.
+3. **Wed–Sat:** she keeps her daily streak going, chases the next milestone, and joins this week's bounty.
+4. **Sunday:** she places in the top three and claims her bounty prize, then buys a blade trail with G$ and shares her public profile.
 
-**Reason to return (beyond rewards):** a fresh daily tournament with a live pool and a countdown; the daily UBI claim lives in the same app; personal bests, combos and cosmetics; and quick, satisfying rounds on a phone.
+**Reason to return (beyond rewards):** daily streaks, rising XP and personal bests, a bounty that always has a live leaderboard and countdown, the daily UBI claim in the same app, and quick, satisfying rounds on a phone.
 
-**Goal (proposed):** 25% of verified players return in a given week (W1 → W4 weekly retention ≥ 25%).
+**Goal (proposed):** 25% of verified players return each week.
 
-**Use:** 1 G$ per round goes into the prize pool; cosmetics are bought in G$; pools can be sponsored in G$.
+**Use:** G$ is spent on cosmetics and sponsored into bounty pools.
 
-**Goal (proposed):** 50,000 G$ used in-game over the season (rounds + shop + sponsorship).
+**Goal (proposed):** 20,000 G$ used in-game over the season.
 
-**Earn:** top daily scores win the pool, split 50/30/20; plus daily UBI claimed in-app.
+**Earn:** milestone rewards for verified humans, bounty prizes, and daily UBI claimed in-app.
 
-**Goal (proposed):** 300 unique verified players win G$ prizes over the season.
+**Goal (proposed):** 500 unique verified players earn G$ in-game over the season.
 
 **Ideas:**
-- Stream prize pools to winners with **G$ Superfluid streams**.
-- Route a share of play fees to the **GoodDollar UBI Pool**.
-- Community-funded challenge pools via **GoodCollective**.
+- G$ streak bonuses via **Superfluid streams**.
+- A share of shop revenue to the **GoodDollar UBI Pool**.
+- **GoodCollective** community bounty pools.
 - Referral rewards for verified friends.
+- Backend replay-verified scores for bigger rewards.
 
 ## 4. Season goals (proposed)
 
@@ -52,10 +51,10 @@ Slyce uses four of the six Season 5 integration paths:
 | --- | --- | --- |
 | GoodDollar-verified players | 100 | 1,000 |
 | Weekly retention (verified) | 20% | 25% |
-| Paid rounds (`SlyceArcade.totalRounds`) | 2,000 | 50,000 |
-| G$ routed into prize pools (`PoolFundedByPlay`) | 2,000 G$ | 50,000 G$ |
-| Unique prize winners (`PrizeClaimed`) | 20 | 300 |
-| Daily tournaments run | 14 | 90 |
+| Games recorded on Celo (`GameRecorded`) | 2,000 | 50,000 |
+| G$ earned by players (`MilestoneRewarded` + `PrizeClaimed`) | 2,000 G$ | 50,000 G$ |
+| Unique verified players earning G$ | 30 | 500 |
+| Bounties run | 14 | 90 |
 
 ## 5. Season plan (two-week milestones)
 
@@ -75,7 +74,7 @@ Slyce uses four of the six Season 5 integration paths:
   - SlyceShop `0x091606F02607222D5DF21DBf3C25939102528Cc1`
 
   All are UUPS proxies, owned by `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`.
-- Tracking: the public `/stats` page reads contract state live. Events to index: `RoundPaid`, `PoolFundedByPlay`, `Entered`, `ScoreSubmitted`, `ResultsPosted`, `PrizeClaimed`, `Purchased`.
+- Tracking: the public `/stats` page reads contract state live. Events to index: `GameRecorded`, `MilestoneRewarded`, `Entered`, `ScoreSubmitted`, `ResultsPosted`, `PrizeClaimed`, `Purchased`.
 
 ## 7. Team
 
