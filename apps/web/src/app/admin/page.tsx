@@ -13,7 +13,6 @@ import {
   Gift,
   LayoutDashboard,
   LogOut,
-  Settings,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -104,8 +103,12 @@ export default function AdminPage() {
             <span className="admin-live">
               <Activity size={14} /> Systems nominal
             </span>
-            <button className="admin-icon-button" aria-label="Settings">
-              <Settings size={18} />
+            <button
+              className="admin-icon-button admin-mobile-signout"
+              aria-label="Sign out"
+              onClick={() => void signOut()}
+            >
+              <LogOut size={18} />
             </button>
           </div>
         </header>

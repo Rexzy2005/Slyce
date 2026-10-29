@@ -107,6 +107,7 @@
 :global(.admin-live) { min-height: 30px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--color-leaf) 32%, var(--color-vine)); border-radius: 999px; background: color-mix(in srgb, var(--color-leaf) 8%, transparent); font-size: 10px; font-weight: 700; }
 :global(.admin-icon-button) { border-radius: 11px; background: color-mix(in srgb, var(--color-canopy) 72%, transparent); transition: border-color .2s ease, color .2s ease, transform .2s ease; }
 :global(.admin-icon-button:hover) { color: var(--color-cream); border-color: var(--color-mist); transform: translateY(-1px); }
+:global(.admin-mobile-signout) { display: none; }
 
 :global(.admin-section) { margin-top: 34px; }
 :global(.admin-section-heading) { align-items: flex-start; margin-bottom: 16px; }
@@ -147,6 +148,7 @@
   :global(.admin-topbar) { min-height: 88px; }
   :global(.admin-topbar h1) { font-size: 21px; }
   :global(.admin-topbar-subtitle) { margin-top: 6px; font-size: 10px; }
+  :global(.admin-mobile-signout) { display: grid; color: var(--color-melon); border-color: color-mix(in srgb, var(--color-melon) 30%, var(--color-vine)); }
   :global(.admin-section) { margin-top: 22px; }
   :global(.admin-section-heading) { margin-bottom: 13px; }
   :global(.admin-section-heading h2) { font-size: 20px; }
