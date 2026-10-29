@@ -3,6 +3,8 @@ import { createContext, useContext } from 'react';
 import type { Address } from 'viem';
 export interface WalletState {
   status: 'unavailable' | 'disconnected' | 'connecting' | 'connected' | 'error';
+  /** True only inside the mounted wallet provider: wagmi/AppKit hooks are safe to call. */
+  live?: boolean;
   address?: Address;
   wrongNetwork: boolean;
   message?: string;

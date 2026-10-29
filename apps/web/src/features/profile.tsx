@@ -12,7 +12,7 @@ export function Profile() {
   useEffect(() => setBests(difficulties.map(readBestScore)), []);
   return <><WalletPanel />
     <section className="panel"><p className="eyebrow">PRACTICE BESTS · THIS DEVICE</p><dl className="stat-grid">{difficulties.map((difficulty, index) => <div key={difficulty}><dt>{difficulty}</dt><dd>{bests[index]?.toLocaleString() ?? '—'}</dd></div>)}</dl></section>
-    {wallet.status !== 'unavailable' && wallet.status === 'connected' ? <Collection /> : <section className="panel"><EmptyState title="Your collection"><p>Connect your wallet to see the blades you own.</p></EmptyState></section>}</>;
+    {wallet.live && wallet.status === 'connected' ? <Collection /> : <section className="panel"><EmptyState title="Your collection"><p>Connect your wallet to see the blades you own.</p></EmptyState></section>}</>;
 }
 function Collection() {
   const { items, reads } = useShopItems();

@@ -31,7 +31,7 @@ export function useShopItems() {
 export function Shop() {
   const wallet = useWallet();
   // Wagmi hooks need the wallet provider, which only mounts when Web3 is configured.
-  if (wallet.status === 'unavailable') return <section className="panel"><EmptyState title="The market is getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
+  if (!wallet.live) return <section className="panel"><EmptyState title="The market is getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
   return <Market />;
 }
 function Market() {

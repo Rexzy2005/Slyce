@@ -26,7 +26,7 @@ async function fetchResults(id: bigint, signal: AbortSignal) {
 }
 export function Rewards() {
   const wallet = useWallet();
-  if (wallet.status === 'unavailable') return <section className="panel"><EmptyState icon="gift" title="Rewards are getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
+  if (!wallet.live) return <section className="panel"><EmptyState icon="gift" title="Rewards are getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
   return <TournamentPrizes />;
 }
 function TournamentPrizes() {

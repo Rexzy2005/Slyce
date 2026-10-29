@@ -1,54 +1,77 @@
-# GoodBuilders Season 5 — Slyce Application Draft
+# GoodBuilders Season 5 — Slyce Application
 
-Draft for the team to edit. Numbers marked **(proposed)** are targets to agree with the GoodBuilders team. Contract addresses are filled in after the real-G$ deployment.
+Draft following the Season 5 application structure. **(proposed)** numbers are to be aligned with the GoodBuilders team on Flow State. Fill in the `_TODO_` items before submitting.
 
-## Product
+## 1. Product
 
-Slyce is a mobile-first fruit-slicing arcade PWA on Celo. Players sign in with email (embedded wallet) or any wallet, play quick rounds, and compete in a daily G$ prize tournament.
+**Slyce** is a mobile-first fruit-slicing arcade, an installable PWA on Celo mainnet built for everyday people, not crypto users. Players sign in with **email** (an embedded wallet is created automatically) or any wallet, play 30-second rounds, and compete in a **daily G$ prize tournament**.
 
-## What value it creates, and how G$ supports it
+- Live app: _TODO: Vercel URL_
+- Live on-chain stats (no sign-in): _TODO: Vercel URL_/stats
+- Code: https://github.com/Rexzy2005/Slyce
 
-- **G$ is the game economy, not only checkout.** Every round costs 1 G$, and while the daily tournament is open that G$ goes straight into its prize pool (`SlyceArcade` → `SlyceTournament`). The best scores win the pool and claim it on-chain.
-- **UBI → play → win loop.** New players verify with GoodDollar inside the app (`/get-gd`), claim daily G$ UBI and receive gas from the GoodDollar faucet. That G$ funds their rounds; winners take G$ home.
-- **Spend:** cosmetic blade trails in G$ (`SlyceShop`). Sponsors and the team can top up any prize pool (`sponsor`).
+## 2. G$ integration
 
-## Why users come back (beyond rewards)
+Slyce uses four of the six Season 5 integration paths:
 
-- A new daily tournament with a live, growing prize pool and a deadline.
-- The daily GoodDollar UBI claim brings players back once a day; claiming and playing happen in the same app.
-- Personal bests per difficulty, combos, and blade cosmetics to show off.
-- Server-verified scores and leaderboards from the Slyce backend (deterministic replay).
+| Integration | How it works in Slyce |
+| --- | --- |
+| **Face verification + UBI claim button** | The `/get-gd` tab runs the GoodDollar verification flow and a daily UBI claim inside the app (`@goodsdks/citizen-sdk`). New wallets get CELO for gas from the GoodDollar faucet. |
+| **Identity SDK, used meaningfully** | Only GoodDollar-verified humans can enter prize tournaments, checked on-chain via the Identity contract. Each identity gets one entry per tournament, even across linked wallets, so bots and farmers can't drain pools. |
+| **Pay in G$, with a purpose** | Every round costs 1 G$, and that G$ goes straight into today's prize pool, not to us. Players pay into a pot they can win. |
+| **Rewards in G$** | Daily winners claim the pool on-chain (Merkle claims). Anyone can sponsor a pool in G$. Cosmetic blade trails are sold in G$. |
 
-## Season goals (proposed)
+## 3. Your product in action — one player's week
+
+1. **Monday:** Ada signs in with her email, verifies with GoodDollar in under a minute, and claims her first daily G$. She also gets free gas.
+2. **Tue–Sat:** each day she claims UBI and plays a few rounds (1 G$ each), watching today's prize pool grow with every round anyone plays. She posts her best score.
+3. **Thursday:** she finishes 2nd and claims 30% of that day's pool in G$.
+4. **Weekend:** she spends G$ on a blade trail to show off.
+
+**Reason to return (beyond rewards):** a fresh daily tournament with a live pool and a countdown; the daily UBI claim lives in the same app; personal bests, combos and cosmetics; and quick, satisfying rounds on a phone.
+
+**Goal (proposed):** 25% of verified players return in a given week (W1 → W4 weekly retention ≥ 25%).
+
+**Use:** 1 G$ per round goes into the prize pool; cosmetics are bought in G$; pools can be sponsored in G$.
+
+**Goal (proposed):** 50,000 G$ used in-game over the season (rounds + shop + sponsorship).
+
+**Earn:** top daily scores win the pool, split 50/30/20; plus daily UBI claimed in-app.
+
+**Goal (proposed):** 300 unique verified players win G$ prizes over the season.
+
+**Ideas:**
+- Stream prize pools to winners with **G$ Superfluid streams**.
+- Route a share of play fees to the **GoodDollar UBI Pool**.
+- Community-funded challenge pools via **GoodCollective**.
+- Referral rewards for verified friends.
+
+## 4. Season goals (proposed)
 
 | Metric | 2 weeks | End of season |
 | --- | --- | --- |
 | GoodDollar-verified players | 100 | 1,000 |
-| Weekly active players | 50 | 400 |
-| D7 retention | 20% | 30% |
+| Weekly retention (verified) | 20% | 25% |
 | Paid rounds (`SlyceArcade.totalRounds`) | 2,000 | 50,000 |
-| G$ routed into prize pools | 2,000 G$ | 50,000 G$ |
-| G$ paid out to winners (`PrizeClaimed`) | 1,500 G$ | 40,000 G$ |
+| G$ routed into prize pools (`PoolFundedByPlay`) | 2,000 G$ | 50,000 G$ |
+| Unique prize winners (`PrizeClaimed`) | 20 | 300 |
 | Daily tournaments run | 14 | 90 |
 
-## Verifiable on-chain data (Celo mainnet, 42220)
+## 5. Season plan (two-week milestones)
 
-Real G$: `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`
+1. Real-G$ contracts live, daily tournament every day, `/stats` public.
+2. Winners decided from **server-verified scores**, using deterministic replay in the Slyce backend.
+3. Onboarding funnel (sign-in → verify → first round) measured and improved.
+4. Streak rewards and referral rewards for verified humans.
+5. Superfluid-streamed prizes; sponsor pools for community events.
+6. A UBI Pool fee share, then a final Demo Day.
 
-| Contract | Address |
-| --- | --- |
-| SlyceArcade | _fill after deploy_ |
-| SlyceTournament | _fill after deploy_ |
-| SlyceShop | _fill after deploy_ |
+## 6. Data
 
-Events to track: `RoundPaid`, `PoolFundedByPlay`, `Entered`, `ScoreSubmitted`, `ResultsPosted`, `PrizeClaimed`, `Purchased`.
+- Chain: Celo mainnet (42220). G$: `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`.
+- Contracts: SlyceArcade _TODO_, SlyceTournament _TODO_, SlyceShop _TODO_ (see `contracts/README.md`).
+- Tracking: the public `/stats` page reads contract state live. Events to index: `RoundPaid`, `PoolFundedByPlay`, `Entered`, `ScoreSubmitted`, `ResultsPosted`, `PrizeClaimed`, `Purchased`.
 
-## Two-week targets (first cycle)
+## 7. Team
 
-1. Real-G$ contracts live; daily tournament running every day.
-2. Onboarding funnel: sign-in → GoodDollar verify → first paid round. Measure and fix drop-off.
-3. Tournament results posted from backend-verified scores instead of self-reported ones.
-
-## Commitment
-
-Two-week targets, weekly 1:1s, every Demo Day, and progress updates on Flow State for the full season.
+_TODO: names, roles and weekly hours._ We commit to two-week targets, weekly 1:1s, every Demo Day and progress updates on Flow State for the full season.

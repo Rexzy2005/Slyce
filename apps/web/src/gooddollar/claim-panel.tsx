@@ -22,7 +22,7 @@ export function ClaimPanel() {
   const wallet = useWallet();
   const availability = goodDollarAvailability(publicConfig);
   if (availability.status === 'blocked') return <section className="panel"><EmptyState icon="leaf" title="Daily G$ is not available here"><p>{availability.reason}</p></EmptyState></section>;
-  if (wallet.status === 'unavailable') return <section className="panel"><EmptyState icon="leaf" title="Daily G$ is not available here"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
+  if (!wallet.live) return <section className="panel"><EmptyState icon="leaf" title="Daily G$ is not available here"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
   if (wallet.status !== 'connected' || !wallet.address) return <section className="panel"><EmptyState icon="leaf" title="Connect to claim daily G$"><p>Verified GoodDollar members can claim free G$ every day.</p></EmptyState></section>;
   if (wallet.wrongNetwork) return <section className="panel"><EmptyState icon="leaf" title="Switch to Celo"><p>GoodDollar claims run on Celo. Switch your wallet's network to continue.</p></EmptyState></section>;
   return <Claimer env={availability.env} />;

@@ -50,6 +50,7 @@ export function ConnectedState({ children }: { children: ReactNode }) {
     : typeof raw === 'bigint' && typeof decimals === 'number' ? { status: 'ready', formatted: formatTokenAmount(raw, decimals), raw }
     : { status: 'loading' };
   const value: WalletState = {
+    live: true,
     status: sessionStatus(account, restoring),
     ...(account.address ? { address: account.address } : {}), wrongNetwork, balance: balanceState,
     gas: native.data === undefined ? 'unknown' : native.data.value < lowGas ? 'low' : 'ok',

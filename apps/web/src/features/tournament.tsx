@@ -25,7 +25,7 @@ export function formatRemaining(seconds: number): string {
 }
 export function Tournament() {
   const wallet = useWallet();
-  if (wallet.status === 'unavailable') return <section className="panel"><EmptyState icon="trophy" title="Tournaments are getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
+  if (!wallet.live) return <section className="panel"><EmptyState icon="trophy" title="Tournaments are getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
   return <CurrentTournament />;
 }
 function CurrentTournament() {
@@ -45,6 +45,7 @@ function CurrentTournament() {
     query: { enabled: !!address && !!id },
   });
   const submit = useContractWrite();
+  const human = useVerifiedHuman(address);
   const [practiceBest, setPracticeBest] = useState<number | null>(null);
   useEffect(() => setPracticeBest(readBestScore('normal')), []);
   if (!address) return <section className="panel"><EmptyState icon="trophy" title="Tournaments are getting ready"><p>The tournament contract is not configured for this environment.</p></EmptyState></section>;
@@ -69,7 +70,9 @@ function CurrentTournament() {
     {!signedIn ? <p className="muted" role="status">Connect your wallet to enter.</p>
       : phase === 'cancelled' ? <Refund id={id} address={address} onDone={() => reads.refetch()} />
       : !entered ? phase === 'open' && !full
-        ? <TokenSpend spender={address} amount={entryFee} label={entryFee === 0n ? 'Enter for free' : 'Enter for ' + formatTokenAmount(entryFee, gdDecimals) + ' G$'} call={{ address, abi: tournamentAbi, functionName: 'enter', args: [id] }} onConfirmed={() => reads.refetch()} />
+        ? human === 'unverified'
+          ? <div className="entered-state"><p><strong>Prizes are for verified humans.</strong> Verify once with GoodDollar (a quick face check) to enter. You'll also unlock free daily G$.</p><Link className="button" href="/get-gd">Verify with GoodDollar</Link></div>
+          : <TokenSpend spender={address} amount={entryFee} label={entryFee === 0n ? 'Enter for free' : 'Enter for ' + formatTokenAmount(entryFee, gdDecimals) + ' G$'} call={{ address, abi: tournamentAbi, functionName: 'enter', args: [id] }} onConfirmed={() => reads.refetch()} />
         : <p className="muted">{full ? 'This tournament is full.' : 'Entries are closed for this tournament.'}</p>
       : <div className="entered-state"><p><strong className="leaf">You're in.</strong> Your submitted score: <strong>{submitted > 0 ? submitted.toLocaleString() : 'none yet'}</strong></p>
         {phase === 'open' && <><p className="muted">Your best Normal-difficulty practice score on this device: <strong>{practiceBest?.toLocaleString() ?? 'none yet'}</strong></p>
@@ -77,7 +80,7 @@ function CurrentTournament() {
             <button className="button" disabled={!canSubmit || !submit.ready || !['idle', 'success', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => { if (practiceBest !== null) void submit.execute({ address, abi: tournamentAbi, functionName: 'submitScore', args: [id, practiceBest] }, { onConfirmed: () => reads.refetch() }); }}>Submit {practiceBest?.toLocaleString() ?? ''}</button></div>
           {submit.state.status !== 'idle' && <TransactionStatus state={submit.state} />}</>}
         {phase === 'results' && <Link className="button" href="/rewards">Check your rewards</Link>}</div>}
-    <p className="muted fine-print">Tournament play uses Normal difficulty. Scores are self-reported from your device and reviewed by the Slyce operator, who posts the winners on-chain after the tournament closes. Default split: 50% / 30% / 20% of the pool to the top three.</p>
+    <p className="muted fine-print">Tournament play uses Normal difficulty. Scores are self-reported from your device and reviewed by the Slyce operator, who posts the winners on-chain after the tournament closes. Default split: 50% / 30% / 20% of the pool to the top three. One entry per GoodDollar-verified human. Every paid round grows the pool.</p>
   </section>;
 }
 function Refund({ id, address, onDone }: { id: bigint; address: `0x${string}`; onDone: () => Promise<unknown> }) {
@@ -89,4 +92,17 @@ function Refund({ id, address, onDone }: { id: bigint; address: `0x${string}`; o
   return <div className="entered-state"><p>This tournament was cancelled. Entry fees and sponsorships are refunded in full.</p>
     <button className="button" disabled={!write.ready || !['idle', 'success', 'rejected', 'failed'].includes(write.state.status)} onClick={() => void write.execute({ address, abi: tournamentAbi, functionName: 'refund', args: [id] }, { onConfirmed: async () => { await Promise.all([refunded.refetch(), onDone()]); } })}>Claim refund</button>
     {write.state.status !== 'idle' && <TransactionStatus state={write.state} />}</div>;
+}
+const identityAbi = [{ type: 'function', name: 'getWhitelistedRoot', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'address' }] }] as const;
+/** Mirrors SlyceTournament's on-chain gate: 'open' when no Identity is set, else whether the wallet is a verified human. */
+function useVerifiedHuman(tournament: `0x${string}` | undefined): 'open' | 'verified' | 'unverified' | 'unknown' {
+  const account = useAccount();
+  const chain = publicConfig.network ? chainFor(publicConfig.network) : undefined;
+  const gate = useReadContract({ address: tournament, abi: tournamentAbi, functionName: 'identity', chainId: chain?.id, query: { enabled: !!tournament && !!chain } });
+  const gated = !!gate.data && gate.data !== zero;
+  const root = useReadContract({ address: gated ? gate.data : undefined, abi: identityAbi, functionName: 'getWhitelistedRoot', args: account.address ? [account.address] : undefined, chainId: chain?.id, query: { enabled: gated && !!account.address } });
+  if (gate.data === undefined) return 'unknown';
+  if (!gated) return 'open';
+  if (root.data === undefined) return 'unknown';
+  return root.data === zero ? 'unverified' : 'verified';
 }

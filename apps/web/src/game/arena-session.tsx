@@ -13,7 +13,7 @@ const payGate = (start: () => void) => <PayToPlay onPaid={start} />;
  */
 export function ArenaSession() {
   const wallet = useWallet();
-  return <>{wallet.status === 'unavailable' ? <GameHost /> : <PaidHost />}<VerifiedMode /></>;
+  return <>{wallet.live ? <PaidHost /> : wallet.status === 'unavailable' ? <GameHost /> : null}<VerifiedMode /></>;
 }
 function PaidHost() {
   const { items } = useShopItems();

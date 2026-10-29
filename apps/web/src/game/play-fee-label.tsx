@@ -9,7 +9,7 @@ import { formatTokenAmount } from '../web3/units';
 import { usePrizePool } from './prize-pool';
 export function PlayFeeLabel() {
   const wallet = useWallet();
-  return wallet.status === 'unavailable' ? null : <Fee />;
+  return wallet.live ? <Fee /> : null;
 }
 function Fee() {
   const arcade = contractsFor(publicConfig).arcade;

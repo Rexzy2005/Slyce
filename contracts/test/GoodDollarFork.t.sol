@@ -71,4 +71,19 @@ contract GoodDollarForkTest is Test {
         assertEq(t.getTournament(id).pool, 3 ether);
         assertEq(GD.balanceOf(address(t)), t.liabilities());
     }
+
+    /// Real GoodDollar Identity: a recent UBI claimer is a verified human; a fresh address is not.
+    function test_realIdentityGatesTournamentEntry() public {
+        address identity = 0xC361A6E67822a0EDc17D899227dd9FC50BD62F42;
+        address human = 0xe380a52aA6d57d60Aba5b9eBd5a799402EF94C64;
+        SlyceTournament t = SlyceTournament(address(new ERC1967Proxy(address(new SlyceTournament()), abi.encodeCall(SlyceTournament.initialize, (GD, treasury, address(this))))));
+        t.setIdentity(identity);
+        uint256 id = t.createTournament(uint64(block.timestamp), uint64(block.timestamp + 1 days), 0, 0);
+        vm.prank(player);
+        vm.expectRevert(SlyceTournament.NotVerifiedHuman.selector);
+        t.enter(id);
+        vm.prank(human);
+        t.enter(id);
+        assertTrue(t.entered(id, human));
+    }
 }

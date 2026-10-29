@@ -6,6 +6,11 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {SlyceBase} from "./SlyceBase.sol";
 
+/// @notice GoodDollar Identity: returns the verified root identity of an account (zero if not a verified human).
+interface IGoodDollarIdentity {
+    function getWhitelistedRoot(address account) external view returns (address);
+}
+
 /// @title Slyce Tournament (UUPS)
 /// @notice Holds G$ entry fees and sponsorships per tournament. Entrants submit self-reported scores; after
 /// the end the owner (operator) posts a Merkle root of prizes and winners claim with a proof. The contract
@@ -40,6 +45,8 @@ contract SlyceTournament is SlyceBase {
         mapping(uint256 id => mapping(address account => bool)) refunded;
         address arcade; // the only contract allowed to add play fees to a prize pool
         uint256 prizeTournament; // tournament whose pool receives play fees while it is open
+        IGoodDollarIdentity identity; // when set, only GoodDollar-verified humans may enter, once per human
+        mapping(uint256 id => mapping(address root => bool)) rootEntered;
     }
 
     // keccak256(abi.encode(uint256(keccak256("slyce.storage.Tournament")) - 1)) & ~bytes32(uint256(0xff))
@@ -66,6 +73,7 @@ contract SlyceTournament is SlyceBase {
     event PrizeTournamentChanged(uint256 indexed id);
     /// @notice Play fees routed into a prize pool by the arcade. Recorded as treasury sponsorship (refundable on cancel).
     event PoolFundedByPlay(uint256 indexed id, uint128 amount);
+    event IdentityChanged(address indexed identity);
 
     error InvalidSchedule();
     error InvalidFee();
@@ -89,6 +97,8 @@ contract SlyceTournament is SlyceBase {
     error ExceedsSurplus(uint256 amount, uint256 surplus);
     error NotArcade();
     error NoOpenPrizeTournament();
+    error NotVerifiedHuman();
+    error HumanAlreadyEntered(uint256 id, address root);
 
     function initialize(IERC20 token_, address treasury_, address owner_) external initializer {
         __SlyceBase_init(token_, treasury_, owner_);
@@ -132,6 +142,10 @@ contract SlyceTournament is SlyceBase {
         return _store().refunded[id][account];
     }
 
+    function identity() external view returns (address) {
+        return address(_store().identity);
+    }
+
     function arcade() external view returns (address) {
         return _store().arcade;
     }
@@ -151,6 +165,12 @@ contract SlyceTournament is SlyceBase {
     }
 
     // ----- Owner -----
+
+    /// @notice GoodDollar Identity contract (zero disables the verified-human requirement).
+    function setIdentity(address identity_) external onlyOwner {
+        _store().identity = IGoodDollarIdentity(identity_);
+        emit IdentityChanged(identity_);
+    }
 
     function setArcade(address arcade_) external onlyOwner {
         _store().arcade = arcade_;
@@ -261,6 +281,14 @@ contract SlyceTournament is SlyceBase {
         Tournament storage t = _open(id);
         if ($.entered[id][msg.sender]) revert AlreadyEntered(id);
         if (t.maxEntrants != 0 && t.entrants >= t.maxEntrants) revert TournamentFull(id);
+        IGoodDollarIdentity gate = $.identity;
+        if (address(gate) != address(0)) {
+            // Prizes go to verified unique humans: one entry per GoodDollar identity, even across linked wallets.
+            address root = gate.getWhitelistedRoot(msg.sender);
+            if (root == address(0)) revert NotVerifiedHuman();
+            if ($.rootEntered[id][root]) revert HumanAlreadyEntered(id, root);
+            $.rootEntered[id][root] = true;
+        }
         $.entered[id][msg.sender] = true;
         t.entrants += 1;
         t.pool += t.entryFee;

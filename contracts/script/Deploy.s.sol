@@ -10,7 +10,8 @@ import {SlyceArcade} from "../src/SlyceArcade.sol";
 
 /// Deploys every contract behind a UUPS (ERC-1967) proxy and lists the shop catalog
 /// (item ids must match apps/web/src/features/catalog.ts).
-/// Env: GD_TOKEN, TREASURY, PLAY_FEE (G$ wei, default 1 G$), OWNER (optional; must later call acceptOwnership()).
+/// Env: GD_TOKEN, TREASURY, PLAY_FEE (G$ wei, default 1 G$), IDENTITY (GoodDollar Identity; recommended),
+/// OWNER (optional; must later call acceptOwnership()).
 contract Deploy is Script {
     function run() external returns (SlyceShop shop, SlyceTournament tournament, SlyceArcade arcade) {
         IERC20 token = IERC20(vm.envAddress("GD_TOKEN"));
@@ -30,6 +31,9 @@ contract Deploy is Script {
         // Every paid round grows the open daily prize pool (see CreateTournament.s.sol).
         tournament.setArcade(address(arcade));
         arcade.setPrizePool(address(tournament));
+        // Only GoodDollar-verified humans can enter prize tournaments (production Identity: docs/research/gooddollar.md).
+        address identity = vm.envOr("IDENTITY", address(0));
+        if (identity != address(0)) tournament.setIdentity(identity);
         if (owner != deployer) {
             shop.transferOwnership(owner);
             tournament.transferOwnership(owner);

@@ -11,6 +11,7 @@
 | [ADR-0005 — Upgradeable contracts, sign-in, paid rounds, app shell](ADR-0005-app-shell-signin-upgradeable.md) | Accepted | UUPS + strict contracts, SlyceArcade play fee, Reown AppKit email/wallet sign-in, app-style shell, Slyce rename. |
 | [ADR-0006 — Drop balance-delta checks for G$](ADR-0006-gd-transfer-gas.md) | Accepted | Halves gas per payment (G$ balanceOf ≈160k gas); token fixed at init. |
 | [ADR-0007 — Play fees fund the daily prize pool](ADR-0007-play-fees-fund-prize-pool.md) | Accepted | Arcade routes each G$ round fee into the open prize tournament; winners claim it. |
+| [ADR-0008 — Verified humans only for prizes](ADR-0008-verified-humans-only-prizes.md) | Accepted | GoodDollar Identity gate on tournament entry; one entry per human. |
 
 The statuses above match their ADRs exactly. The [active execution plan](../exec-plans/active/current.md) records the user-authorized implementation scope; agent installation/server startup remain prohibited. Supporting research is [dependency-baseline.md](../research/dependency-baseline.md), not the nonexistent `frontend-dependency-baseline.md` named in the ADR source field.
 

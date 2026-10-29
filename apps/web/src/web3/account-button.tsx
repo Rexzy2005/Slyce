@@ -5,7 +5,7 @@ import { useWallet } from './context';
 /** Opens the Reown modal: sign in when disconnected, account details when connected. */
 export function AccountButton() {
   const wallet = useWallet();
-  if (wallet.status === 'unavailable') return <span className="account-chip muted" title={wallet.message}><Icon name="wallet" />Offline mode</span>;
+  if (!wallet.live) return <span className="account-chip muted" title={wallet.message}><Icon name="wallet" />Offline mode</span>;
   return <ConnectedAccountButton />;
 }
 function ConnectedAccountButton() {

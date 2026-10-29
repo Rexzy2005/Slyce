@@ -59,7 +59,7 @@ You need CELO for gas. The G$ token must match `NEXT_PUBLIC_GOODDOLLAR_ENV` (`do
 
 ```bash
 cast wallet import slyce-owner --interactive          # encrypted keystore; never commit keys
-GD_TOKEN=0x... TREASURY=0x... PLAY_FEE=1000000000000000000 [OWNER=0xMultisig] \
+GD_TOKEN=0x... TREASURY=0x... IDENTITY=0xC361A6E67822a0EDc17D899227dd9FC50BD62F42 PLAY_FEE=1000000000000000000 [OWNER=0xMultisig] \
   forge script script/Deploy.s.sol --rpc-url https://forno.celo.org --account slyce-owner --broadcast
 ```
 

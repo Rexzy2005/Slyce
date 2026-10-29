@@ -11,7 +11,7 @@ vi.mock('@reown/appkit/react', () => ({ useAppKit: () => ({ open }) }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/shop' }));
 vi.mock('next/image', () => ({ default: () => null }));
 afterEach(() => { cleanup(); open.mockReset(); });
-const signedOut: WalletState = { status: 'disconnected', wrongNetwork: false, balance: { status: 'unavailable' } };
+const signedOut: WalletState = { live: true, status: 'disconnected', wrongNetwork: false, balance: { status: 'unavailable' } };
 const withWallet = (wallet: WalletState, node: React.ReactNode) => render(<WalletContext value={wallet}>{node}</WalletContext>);
 it('blocks the app until the player signs in with email or a wallet', () => {
   withWallet(signedOut, <SignInGate><p>secret app</p></SignInGate>);
