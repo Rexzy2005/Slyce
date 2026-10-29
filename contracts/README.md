@@ -80,13 +80,16 @@ cast send $CONTRACT "pause()" --account slyce-owner --rpc-url $RPC
 3. Run: `PROXY=0x... CONTRACT=Shop|Tournament|Arcade forge script script/Upgrade.s.sol --rpc-url $RPC --account slyce-owner --broadcast`.
 4. Then: `node script/export-abis.mjs`. Redeploy the web app if the ABI changed.
 
-## Run the daily tournament
+## Automatic tournaments (v1.3.0)
 
-Create one every day. It becomes the prize tournament automatically (`PRIZE=1`), and entry is free by default because the pool is funded by play fees:
+Turn this on once. After that, a new free tournament starts whenever none is open, triggered by the next paid round or the app's "Start the next tournament" button:
 
 ```bash
-TOURNAMENT=0x... DURATION=86400 forge script script/CreateTournament.s.sol --rpc-url https://forno.celo.org --account slyce-owner --broadcast --with-gas-price 205gwei --priority-gas-price 3gwei
+TOURNAMENT=0xA4964F4D3143142a509932FF6EaB04005e319Baa ARCADE=0xACbB0ABF3Cb485b64eB2707CF8E4B69AC25C43A6 AUTO_DURATION=86400 \
+  forge script script/EnableAutoRoll.s.sol --rpc-url https://forno.celo.org --account slyce-owner --broadcast --with-gas-price 205gwei --priority-gas-price 3gwei --gas-estimate-multiplier 110
 ```
+
+To change the length later, run `cast send $TOURNAMENT "setAutoRoll(uint64)" <seconds>`; `0` turns it off. After each tournament ends you still post its results (below) so winners can claim.
 
 ## Run a tournament
 

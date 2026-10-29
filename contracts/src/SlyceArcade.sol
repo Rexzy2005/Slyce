@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SlyceBase} from "./SlyceBase.sol";
 
 interface ISlycePrizePool {
-    function openPrizeTournament() external view returns (uint256);
+    function ensurePrizeTournament() external returns (uint256);
     function creditFromArcade(uint128 amount) external returns (uint256);
 }
 
@@ -42,7 +42,7 @@ contract SlyceArcade is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.2.0";
+        return "1.3.0";
     }
 
     function playFee() external view returns (uint128) {
@@ -78,7 +78,8 @@ contract SlyceArcade is SlyceBase {
         round = ++$.totalRounds;
         uint64 playerRound = ++$.roundsPlayed[msg.sender];
         ISlycePrizePool pool = $.prizePool;
-        uint256 prizeId = fee != 0 && address(pool) != address(0) ? pool.openPrizeTournament() : 0;
+        // Starts the next automatic tournament if the last one ended, so the pool never sits closed.
+        uint256 prizeId = fee != 0 && address(pool) != address(0) ? pool.ensurePrizeTournament() : 0;
         emit RoundPaid(msg.sender, round, playerRound, fee, prizeId);
         if (fee == 0) return round;
         if (prizeId != 0) {

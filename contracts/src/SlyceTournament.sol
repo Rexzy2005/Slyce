@@ -47,6 +47,7 @@ contract SlyceTournament is SlyceBase {
         uint256 prizeTournament; // tournament whose pool receives play fees while it is open
         IGoodDollarIdentity identity; // when set, only GoodDollar-verified humans may enter, once per human
         mapping(uint256 id => mapping(address root => bool)) rootEntered;
+        uint64 autoDuration; // when non-zero, a new free prize tournament of this length starts whenever none is open
     }
 
     // keccak256(abi.encode(uint256(keccak256("slyce.storage.Tournament")) - 1)) & ~bytes32(uint256(0xff))
@@ -74,6 +75,7 @@ contract SlyceTournament is SlyceBase {
     /// @notice Play fees routed into a prize pool by the arcade. Recorded as treasury sponsorship (refundable on cancel).
     event PoolFundedByPlay(uint256 indexed id, uint128 amount);
     event IdentityChanged(address indexed identity);
+    event AutoRollChanged(uint64 duration);
 
     error InvalidSchedule();
     error InvalidFee();
@@ -105,7 +107,7 @@ contract SlyceTournament is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.2.0";
+        return "1.3.0";
     }
 
     // ----- Views -----
@@ -140,6 +142,10 @@ contract SlyceTournament is SlyceBase {
 
     function refunded(uint256 id, address account) external view returns (bool) {
         return _store().refunded[id][account];
+    }
+
+    function autoDuration() external view returns (uint64) {
+        return _store().autoDuration;
     }
 
     function identity() external view returns (address) {
@@ -208,6 +214,31 @@ contract SlyceTournament is SlyceBase {
         onlyOwner
         returns (uint256 id)
     {
+        return _create(startTime, endTime, entryFee, maxEntrants);
+    }
+
+    /// @notice Turns on automatic tournaments of `duration` seconds (0 turns it off).
+    function setAutoRoll(uint64 duration) external onlyOwner {
+        if (duration != 0 && (duration < MIN_DURATION || duration > MAX_DURATION)) revert InvalidSchedule();
+        _store().autoDuration = duration;
+        emit AutoRollChanged(duration);
+    }
+
+    /// @notice Returns the open prize tournament, starting a new free one if auto-roll is on and none is open.
+    /// Anyone may call it (the arcade does on every paid round); its parameters are fixed by the owner.
+    function ensurePrizeTournament() external returns (uint256 id) {
+        id = openPrizeTournament();
+        if (id != 0) return id;
+        TournamentStorage storage $ = _store();
+        uint64 duration = $.autoDuration;
+        if (duration == 0 || paused()) return 0;
+        uint64 start = uint64(block.timestamp);
+        id = _create(start, start + duration, 0, 0);
+        $.prizeTournament = id;
+        emit PrizeTournamentChanged(id);
+    }
+
+    function _create(uint64 startTime, uint64 endTime, uint128 entryFee, uint32 maxEntrants) private returns (uint256 id) {
         if (startTime < block.timestamp || endTime <= startTime) revert InvalidSchedule();
         uint256 duration = endTime - startTime;
         if (duration < MIN_DURATION || duration > MAX_DURATION) revert InvalidSchedule();

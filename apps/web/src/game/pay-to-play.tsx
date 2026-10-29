@@ -18,7 +18,7 @@ export function PayToPlay({ onPaid }: { onPaid: () => void }) {
   if (fee.isPending) return <p role="status">Checking the play fee…</p>;
   if (fee.isError || fee.data === undefined) return <p className="error-text" role="alert">The play fee could not be read. <button className="text-button" onClick={() => void fee.refetch()}>Try again</button></p>;
   const amount = fee.data;
-  return <div className="pay-to-play"><p className="eyebrow">ROUND ENTRY</p>
+  return <div className="pay-to-play"><p className="eyebrow">PLAY A ROUND</p>
     <p className="pay-fee">{amount === 0n ? 'Free right now' : formatTokenAmount(amount, gdDecimals) + ' G$ per round'}</p>
     <TokenSpend spender={arcade} amount={amount} approveAmount={amount * roundsPerApproval}
       label={amount === 0n ? 'Start round' : 'Pay ' + formatTokenAmount(amount, gdDecimals) + ' G$ & play'}
@@ -26,6 +26,6 @@ export function PayToPlay({ onPaid }: { onPaid: () => void }) {
       onConfirmed={async () => { prize.refetch(); onPaid(); }} />
     {prize.id !== undefined
       ? <p className="prize-note"><strong>Your G$ goes into today's prize pool</strong>{prize.pool !== undefined && <> · now {formatTokenAmount(prize.pool, gdDecimals)} G$</>}. Enter the tournament and post your best score to win it.</p>
-      : <small className="muted">No prize pool is open right now, so fees go to the Slyce treasury on Celo.</small>}
-    <small className="muted">Your approval covers {roundsPerApproval.toString()} rounds; you confirm each round. Network gas is paid in CELO.</small></div>;
+      : <small className="muted">No prize pool is open right now, so this fee goes to the Slyce treasury.</small>}
+    <small className="muted">Network fees are paid in CELO (about 0.06 CELO per round).</small></div>;
 }

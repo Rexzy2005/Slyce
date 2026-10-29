@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { erc20Abi, type Abi, type Address, type ContractFunctionName } from 'viem';
 import { useAccount, useReadContract } from 'wagmi';
 import { publicConfig } from '../config/public';
@@ -30,12 +31,20 @@ export function TokenSpend<abi extends Abi, name extends ContractFunctionName<ab
   if (wallet.status !== 'connected') return <p className="muted" role="status">Connect your wallet to continue.</p>;
   if (wallet.wrongNetwork) return <p className="error-text" role="alert">Switch your wallet to {chain?.name ?? 'the configured network'}.</p>;
   const needsApproval = amount > 0n && (allowance.data === undefined || allowance.data < amount);
+  const allowAmount = approveAmount > amount ? approveAmount : amount;
+  const have = wallet.balance.raw === undefined ? undefined : formatTokenAmount(wallet.balance.raw, gdDecimals);
+  if (insufficient) return <div className="token-spend need-gd" role="status">
+    <p><strong>You need {formatTokenAmount(amount, gdDecimals)} G$</strong> · you have {have ?? '0'} G$.</p>
+    <p className="muted">Verified humans can claim free G$ every day from GoodDollar. It takes a minute.</p>
+    <Link className="button" href="/get-gd">Get free G$</Link>
+  </div>;
   return <div className="token-spend">
-    {wallet.gas === 'low' && <p className="error-text" role="status">Low on CELO for network fees. <a href="/get-gd">Get free gas</a></p>}
-    {insufficient && <p className="error-text" role="status">Not enough G$. You need {formatTokenAmount(amount, gdDecimals)} G$.</p>}
+    {wallet.gas === 'low' && <p className="error-text" role="status">Low on CELO for network fees. <Link href="/get-gd">Get free gas</Link></p>}
     {needsApproval
-      ? <button className="button" disabled={disabled || pending || allowance.isPending || insufficient} onClick={() => void approve.execute({ address: token, abi: erc20Abi, functionName: 'approve', args: [spender, approveAmount > amount ? approveAmount : amount] }, { check: checkBalance, onConfirmed: () => allowance.refetch() })}>{allowance.isPending ? 'Checking allowance…' : 'Approve ' + formatTokenAmount(approveAmount > amount ? approveAmount : amount, gdDecimals) + ' G$'}</button>
-      : <button className="button" disabled={disabled || pending || insufficient} onClick={() => void action.execute(call, { check: checkBalance, onConfirmed: async () => { await Promise.all([onConfirmed(), allowance.refetch()]); wallet.refreshBalance?.(); } })}>{label}</button>}
+      ? <><p className="spend-step"><strong>Step 1 of 2 · Allow Slyce to use your G$</strong><br /><span className="muted">A one-time permission for up to {formatTokenAmount(allowAmount, gdDecimals)} G$. Nothing is spent yet, and you still confirm each payment.</span></p>
+        <button className="button" disabled={disabled || pending || allowance.isPending} onClick={() => void approve.execute({ address: token, abi: erc20Abi, functionName: 'approve', args: [spender, allowAmount] }, { check: checkBalance, onConfirmed: () => allowance.refetch() })}>{allowance.isPending ? 'Checking…' : 'Allow ' + formatTokenAmount(allowAmount, gdDecimals) + ' G$'}</button></>
+      : <>{allowAmount > amount && <p className="spend-step"><strong>Step 2 of 2</strong></p>}
+        <button className="button" disabled={disabled || pending} onClick={() => void action.execute(call, { check: checkBalance, onConfirmed: async () => { await Promise.all([onConfirmed(), allowance.refetch()]); wallet.refreshBalance?.(); } })}>{label}</button></>}
     {approve.state.status !== 'idle' && approve.state.status !== 'success' && <TransactionStatus state={approve.state} />}
     {action.state.status !== 'idle' && <TransactionStatus state={action.state} />}
   </div>;

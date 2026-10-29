@@ -80,6 +80,7 @@ function CurrentTournament() {
             <button className="button" disabled={!canSubmit || !submit.ready || !['idle', 'success', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => { if (practiceBest !== null) void submit.execute({ address, abi: tournamentAbi, functionName: 'submitScore', args: [id, practiceBest] }, { onConfirmed: () => reads.refetch() }); }}>Submit {practiceBest?.toLocaleString() ?? ''}</button></div>
           {submit.state.status !== 'idle' && <TransactionStatus state={submit.state} />}</>}
         {phase === 'results' && <Link className="button" href="/rewards">Check your rewards</Link>}</div>}
+    {(phase === 'closed' || phase === 'results' || phase === 'cancelled') && <NextTournament address={address} onStarted={async () => { await Promise.all([count.refetch(), reads.refetch()]); }} />}
     <p className="muted fine-print">Tournament play uses Normal difficulty. Scores are self-reported from your device and reviewed by the Slyce operator, who posts the winners on-chain after the tournament closes. Default split: 50% / 30% / 20% of the pool to the top three. One entry per GoodDollar-verified human. Every paid round grows the pool.</p>
   </section>;
 }
@@ -105,4 +106,15 @@ function useVerifiedHuman(tournament: `0x${string}` | undefined): 'open' | 'veri
   if (!gated) return 'open';
   if (root.data === undefined) return 'unknown';
   return root.data === zero ? 'unverified' : 'verified';
+}
+/** Tournaments start automatically on the next paid round; anyone can also start the next one from here. */
+function NextTournament({ address, onStarted }: { address: `0x${string}`; onStarted: () => Promise<unknown> }) {
+  const chain = publicConfig.network ? chainFor(publicConfig.network) : undefined;
+  const duration = useReadContract({ address, abi: tournamentAbi, functionName: 'autoDuration', chainId: chain?.id });
+  const start = useContractWrite();
+  if (!duration.data) return null;
+  const hours = Number(duration.data) / 3600;
+  return <div className="entered-state"><p><strong>The next {hours >= 24 && hours % 24 === 0 ? (hours / 24 === 1 ? 'daily' : hours / 24 + '-day') : hours + '-hour'} tournament</strong> starts with the next round anyone plays, or start it now.</p>
+    <button className="button secondary" disabled={!start.ready || !['idle', 'success', 'rejected', 'failed'].includes(start.state.status)} onClick={() => void start.execute({ address, abi: tournamentAbi, functionName: 'ensurePrizeTournament', args: [] }, { onConfirmed: onStarted })}>Start the next tournament</button>
+    {start.state.status !== 'idle' && <TransactionStatus state={start.state} />}</div>;
 }
