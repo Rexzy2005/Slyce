@@ -18,7 +18,7 @@ Safety properties:
 
 ## Current deployment (Celo mainnet, 42220)
 
-Deployed 2026-10-29 with **real G$** (`0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`), contracts v1.2.0. Owner and treasury: `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`. Play fee 1 G$, which goes into the open prize pool (ADR-0007). Blades 101/102/103 cost 100/100/150 G$. Tournament entry requires a GoodDollar-verified human (Identity `0xC361A6E67822a0EDc17D899227dd9FC50BD62F42`, ADR-0008).
+Deployed 2026-10-29 with **real G$** (`0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`), contracts v1.2.0; upgraded the same day by `SeasonUpgrade.s.sol` to Tournament v1.3.0 (24h auto-roll) and Arcade v2.0.0 (free play, game records, milestone rewards; reward pot starts empty). Owner and treasury: `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`. Play fee 0 (ADR-0007, ADR-0010). Blades 101/102/103 cost 100/100/150 G$. Tournament entry requires a GoodDollar-verified human (Identity `0xC361A6E67822a0EDc17D899227dd9FC50BD62F42`, ADR-0008).
 
 | Contract | Proxy (use in the app) |
 | --- | --- |
@@ -82,11 +82,11 @@ cast send $CONTRACT "pause()" --account slyce-owner --rpc-url $RPC
 
 ## Season upgrade: free play, game records, automatic bounties
 
-This one script upgrades the live proxies (Tournament v1.3.0 with auto-roll, Arcade v2.0.0 with game records) and configures them:
+Ran on mainnet 2026-10-29 (block 81406791, 1.27 CELO). Pass `--sender` with the owner address, or forge simulates as its default sender and reverts. This one script upgrades the live proxies (Tournament v1.3.0 with auto-roll, Arcade v2.0.0 with game records) and configures them:
 
 ```bash
 TOURNAMENT=0xA4964F4D3143142a509932FF6EaB04005e319Baa ARCADE=0xACbB0ABF3Cb485b64eB2707CF8E4B69AC25C43A6 IDENTITY=0xC361A6E67822a0EDc17D899227dd9FC50BD62F42 AUTO_DURATION=86400 \
-  forge script script/SeasonUpgrade.s.sol --rpc-url https://forno.celo.org --account slyce-owner --broadcast --with-gas-price 205gwei --priority-gas-price 3gwei --gas-estimate-multiplier 110
+  forge script script/SeasonUpgrade.s.sol --rpc-url https://forno.celo.org --account slyce-owner --sender 0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3 --broadcast --with-gas-price 205gwei --priority-gas-price 3gwei --gas-estimate-multiplier 110
 ```
 
 What it sets:

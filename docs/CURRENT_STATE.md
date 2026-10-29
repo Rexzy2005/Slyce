@@ -36,7 +36,7 @@ Updated: 2026-10-28. Target: GoodDollar Season 5. Web + installable PWA on Verce
 
 - No browser/device testing (the user prohibits use of their PC browser). The Playwright specs were rewritten for the gate but not run.
 - Real email sign-in, face verification, UBI claim and faucet top-up: these need Reown dashboard setup and a real account.
-- Contracts v1.2.0 are deployed on Celo mainnet with real G$, with the prize-pool routing and the verified-human gate (addresses in `contracts/README.md`). They are not audited.
+- Contracts are live on Celo mainnet with real G$ (addresses in `contracts/README.md`): Tournament v1.3.0 with 24h auto-rolling prize tournaments, Arcade v2.0.0 with free play, on-chain game records, XP, streaks and G$ milestones for verified humans. The milestone reward pot is unfunded (0 G$) until the owner calls `fundRewards`. They are not audited.
 
 ## Known gaps
 
