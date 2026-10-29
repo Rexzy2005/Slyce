@@ -36,7 +36,7 @@ Updated: 2026-10-28. Target: GoodDollar Season 5. Web + installable PWA on Verce
 
 - No browser/device testing (the user prohibits use of their PC browser). The Playwright specs were rewritten for the gate but not run.
 - Real email sign-in, face verification, UBI claim and faucet top-up: these need Reown dashboard setup and a real account.
-- Contracts are deployed on Celo mainnet against development G$ (addresses in `contracts/README.md`) but are not audited.
+- Contracts v1.2.0 are deployed on Celo mainnet with real G$, with the prize-pool routing and the verified-human gate (addresses in `contracts/README.md`). They are not audited.
 
 ## Known gaps
 

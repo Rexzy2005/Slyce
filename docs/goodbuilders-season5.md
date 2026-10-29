@@ -69,7 +69,12 @@ Slyce uses four of the six Season 5 integration paths:
 ## 6. Data
 
 - Chain: Celo mainnet (42220). G$: `0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`.
-- Contracts: SlyceArcade _TODO_, SlyceTournament _TODO_, SlyceShop _TODO_ (see `contracts/README.md`).
+- Contracts:
+  - SlyceArcade `0xACbB0ABF3Cb485b64eB2707CF8E4B69AC25C43A6`
+  - SlyceTournament `0xA4964F4D3143142a509932FF6EaB04005e319Baa`
+  - SlyceShop `0x091606F02607222D5DF21DBf3C25939102528Cc1`
+
+  All are UUPS proxies, owned by `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`.
 - Tracking: the public `/stats` page reads contract state live. Events to index: `RoundPaid`, `PoolFundedByPlay`, `Entered`, `ScoreSubmitted`, `ResultsPosted`, `PrizeClaimed`, `Purchased`.
 
 ## 7. Team

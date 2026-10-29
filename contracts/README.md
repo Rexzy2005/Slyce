@@ -18,17 +18,15 @@ Safety properties:
 
 ## Current deployment (Celo mainnet, 42220)
 
-**Obsolete:** this deployment uses development G$, and it is being replaced by a real-G$ v1.2.0 deployment.
-
-Deployed 2026-10-25 against **development G$** (`0xFa51eFDc0910CCdA91732e6806912Fa12e2FD475`). Owner and treasury: `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`. Play fee 1 G$; blades 101/102/103 at 100/100/150 G$.
+Deployed 2026-10-29 with **real G$** (`0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`), contracts v1.2.0. Owner and treasury: `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`. Play fee 1 G$, which goes into the open prize pool (ADR-0007). Blades 101/102/103 cost 100/100/150 G$. Tournament entry requires a GoodDollar-verified human (Identity `0xC361A6E67822a0EDc17D899227dd9FC50BD62F42`, ADR-0008).
 
 | Contract | Proxy (use in the app) |
 | --- | --- |
-| SlyceShop | `0x33d52a95f7f842a54CF022540314DFA1ec27f153` |
-| SlyceTournament | `0x5244A368FBF6137E70dd2F0eC70d23aab8815056` |
-| SlyceArcade | `0x5BB9ec89e18C44fD17a6A08850F12A3b0ee698F3` |
+| SlyceShop | `0x091606F02607222D5DF21DBf3C25939102528Cc1` |
+| SlyceTournament | `0xA4964F4D3143142a509932FF6EaB04005e319Baa` |
+| SlyceArcade | `0xACbB0ABF3Cb485b64eB2707CF8E4B69AC25C43A6` |
 
-A later, interrupted run also created an unused shop at `0x7d21725aa1f3a8e8c83640615a91e48a7fa1ece3`. Ignore it.
+The obsolete development-G$ deployment (2026-10-25) is unused: shop `0x33d52a95…27f153`, tournament `0x5244A368…815056`, arcade `0x5BB9ec89…e698F3`, plus an unused shop at `0x7d21725a…a1ece3`.
 
 Player gas with v1.1.0 (ADR-0006), measured on a Celo fork at a 200 gwei base fee:
 
