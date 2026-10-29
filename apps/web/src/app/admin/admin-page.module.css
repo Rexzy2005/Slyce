@@ -1,0 +1,71 @@
+:global(.admin-soon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  max-width: 100%;
+  padding: 3px 6px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-mist) 22%, var(--color-vine));
+  border-radius: 999px;
+  color: var(--color-mist);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .transactionGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  :global(.admin-shell) :global(.admin-sidebar) {
+    position: relative;
+    z-index: 20;
+    padding: 16px 18px 8px;
+  }
+
+  :global(.admin-shell) :global(.admin-nav) {
+    position: fixed;
+    z-index: 40;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 7px 6px calc(7px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-vine);
+    border-bottom: 0;
+    background: color-mix(in srgb, var(--color-canopy) 96%, transparent);
+    box-shadow: 0 -10px 25px color-mix(in srgb, var(--color-night) 60%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  :global(.admin-shell) :global(.admin-nav-item) {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: initial;
+    width: auto;
+    min-height: 54px;
+    padding: 7px 3px;
+    border-radius: 11px;
+    text-align: center;
+    font-size: 10px;
+  }
+
+  :global(.admin-shell) :global(.admin-nav-item) svg { width: 20px; height: 20px; }
+  :global(.admin-shell) :global(.admin-nav-item[aria-current='page']) { background: color-mix(in srgb, var(--color-mango) 12%, transparent); box-shadow: inset 0 -2px var(--color-mango); }
+  :global(.admin-shell) :global(.admin-nav-item .admin-soon) { position: absolute; top: 4px; right: 4px; min-width: 0; margin-left: 0; padding: 2px 4px; font-size: 7px; }
+  :global(.admin-shell) :global(.admin-sidebar-footer) { display: none; }
+  :global(.admin-shell) :global(.admin-main) { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+}

@@ -96,3 +96,28 @@
 @media (prefers-reduced-motion: reduce) {
   .submit svg { transition: none; }
 }
+
+.access {
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+@media (max-width: 760px) {
+  .access {
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .accessLayout {
+    display: flex;
+    align-items: center;
+    width: min(100%, 470px);
+    min-height: 100%;
+    padding-bottom: 0;
+  }
+
+  .accessIntro,
+  .accessFooter {
+    display: none;
+  }
+}
