@@ -104,23 +104,6 @@ export default function AdminPage() {
           </div>
         </header>
         <div className="admin-scroll-area">
-        <section className="admin-hero">
-          <div>
-            <p className="eyebrow">SLYCE CONTROL ROOM</p>
-            <h2>
-              Make every slice
-              <br />
-              <span>count.</span>
-            </h2>
-            <p>
-              Monitor the player journey, keep the arcade fair, and turn
-              verified play into the next season.
-            </p>
-          </div>
-          <div className="admin-hero-mark" aria-hidden="true">
-            /
-          </div>
-        </section>
         <section className="admin-section">
           <div className="admin-section-heading">
             <div>
