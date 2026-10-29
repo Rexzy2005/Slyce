@@ -80,16 +80,31 @@ cast send $CONTRACT "pause()" --account slyce-owner --rpc-url $RPC
 3. Run: `PROXY=0x... CONTRACT=Shop|Tournament|Arcade forge script script/Upgrade.s.sol --rpc-url $RPC --account slyce-owner --broadcast`.
 4. Then: `node script/export-abis.mjs`. Redeploy the web app if the ABI changed.
 
-## Automatic tournaments (v1.3.0)
+## Season upgrade: free play, game records, automatic bounties
 
-Turn this on once. After that, a new free tournament starts whenever none is open, triggered by the next paid round or the app's "Start the next tournament" button:
+This one script upgrades the live proxies (Tournament v1.3.0 with auto-roll, Arcade v2.0.0 with game records) and configures them:
 
 ```bash
-TOURNAMENT=0xA4964F4D3143142a509932FF6EaB04005e319Baa ARCADE=0xACbB0ABF3Cb485b64eB2707CF8E4B69AC25C43A6 AUTO_DURATION=86400 \
-  forge script script/EnableAutoRoll.s.sol --rpc-url https://forno.celo.org --account slyce-owner --broadcast --with-gas-price 205gwei --priority-gas-price 3gwei --gas-estimate-multiplier 110
+TOURNAMENT=0xA4964F4D3143142a509932FF6EaB04005e319Baa ARCADE=0xACbB0ABF3Cb485b64eB2707CF8E4B69AC25C43A6 IDENTITY=0xC361A6E67822a0EDc17D899227dd9FC50BD62F42 AUTO_DURATION=86400 \
+  forge script script/SeasonUpgrade.s.sol --rpc-url https://forno.celo.org --account slyce-owner --broadcast --with-gas-price 205gwei --priority-gas-price 3gwei --gas-estimate-multiplier 110
 ```
 
-To change the length later, run `cast send $TOURNAMENT "setAutoRoll(uint64)" <seconds>`; `0` turns it off. After each tournament ends you still post its results (below) so winners can claim.
+What it sets:
+- Rounds are free (fee 0).
+- Score cap 100,000, one submission per player every 20 seconds.
+- Milestones: 500 / 1,000 / 2,500 / 5,000 points pay 5 / 15 / 40 / 100 G$, once per day per verified human.
+- Bounties start automatically every `AUTO_DURATION` seconds.
+
+The upgrade was rehearsed on a fork of the live proxies and costs ~0.97 CELO.
+
+Fund the milestone pot. Anyone can sponsor it:
+
+```bash
+cast send $GD "approve(address,uint256)" $ARCADE <wei> --account slyce-owner --rpc-url $RPC
+cast send $ARCADE "fundRewards(uint128)" <wei> --account slyce-owner --rpc-url $RPC
+```
+
+Fund a bounty pool the same way, with `sponsor(id, amount)` on the Tournament after approving it.
 
 ## Run a tournament
 

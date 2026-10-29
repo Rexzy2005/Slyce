@@ -15,12 +15,14 @@ export interface PracticeState {
   /** Fruit cut during the current swipe. */
   readonly swipeCuts: number;
   readonly bestCombo: number;
+  /** Fruit sliced this round. */
+  readonly fruits: number;
   readonly over: GameOverCause | null;
 }
-export function newPractice(): PracticeState { return { score: 0, lives: startingLives, swipeCuts: 0, bestCombo: 0, over: null }; }
+export function newPractice(): PracticeState { return { score: 0, lives: startingLives, swipeCuts: 0, bestCombo: 0, fruits: 0, over: null }; }
 export function cutFruit(state: PracticeState): PracticeState {
   if (state.over) return state;
-  return { ...state, score: state.score + fruitPoints, swipeCuts: state.swipeCuts + 1 };
+  return { ...state, score: state.score + fruitPoints, swipeCuts: state.swipeCuts + 1, fruits: state.fruits + 1 };
 }
 /** Ends a swipe; three or more fruit in one swipe award a combo bonus. */
 export function endSwipe(state: PracticeState): { state: PracticeState; combo: number; bonus: number } {

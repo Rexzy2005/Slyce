@@ -85,7 +85,7 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       const cause = this.practice.over; if (!cause) return;
       this.pointer = null;
       bridge.emit({ type: 'effect', cue: cause === 'bomb' ? 'boom' : 'fail' });
-      bridge.emit({ type: 'game-over', score: this.practice.score, cause });
+      bridge.emit({ type: 'game-over', score: this.practice.score, cause, bestCombo: this.practice.bestCombo, fruits: this.practice.fruits });
     }
     private launch() {
       if (this.fruits.length >= difficultyPacing[this.settings.difficulty].maxFruit) return;

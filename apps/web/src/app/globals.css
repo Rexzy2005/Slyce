@@ -432,8 +432,7 @@ body { font-weight:500; } button,input,select,textarea { font-family:inherit; }
 .home-tile.tone-leaf svg { color:var(--color-leaf); }.home-tile.tone-mango svg { color:var(--color-mango); }.home-tile.tone-melon svg { color:var(--color-melon); }.home-tile.tone-sky svg { color:var(--color-sky); }
 .pay-gate { position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end; justify-content:center; background:color-mix(in srgb,black 55%,transparent); padding:16px 16px calc(16px + env(safe-area-inset-bottom)); }
 .pay-gate-card { width:100%; max-width:440px; display:flex; flex-direction:column; gap:12px; padding:22px; border-radius:22px; background:var(--color-canopy); }
-.pay-to-play { display:flex; flex-direction:column; gap:10px; }.pay-to-play .eyebrow { margin:0; }.pay-fee { font-size:26px; font-weight:700; margin:0; color:var(--color-sky); }
-.pay-to-play .button { width:100%; min-height:52px; justify-content:center; }.pay-gate-card>.text-button { align-self:center; }
+.pay-gate-card>.text-button { align-self:center; }
 .app-main .page-heading { margin-bottom:16px; }.app-main .page-heading h1 { font-size:clamp(28px,7vw,38px); }
 @media (min-width:900px) { .app-shell { max-width:720px; } .tab-bar { max-width:720px; border-radius:18px 18px 0 0; } }
 .gas-banner { display:block; margin:0 0 14px; padding:12px 14px; border-radius:14px; background:color-mix(in srgb,var(--color-mango) 16%,var(--color-canopy)); color:var(--color-cream); font-size:13px; line-height:1.4; }.gas-banner strong { display:block; color:var(--color-mango); }
@@ -454,3 +453,7 @@ body { font-weight:500; } button,input,select,textarea { font-family:inherit; }
 .stats-page { max-width:640px; margin:0 auto; padding:24px 16px 48px; }.stats { display:flex; flex-direction:column; gap:12px; }.stats h1 { font-size:clamp(30px,8vw,44px); margin:8px 0 0; }.stats h2 { font-size:20px; margin:12px 0 0; }.stats .stat-grid { margin:8px 0; }
 .stats-links { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }.stats-links a { display:flex; justify-content:space-between; gap:8px; padding:12px 14px; border-radius:12px; background:var(--color-canopy); color:var(--color-cream); }.stats-links code { color:var(--color-sky); }
 .need-gd { padding:14px; border-radius:14px; background:color-mix(in srgb,var(--color-mango) 12%,var(--color-night)); }.need-gd p { font-size:14px !important; }.spend-step { font-size:13px !important; line-height:1.45; }
+.after-game { width:100%; max-width:360px; }.record-game { display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:16px; background:color-mix(in srgb,var(--color-night) 82%,transparent); text-align:left; }.record-game p { margin:0; font-size:13px !important; line-height:1.45; }.record-game .button { width:100%; justify-content:center; }
+.how-to-play p { line-height:1.6; color:var(--color-cream); }.how-to-play h2 { margin-top:18px; }
+.milestones { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }.milestones li { display:flex; justify-content:space-between; padding:12px 14px; border-radius:12px; background:var(--color-canopy); }
+.mango { color:var(--color-mango); }.player-card { margin:12px 0; }

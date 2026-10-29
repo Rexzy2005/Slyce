@@ -54,7 +54,7 @@ it('shows combos, game over and a device-local best, then restarts', () => {
   window.localStorage.clear();
   render(<GameHost />);
   fireEvent.click(screen.getByRole('button', { name: 'Start practice round' }));
-  act(() => { observed.bridge?.emit({ type: 'combo', count: 3, bonus: 15 }); observed.bridge?.emit({ type: 'game-over', score: 90, cause: 'bomb' }); });
+  act(() => { observed.bridge?.emit({ type: 'combo', count: 3, bonus: 15 }); observed.bridge?.emit({ type: 'game-over', score: 90, cause: 'bomb', bestCombo: 3, fruits: 8 }); });
   expect(screen.getByText('x3 +15')).toBeTruthy();
   expect(screen.getByRole('heading', { name: 'Game over' })).toBeTruthy();
   expect(screen.getByText('YOU HIT A BOMB')).toBeTruthy();
@@ -156,11 +156,22 @@ it('never starts a round until the play fee is paid', () => {
   expect(screen.queryByRole('dialog', { name: 'Pay to play' })).toBeNull();
 
   observed.commands.length = 0;
-  act(() => observed.bridge?.emit({ type: 'game-over', score: 10, cause: 'lives' }));
+  act(() => observed.bridge?.emit({ type: 'game-over', score: 10, cause: 'lives', bestCombo: 0, fruits: 1 }));
   fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
   expect(screen.getByRole('dialog', { name: 'Pay to play' })).toBeTruthy();
   expect(observed.commands).toEqual([]);
   act(() => paid?.());
   expect(observed.commands).toEqual([{ type: 'preview', enabled: true }]);
+  window.localStorage.clear();
+});
+
+it('hands the finished round to the after-game slot (e.g. saving on Celo)', () => {
+  window.localStorage.clear();
+  const seen: unknown[] = [];
+  render(<GameHost afterGame={result => { seen.push(result); return <p>Save {result.score} on Celo</p>; }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start practice round' }));
+  act(() => observed.bridge?.emit({ type: 'game-over', score: 640, cause: 'lives', bestCombo: 4, fruits: 52 }));
+  expect(screen.getByText('Save 640 on Celo')).toBeTruthy();
+  expect(seen.at(-1)).toEqual({ score: 640, bestCombo: 4, fruits: 52, cause: 'lives' });
   window.localStorage.clear();
 });

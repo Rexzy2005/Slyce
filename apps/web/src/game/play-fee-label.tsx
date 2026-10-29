@@ -18,7 +18,7 @@ function Fee() {
   const prize = usePrizePool();
   if (!arcade || fee.data === undefined) return null;
   return <>
-    {prize.id !== undefined && prize.pool !== undefined && <Link href="/tournament" className="home-prize"><span>TODAY'S PRIZE POOL</span><strong>{Number(formatTokenAmount(prize.pool, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} G$</strong><small>Every round adds to it. Top scores win it →</small></Link>}
-    <small className="home-fee">{fee.data === 0n ? 'Rounds are free right now' : formatTokenAmount(fee.data, gdDecimals) + ' G$ per round' + (prize.id !== undefined ? ' · goes to the prize pool' : '')}</small>
+    {prize.id !== undefined && prize.pool !== undefined && <Link href="/tournament" className="home-prize"><span>BOUNTY PRIZE POOL</span><strong>{Number(formatTokenAmount(prize.pool, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} G$</strong><small>Verified players compete for it →</small></Link>}
+    <small className="home-fee">{fee.data === 0n ? 'Free to play · save games on Celo for XP and G$ milestones' : formatTokenAmount(fee.data, gdDecimals) + ' G$ per round'} · <Link href="/how-to-play">How to play</Link></small>
   </>;
 }
