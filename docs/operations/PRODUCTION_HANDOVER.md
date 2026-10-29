@@ -12,7 +12,7 @@ The repository is deployment-ready, but no production deployment is recorded. Re
 - Runtime data access uses DATABASE_URL; migrations use DIRECT_URL.
 - /healthz is liveness; /readyz verifies database readiness and is the Render health check.
 
-Required backend values are NODE_ENV=production, DATABASE_URL, DIRECT_URL, SLYCE_ADMIN_EMAILS, CORS_ORIGINS, and a random AUTH_SESSION_SECRET of at least 32 characters. For initial provisioning only, set SLYCE_ADMIN_SEED_EMAIL and SLYCE_ADMIN_SEED_PASSWORD, run `pnpm --filter @slyce/backend admin:seed`, then remove the password variable. GoodDollar production observation additionally requires GOODDOLLAR_ENV=production plus a verified GOODDOLLAR_RPC_URL and GOODDOLLAR_IDENTITY_ADDRESS pair. Render supplies PORT.
+Required backend values are NODE_ENV=production, DATABASE_URL, DIRECT_URL, SUPABASE_CA_CERT, SLYCE_ADMIN_EMAILS, CORS_ORIGINS, and a random AUTH_SESSION_SECRET of at least 32 characters. `SUPABASE_CA_CERT` must contain the full PEM downloaded from Supabase Database Settings > SSL Configuration. The backend and Prisma CLI use that CA with hostname and certificate verification enabled; never replace it with `rejectUnauthorized=false` or `sslmode=disable`. For initial provisioning only, set SLYCE_ADMIN_SEED_EMAIL and SLYCE_ADMIN_SEED_PASSWORD, run `pnpm --filter @slyce/backend admin:seed`, then remove the password variable. GoodDollar production observation additionally requires GOODDOLLAR_ENV=production plus a verified GOODDOLLAR_RPC_URL and GOODDOLLAR_IDENTITY_ADDRESS pair. Render supplies PORT.
 
 Set NEXT_PUBLIC_BACKEND_URL to the deployed HTTPS backend origin. Configure all other frontend values from .env.example with production-matching Supabase, network, RPC, Reown, GoodDollar, and contract values. Public variables are embedded at build time and require a frontend redeploy when changed.
 
@@ -21,7 +21,7 @@ Set NEXT_PUBLIC_BACKEND_URL to the deployed HTTPS backend origin. Configure all 
 1. Confirm an approved Supabase backup or point-in-time recovery window.
 2. Review every pending migration. Never use db push or a destructive reset in production.
 3. Create or update the Render Blueprint from render.yaml.
-4. Enter every sync:false secret in Render and restrict edit access.
+4. Enter every sync:false value in Render, including the full `SUPABASE_CA_CERT` PEM, and restrict edit access.
 5. Run pnpm --filter @slyce/backend deployment:check.
 6. Deploy. Render generates Prisma Client and builds, then runs prisma migrate deploy before promotion.
 7. Confirm /healthz and /readyz return 200 over HTTPS.

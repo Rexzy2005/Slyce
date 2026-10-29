@@ -29,6 +29,7 @@ test('validates the complete production deployment environment', () => {
     NODE_ENV: 'production',
     DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app?sslmode=require',
     DIRECT_URL: 'postgresql://user:pass@db.example.com:5432/app?sslmode=require',
+    SUPABASE_CA_CERT: '-----BEGIN CERTIFICATE-----\\nexample\\n-----END CERTIFICATE-----',
     SLYCE_ADMIN_EMAILS: ' Admin@Example.com, operator@example.com, ADMIN@example.com ',
     CORS_ORIGINS: 'https://app.example.com',
     AUTH_SESSION_SECRET: 'a'.repeat(32),
@@ -40,6 +41,7 @@ test('validates the complete production deployment environment', () => {
   assert.throws(() => loadConfig({ SLYCE_ADMIN_EMAILS: 'admin@example.com,not-an-email' }), /valid comma-separated/);
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, CORS_ORIGINS: '' }), /CORS_ORIGINS/);
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, AUTH_SESSION_SECRET: '' }), /AUTH_SESSION_SECRET/);
+  assert.throws(() => verifyDeploymentEnvironment({ ...valid, SUPABASE_CA_CERT: '-----BEGIN CERTIFICATE-----\\nreplace-with-ca\\n-----END CERTIFICATE-----' }), /SUPABASE_CA_CERT/);
 });
 
 test('requires a runtime database URL without exposing its value', () => {

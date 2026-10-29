@@ -5,9 +5,9 @@ This file is the chronological evidence log for implementing `backend-fix.md`. T
 ## Status summary
 
 - Overall status: **In progress**
-- Current phase: **Phase 14 dedicated administrator authentication and full verification**
-- Production mutations performed: **None**
-- Database migrations performed during remediation: **None**
+- Current phase: **PostgreSQL TLS certificate-chain remediation and seed verification**
+- Production mutations performed: **Administrator seed account created; repeat seed was idempotent**
+- Database migrations performed during remediation: **None; migration status reports `20261029120000_admin_password_sessions` pending**
 - Last updated: **2026-10-29**
 
 ## Progress ledger
@@ -20,6 +20,8 @@ This file is the chronological evidence log for implementing `backend-fix.md`. T
 | 2026-10-29 | Reown administrator-auth migration | Superseded by owner | `do-this-instead.md` explicitly replaces the Reown administrator-auth requirement. Reown AppKit remains unchanged for player wallet/email connection and is not used as the admin credential. |
 | 2026-10-29 | Owner-authored replacement decision | Complete | `do-this-instead.md` supersedes the Reown administrator migration. Reown remains unchanged for the game; administrator access is now a dedicated backend-owned seeded email/password system. |
 | 2026-10-29 | Dedicated administrator authentication | Implemented | Added `AdminSession`, salted scrypt password hashes, idempotent `admin:seed`, 30-day HttpOnly cookie sessions, rotation/revocation, live allowlist/role/active checks, login rate limiting, generic failures, and cookie CSRF enforcement. Removed the admin-only Supabase OTP UI/dependencies and preserved Reown player configuration. | Run full tests and apply the reviewed migration in the authorized database. |
+| 2026-10-29 | Administrator seed attempt | Blocked by local connection trust | The seed command was run with the configured backend environment and reached the database, but Node rejected the database TLS chain as self-signed before any account read/write. No password or account data was logged and no seed mutation occurred. | Run the same seed command from the authorized Render backend shell/connection where the production certificate chain is trusted; do not disable TLS verification. |
+| 2026-10-29 | PostgreSQL TLS certificate-chain remediation | Complete for the existing database client | Root cause was a malformed local `SUPABASE_CA_CERT` placeholder while the Supabase pooler presented a chain signed by Supabase's private CA. `pg` now receives the verified CA PEM with `rejectUnauthorized: true`; URL `sslmode`/`sslrootcert` parameters are removed when the programmatic TLS object is used, and Prisma CLI writes the CA to a mode-600 temporary file for `verify-full` migrations. The placeholder was replaced locally with Supabase's official CA. The seed created the administrator account on the first successful run and returned `already_exists` on the repeat run. `prisma migrate status` reached the database over verified TLS and reported one pending admin-session migration; no migration was applied. | Set the same full CA PEM in Render as `SUPABASE_CA_CERT`, deploy the reviewed migration through Render's pre-deploy command, then verify `/readyz`. |
 | 2026-10-29 | Baseline quality checks | Complete | Architecture/static checks, core checks, whitespace checks, backend build, and backend/web/shared/worker typechecks passed. A root-scoped Vitest invocation incorrectly discovered backend and Playwright files and is not counted as a web result. Workspace dependencies were restored from the existing frozen lockfile without changing the dependency specification. | Run the web suite from its package scope during final verification. |
 | 2026-10-29 | Administrator authorization hardening | Complete | Added strict, normalized `SLYCE_ADMIN_EMAILS` parsing; production rejects missing, empty, and malformed allowlists. Dedicated admin sessions recheck allowlist membership, active status, and `ADMIN`/`SUPER_ADMIN` role on every request. | Apply the reviewed migration and run the seed process in the authorized deployment. |
 | 2026-10-29 | Verified gameplay trust boundary | Complete | Removed client breakdown persistence from verified submissions and changed challenge evaluation to consume only `ScoreVerificationService` output. Regression coverage submits forged counters and proves the deterministic verifier's zero counters are used. Backend build, 22 server tests, and `git diff --check` pass. | Make wallet nonce consumption atomic and prove only one concurrent consumer succeeds. |
@@ -83,7 +85,7 @@ If official/current Reown behavior cannot establish verified email server-side f
 Verified on 2026-10-29:
 
 - backend TypeScript build: pass;
-- complete compiled backend suite: 47 passed, 0 failed;
+- complete compiled backend suite: 51 passed, 0 failed;
 - backend, web, worker, and shared typechecks: pass;
 - architecture/static, core, whitespace, and diff checks: pass;
 - focused forged-breakdown regression: included in the passing server suite.
@@ -94,7 +96,7 @@ Still pending for the final quality gate: correctly scoped full web Vitest, prod
 
 1. The required Reown administrator-auth migration needs a supported server-verification contract plus configured-project browser acceptance. This blocks completion of `backend-fix.md`, although the current Supabase-protected administrator flow remains secure while replacement work is pending.
 2. Real Reown email/wallet acceptance requires configured Reown project access and browser interaction.
-3. Production database compatibility checks and migrations require explicit production authorization; none is implied by this remediation.
+3. Production database migrations still require the authorized Render pre-deploy path; the status check found `20261029120000_admin_password_sessions` pending and no migration was applied locally.
 4. GoodDollar denomination and provider failure behavior require official-source revalidation before precision/integration changes.
 
 ## Exact next action

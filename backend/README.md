@@ -45,6 +45,7 @@ P2 uses Prisma `7.10.1` with PostgreSQL and separates runtime and migration conn
 
 - `DATABASE_URL`: runtime connection. Use a Supabase pooled/session connection appropriate for the Render service.
 - `DIRECT_URL`: Prisma CLI/migration connection. Use a direct or session-mode Supabase connection.
+- `SUPABASE_CA_CERT`: the PEM contents of the CA certificate downloaded from Supabase Database Settings > SSL Configuration. The backend passes it to `pg` with certificate verification enabled; do not use `rejectUnauthorized=false`.
 
 Copy `backend/.env.example` to a local, ignored environment file and replace the placeholders with credentials supplied by the project owner. Never commit those values.
 
