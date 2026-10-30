@@ -18,3 +18,12 @@ Verified: 2026-10-15. Packages: `@reown/appkit` 1.8.24, `@reown/appkit-adapter-w
 - `createAppKit` runs during Next pre-rendering (no `window`), so the app passes an explicit `NEXT_PUBLIC_APP_URL` for metadata.
 - Under `exactOptionalPropertyTypes`, `WagmiAdapter` is not assignable to AppKit's adapter parameter type (`namespace`/`adapterType` are optional). The app checks those fields at runtime instead of casting.
 - New email wallets hold no CELO. GoodDollar's faucet (`@goodsdks/citizen-sdk` `ClaimSDK.claim`/`triggerFaucet`) tops up verified users, falling back to GoodDollar's API when the wallet cannot pay gas.
+
+## AppKit analytics
+
+Verified: 2026-10-31. Applies to the installed `@reown/appkit` and `@reown/appkit-adapter-wagmi` 1.8.24.
+
+- AppKit 1.8.24 exposes the `features.analytics` option. Slyyce opts in with `features.analytics: true` in `apps/web/src/web3/appkit-provider.tsx`.
+- Existing Reown projects must have **AppKit Analytics API** enabled under the project’s Settings → APIs. Reown’s [Analytics guide](https://docs.reown.com/cloud/analytics) places project metrics under Analytics → User Activity; team MAUs are under Usage.
+- Reown’s [existing-project setup instructions](https://reown.com/blog/appkit-analytics) require dashboard activation. The repository setting alone cannot turn on that project-level API.
+- Reown analytics counts AppKit activity; it does not populate Slyyce’s admin player records. The admin panel’s “Players on Celo” count is based on wallets that used deployed contracts.

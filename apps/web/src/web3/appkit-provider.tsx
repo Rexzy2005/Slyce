@@ -31,7 +31,7 @@ function createWallets() {
   createAppKit({
     adapters: [adapter], networks: [network], defaultNetwork: network, projectId: publicConfig.walletConnectProjectId,
     metadata: { name: 'Slyyce', description: 'Swipe. Slice. Stack your G$.', url: origin, icons: [origin + '/icons/icon-192.png'] },
-    features: { email: true, emailShowWallets: true, socials: false, analytics: false, swaps: false, onramp: false, connectMethodsOrder: ['email', 'wallet'] },
+    features: { email: true, emailShowWallets: true, socials: false, analytics: true, swaps: false, onramp: false, connectMethodsOrder: ['email', 'wallet'] },
     allowUnsupportedChain: false, themeMode: 'dark', themeVariables: { '--w3m-accent': tokens.mango, '--w3m-font-family': 'Rajdhani, system-ui, sans-serif' },
   });
   wallets = adapter;
