@@ -99,12 +99,12 @@ export default function AdminPage() {
       <main className="admin-main" id="main">
         <header className="admin-topbar">
           <div>
-            <p className="eyebrow">TUESDAY · SEASON 05</p>
+            <p className="eyebrow">{new Date().toLocaleDateString("en", { weekday: "long" }).toUpperCase()} · OPERATIONS</p>
             <h1>Good morning, operator.</h1>
             <p className="admin-topbar-subtitle">A clear read on the Slyyce player ecosystem.</p>
           </div>
           <div className="admin-top-actions">
-            <span className="admin-season-label">SEASON 05 <span aria-hidden="true">/</span> LIVE</span>
+            <span className="admin-season-label">CELO <span aria-hidden="true">/</span> LIVE</span>
             <span className="admin-live">
               <Activity size={14} /> Systems nominal
             </span>

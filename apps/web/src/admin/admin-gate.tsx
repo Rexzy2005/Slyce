@@ -70,7 +70,7 @@ function AdminLogin({ onAuthenticated }: { onAuthenticated: () => void }) {
         <BrandLockup />
         <p className="eyebrow">SLYYCE CONTROL ROOM</p>
         <h2>Keep every<br /><span>slice fair.</span></h2>
-        <p className={styles.introCopy}>A focused workspace for the people who protect the player experience, verify the signal, and keep the season moving.</p>
+        <p className={styles.introCopy}>A focused workspace for the people who protect the player experience, verify the signal, and keep the game running.</p>
         <div className={styles.signal}><span className={styles.signalDot} /><span>Secure operator channel</span><Sparkles size={14} aria-hidden="true" /></div>
       </div>
       <div className={`admin-access-card ${styles.formCard}`}>
