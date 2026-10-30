@@ -15,6 +15,7 @@
 | [ADR-0009 — Automatic prize tournaments](ADR-0009-automatic-tournaments.md) | Accepted | Paid rounds start the next tournament when none is open; no daily admin step. |
 | [ADR-0010 — Free play, game records, G$ milestones](ADR-0010-free-play-game-records.md) | Accepted | Arcade v2: on-chain games, XP, streaks, daily-capped milestone G$ for verified humans. |
 | [ADR-0011 — Slyyce product name](ADR-0011-slyyce-product-name.md) | Accepted | Rebrand product and workspace packages; preserve deployed contract identifiers and storage namespaces. |
+| [ADR-0012 — Admin users and transactions from on-chain activity](ADR-0012-admin-onchain-activity.md) | Accepted | Backend indexes contract logs in memory; admin-only users/transactions endpoints and views. |
 
 The statuses above match their ADRs exactly. The [active execution plan](../exec-plans/active/current.md) records the user-authorized implementation scope; agent installation/server startup remain prohibited. Supporting research is [dependency-baseline.md](../research/dependency-baseline.md), not the nonexistent `frontend-dependency-baseline.md` named in the ADR source field.
 

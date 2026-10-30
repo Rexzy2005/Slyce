@@ -451,6 +451,16 @@ export const operationalMetricsSchema = z.object({
   health: z.object({ database: z.literal('reachable') }),
 });
 
+const chainCursor = z.string().regex(/^\d{1,9}$/).optional();
+const chainSummarySchema = z.object({ users: z.number().int().nonnegative(), transactions: z.number().int().nonnegative(), games: z.number().int().nonnegative(), earned: z.string().regex(/^\d+$/), spent: z.string().regex(/^\d+$/), indexedToBlock: z.number().int().nullable(), latestBlock: z.number().int().nullable(), catchingUp: z.boolean() });
+export const chainTransactionKindSchema = z.enum(['game', 'milestone_reward', 'round_fee', 'rewards_funded', 'purchase', 'tournament_entry', 'sponsor', 'tournament_score', 'prize_claim', 'refund']);
+export const chainTransactionQuerySchema = paginationQuerySchema.extend({ cursor: chainCursor, kind: chainTransactionKindSchema.optional(), account: z.string().regex(/^0x[0-9a-fA-F]{40}$/).optional() });
+export const chainUserQuerySchema = paginationQuerySchema.extend({ cursor: chainCursor, search: z.string().trim().min(1).max(42).regex(/^(0x)?[0-9a-fA-F]+$/).optional() });
+const chainTransactionSchema = z.object({ id: z.string(), kind: chainTransactionKindSchema, account: z.string(), transactionHash: z.string(), blockNumber: z.number().int(), timestamp: z.string().datetime().nullable(), amount: z.string().regex(/^\d+$/).nullable(), direction: z.enum(['in', 'out']).nullable(), details: z.record(z.string(), z.union([z.string(), z.number()])) });
+const chainUserSchema = z.object({ address: z.string(), firstSeen: z.string().datetime().nullable(), lastSeen: z.string().datetime().nullable(), transactions: z.number().int(), games: z.number().int(), bestScore: z.number().int(), xp: z.number().int(), earned: z.string().regex(/^\d+$/), spent: z.string().regex(/^\d+$/) });
+export const chainTransactionListResponseSchema = z.object({ data: z.array(chainTransactionSchema), summary: chainSummarySchema, pagination: paginationSchema });
+export const chainUserListResponseSchema = z.object({ data: z.array(chainUserSchema), summary: chainSummarySchema, pagination: paginationSchema });
+
 export const routeGroups = {
   health: '/healthz',
   readiness: '/readyz',

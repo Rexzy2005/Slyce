@@ -13,6 +13,8 @@ export interface BackendConfig {
   goodDollarRpcUrl?: string;
   goodDollarEnvironment: 'production' | 'staging' | 'development';
   goodDollarIdentityAddress?: string;
+  /** Slyyce contracts indexed for the admin users/transactions view (ADR-0012). */
+  chainActivity?: { rpcUrl: string; contracts: readonly `0x${string}`[]; startBlock: bigint };
 }
 
 function parsePort(value: string | undefined): number {
@@ -54,6 +56,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
   const authSessionSecret = parseSecret(env.AUTH_SESSION_SECRET, 'AUTH_SESSION_SECRET');
   if (environment === 'production' && adminEmails.length === 0) throw new Error('SLYCE_ADMIN_EMAILS is required in production');
   if (environment === 'production' && !authSessionSecret) throw new Error('AUTH_SESSION_SECRET is required in production');
+  const chainActivity = parseChainActivity(env);
   return {
     environment,
     port: parsePort(env.PORT),
@@ -67,7 +70,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
     ...(env.GOODDOLLAR_RPC_URL?.trim() ? { goodDollarRpcUrl: env.GOODDOLLAR_RPC_URL.trim() } : {}),
     goodDollarEnvironment: env.GOODDOLLAR_ENV === 'staging' || env.GOODDOLLAR_ENV === 'development' ? env.GOODDOLLAR_ENV : 'production',
     ...(env.GOODDOLLAR_IDENTITY_ADDRESS?.trim() ? { goodDollarIdentityAddress: env.GOODDOLLAR_IDENTITY_ADDRESS.trim() } : {}),
+    ...(chainActivity ? { chainActivity } : {}),
   };
+}
+
+function parseChainActivity(env: NodeJS.ProcessEnv): BackendConfig['chainActivity'] {
+  const rpcUrl = env.CHAIN_RPC_URL?.trim() || env.GOODDOLLAR_RPC_URL?.trim();
+  const names = ['SLYYCE_ARCADE_ADDRESS', 'SLYYCE_TOURNAMENT_ADDRESS', 'SLYYCE_SHOP_ADDRESS'] as const;
+  const values = names.map(name => env[name]?.trim()).filter((value): value is string => Boolean(value));
+  if (values.length === 0) return undefined;
+  const invalid = names.find(name => env[name]?.trim() && !/^0x[0-9a-fA-F]{40}$/.test(env[name]!.trim()));
+  if (invalid) throw new Error(`${invalid} must be a 0x-prefixed 20-byte address`);
+  const start = env.SLYYCE_CONTRACTS_START_BLOCK?.trim();
+  if (!start || !/^\d+$/.test(start)) throw new Error('SLYYCE_CONTRACTS_START_BLOCK must be the block number the contracts were deployed at');
+  if (!rpcUrl) throw new Error('CHAIN_RPC_URL or GOODDOLLAR_RPC_URL is required when Slyyce contract addresses are set');
+  return { rpcUrl, contracts: values as `0x${string}`[], startBlock: BigInt(start) };
 }
 
 function parseSecret(value: string | undefined, name: string): string | undefined {

@@ -29,6 +29,8 @@ Security configuration is provided through `CORS_ORIGINS`, `MAX_REQUEST_BYTES`, 
 
 API contracts and the route inventory are documented in docs/API_CONTRACTS.md.
 
+On-chain activity for `/admin` (ADR-0012): set `SLYYCE_ARCADE_ADDRESS`, `SLYYCE_TOURNAMENT_ADDRESS`, `SLYYCE_SHOP_ADDRESS` and `SLYYCE_CONTRACTS_START_BLOCK` (mainnet: block `81391119`), plus `CHAIN_RPC_URL` or `GOODDOLLAR_RPC_URL`. Without them, `/api/v1/admin/chain/*` returns 503.
+
 Administrator authentication is backend-owned. Configure `SLYCE_ADMIN_EMAILS`, provide `SLYCE_ADMIN_SEED_EMAIL` and `SLYCE_ADMIN_SEED_PASSWORD` only for the one-time seed command, then remove the seed password from the environment. The seed creates an idempotent active `ADMIN` account with a salted scrypt password hash. Login creates a rotated 30-day HttpOnly session cookie; logout revokes it, and every protected request rechecks account status, role, and the current allowlist. The existing Reown/AppKit wallet and email UX remains unchanged for players.
 
 Seed the initial account with:

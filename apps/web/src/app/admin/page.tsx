@@ -6,7 +6,6 @@ import {
   Activity,
   ArrowUpRight,
   ArrowLeftRight,
-  BarChart3,
   BadgeCheck,
   ClipboardList,
   Gamepad2,
@@ -18,17 +17,22 @@ import {
 } from "lucide-react";
 import { signOutAdministrator } from "../../admin/admin-gate";
 import { adminRequest } from "../../admin/auth-client";
+import { ChainPlayers, ChainTransactions, formatGd, useChainSummary } from "../../admin/chain-activity";
 import styles from "./admin-page.module.css";
 
-const navigation = [
-  { label: "Overview", icon: LayoutDashboard, active: true },
-  { label: "Players", icon: Users },
+type View = "overview" | "players" | "transactions";
+const navigation: { label: string; icon: typeof Users; view?: View }[] = [
+  { label: "Overview", icon: LayoutDashboard, view: "overview" },
+  { label: "Players", icon: Users, view: "players" },
+  { label: "Transactions", icon: ArrowLeftRight, view: "transactions" },
   { label: "Challenges", icon: ClipboardList },
-  { label: "Rewards", icon: BarChart3 },
 ];
 export default function AdminPage() {
   const [verifiedUsers, setVerifiedUsers] = useState<number | null>(null);
   const signOut = signOutAdministrator;
+  const [view, setView] = useState<View>("overview");
+  const [account, setAccount] = useState<string | null>(null);
+  const chain = useChainSummary();
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -60,16 +64,17 @@ export default function AdminPage() {
           <p className="admin-console-label">OPERATIONS CONSOLE</p>
         </div>
         <nav className="admin-nav" aria-label="Admin navigation">
-          {navigation.map(({ label, icon: Icon, active }) => (
+          {navigation.map(({ label, icon: Icon, view: target }) => (
             <button
               key={label}
               className="admin-nav-item"
-              aria-current={active ? "page" : undefined}
-              disabled={!active}
+              aria-current={target === view ? "page" : undefined}
+              disabled={!target}
+              onClick={() => { if (target) { setView(target); if (target !== "transactions") setAccount(null); } }}
             >
               <Icon size={18} />
               <span className="admin-nav-label">{label}</span>
-              {!active && <span className="admin-soon">Soon</span>}
+              {!target && <span className="admin-soon">Soon</span>}
             </button>
           ))}
         </nav>
@@ -113,6 +118,9 @@ export default function AdminPage() {
           </div>
         </header>
         <div className="admin-scroll-area">
+        {view === "players" && <div className="admin-section"><ChainPlayers onSelect={address => { setAccount(address); setView("transactions"); }} /></div>}
+        {view === "transactions" && <div className="admin-section"><ChainTransactions account={account} onClearAccount={() => setAccount(null)} /></div>}
+        {view === "overview" && <>
         <section className="admin-section">
           <div className="admin-section-heading">
             <div>
@@ -120,7 +128,7 @@ export default function AdminPage() {
               <h2>Platform pulse</h2>
             </div>
             <span className="muted">
-              Live data connects in the next service milestone.
+              {chain ? "Player activity read from Celo" : "Reading Celo activity"}
             </span>
           </div>
           <div className={`admin-metric-grid ${styles.transactionGrid}`}>
@@ -138,30 +146,30 @@ export default function AdminPage() {
               tone="mango"
             />
             <Metric
-              label="Active rounds"
-              value="—"
-              detail="Awaiting gameplay service"
-              icon={Gamepad2}
+              label="Players on Celo"
+              value={chain ? chain.users.toLocaleString() : "—"}
+              detail="Wallets that used the contracts"
+              icon={BadgeCheck}
               tone="leaf"
             />
             <Metric
-              label="Verified scores"
-              value="—"
-              detail="Awaiting leaderboard service"
-              icon={BadgeCheck}
+              label="Games saved"
+              value={chain ? chain.games.toLocaleString() : "—"}
+              detail="Recorded on-chain"
+              icon={Gamepad2}
               tone="sky"
             />
             <Metric
-              label="Rewards pending"
-              value="—"
-              detail="Awaiting rewards service"
+              label="G$ paid to players"
+              value={chain ? formatGd(chain.earned) : "—"}
+              detail="Milestones, prizes and refunds"
               icon={Gift}
               tone="melon"
             />
             <Metric
               label="Total transactions"
-              value="—"
-              detail="Awaiting transaction service"
+              value={chain ? chain.transactions.toLocaleString() : "—"}
+              detail="Player activity on Slyyce contracts"
               icon={ArrowLeftRight}
               tone="sky"
             />
@@ -192,11 +200,19 @@ export default function AdminPage() {
                 <h2>Quick actions</h2>
               </div>
             </div>
-            <button disabled className="admin-quick-action">
+            <button className="admin-quick-action" onClick={() => setView("players")}>
               <Users size={18} />
               <span>
                 <strong>Review players</strong>
-                <small>Coming with P6</small>
+                <small>Every wallet that played on Celo</small>
+              </span>
+              <ArrowUpRight size={16} />
+            </button>
+            <button className="admin-quick-action" onClick={() => setView("transactions")}>
+              <ArrowLeftRight size={18} />
+              <span>
+                <strong>Review transactions</strong>
+                <small>Games, rewards, purchases and entries</small>
               </span>
               <ArrowUpRight size={16} />
             </button>
@@ -210,6 +226,7 @@ export default function AdminPage() {
             </button>
           </div>
         </section>
+        </>}
         <footer className="admin-footer">
           <span>Slyyce / Operator workspace</span>
           <span>Build foundation · P5</span>

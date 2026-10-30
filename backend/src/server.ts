@@ -9,6 +9,10 @@ import {
   auditLogListResponseSchema,
   adminLoginRequestSchema,
   auditLogQuerySchema,
+  chainTransactionListResponseSchema,
+  chainTransactionQuerySchema,
+  chainUserListResponseSchema,
+  chainUserQuerySchema,
   adminPlayerListResponseSchema,
   bountyLeaderboardResponseSchema,
   bountyListResponseSchema,
@@ -64,6 +68,7 @@ import { PrismaRewardRepository, RewardService } from './reward-service.js';
 import { OperationsService, PrismaOperationsRepository } from './operations-service.js';
 import { AdminAuthService, adminSessionToken, clearAdminSessionCookie, setAdminSessionCookie } from './admin-auth.js';
 import { CompositeTokenVerifier } from './security.js';
+import { ChainActivityIndex, ChainActivityService, createViemActivitySource } from './chain-activity-service.js';
 
 interface ErrorResponse {
   error: {
@@ -110,6 +115,7 @@ interface AppDependencies {
   bountyService?: BountyService;
   rewardService?: RewardService;
   operationsService?: OperationsService;
+  chainActivityService?: ChainActivityService;
 }
 
 async function readJsonBody(request: IncomingMessage, maxBytes: number): Promise<unknown> {
@@ -623,6 +629,20 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     return sendJson(response, 200, auditLogListResponseSchema.parse({ data: result.items, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
   }
 
+  if ((pathname === `${apiPrefix}/admin/chain/users` || pathname === `${apiPrefix}/admin/chain/transactions`) && request.method === 'GET') {
+    if (!dependencies.verifier || !dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
+    const principal = await authenticate(request, dependencies.verifier);
+    const params = Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams);
+    if (pathname.endsWith('/users')) {
+      const query = chainUserQuerySchema.parse(params);
+      const result = await dependencies.chainActivityService.users(principal, query);
+      return sendJson(response, 200, chainUserListResponseSchema.parse({ data: result.items, summary: result.summary, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
+    }
+    const query = chainTransactionQuerySchema.parse(params);
+    const result = await dependencies.chainActivityService.transactions(principal, query);
+    return sendJson(response, 200, chainTransactionListResponseSchema.parse({ data: result.items, summary: result.summary, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
+  }
+
   return sendJson(response, 404, { error: { code: 'not_found', message: 'The requested route was not found.' } } satisfies ErrorResponse);
 }
 
@@ -710,6 +730,7 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     bountyService: new BountyService(new PrismaBountyRepository(prisma)),
     rewardService: new RewardService(new PrismaRewardRepository(prisma)),
     operationsService: new OperationsService(new PrismaOperationsRepository(prisma), config.goodDollarEnvironment),
+    ...(config.chainActivity ? { chainActivityService: new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock)) } : {}),
   });
   server.listen(config.port, config.host, () => {
     const address = server.address();

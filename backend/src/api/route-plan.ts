@@ -57,4 +57,6 @@ export const routePlan: readonly RouteDefinition[] = [
   { method: 'POST', path: `${routeGroups.admin}/rewards/:id/distributions`, access: 'administrator', idempotent: true },
   { method: 'GET', path: `${routeGroups.admin}/metrics`, access: 'administrator', idempotent: false },
   { method: 'GET', path: `${routeGroups.admin}/audit-logs`, access: 'administrator', idempotent: false },
+  { method: 'GET', path: `${routeGroups.admin}/chain/users`, access: 'administrator', idempotent: false },
+  { method: 'GET', path: `${routeGroups.admin}/chain/transactions`, access: 'administrator', idempotent: false },
 ];
