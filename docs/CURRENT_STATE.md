@@ -37,7 +37,7 @@ Updated: 2026-10-29. Product name: Slyyce. Target: GoodDollar Season 5. Web + in
 
 - No browser/device testing (the user prohibits use of their PC browser). The Playwright specs were rewritten for the gate but not run.
 - Real email sign-in, face verification, UBI claim and faucet top-up: these need Reown dashboard setup and a real account.
-- Contracts are live on Celo mainnet with real G$ (addresses in `contracts/README.md`): Tournament v1.3.0 with 24h auto-rolling prize tournaments, Arcade v2.0.0 with free play, on-chain game records, XP, streaks and G$ milestones for verified humans. The milestone reward pot is unfunded (0 G$) until the owner calls `fundRewards`. They are not audited.
+- Contracts are live on Celo mainnet with real G$ (addresses in `contracts/README.md`): Tournament v1.3.0 with 24h auto-rolling prize tournaments, Arcade v2.0.0 with free play, on-chain game records, XP, streaks and G$ milestones for verified humans. The milestone reward pot is intentionally unfunded (0 G$): G$ rewards have not started, and the app says so. Rewards start when the owner calls `fundRewards`. They are not audited.
 
 ## Known gaps
 
