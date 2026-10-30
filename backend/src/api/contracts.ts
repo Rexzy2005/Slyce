@@ -56,6 +56,7 @@ export const playerProfileSchema = z.object({
     chainId: z.number().int().positive(),
     status: z.enum(['ACTIVE', 'REVOKED']),
     verificationStatus: z.enum(['UNVERIFIED', 'VERIFIED', 'DISPUTED']),
+    signInMethod: z.enum(['email', 'social', 'wallet']).nullable().optional(),
   })),
   goodDollarVerification: z.object({
     state: z.enum(['UNKNOWN', 'VERIFIED', 'UNVERIFIED', 'UNAVAILABLE']),
@@ -72,6 +73,16 @@ export const adminPlayerListItemSchema = playerProfileSchema.extend({
 export const adminPlayerListResponseSchema = z.object({
   data: z.array(adminPlayerListItemSchema),
   pagination: paginationSchema,
+});
+
+export const playerGrowthQuerySchema = z.object({ days: z.coerce.number().int().min(1).max(365).default(30) });
+export const playerGrowthSchema = z.object({
+  total: z.number().int().nonnegative(),
+  last24h: z.number().int().nonnegative(),
+  last7d: z.number().int().nonnegative(),
+  last30d: z.number().int().nonnegative(),
+  byMethod: z.object({ email: z.number().int().nonnegative(), social: z.number().int().nonnegative(), wallet: z.number().int().nonnegative(), unknown: z.number().int().nonnegative() }),
+  daily: z.array(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), signUps: z.number().int().nonnegative(), total: z.number().int().nonnegative() })),
 });
 
 export const leaderboardQuerySchema = paginationQuerySchema.extend({
@@ -151,7 +162,9 @@ export const walletChallengeResponseSchema = z.object({
 
 export const walletVerifyRequestSchema = walletChallengeRequestSchema.extend({
   nonce: z.string().min(20),
-  signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
+  // 65-byte wallet signatures, or longer smart-account (ERC-1271/6492) signatures.
+  signature: z.string().max(20_002).regex(/^0x(?:[0-9a-fA-F]{2}){65,}$/),
+  signInMethod: z.enum(['email', 'social', 'wallet']).optional(),
 });
 
 export const walletVerifyResponseSchema = z.object({

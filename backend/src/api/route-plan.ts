@@ -19,6 +19,7 @@ export const routePlan: readonly RouteDefinition[] = [
   { method: 'GET', path: routeGroups.session, access: 'public', idempotent: false },
   { method: 'GET', path: `${routeGroups.players}/me`, access: 'player', idempotent: false },
   { method: 'GET', path: `${routeGroups.admin}/players`, access: 'administrator', idempotent: false },
+  { method: 'GET', path: `${routeGroups.admin}/players/growth`, access: 'administrator', idempotent: false },
   { method: 'POST', path: `${apiPrefix}/gooddollar/verification/check`, access: 'public', idempotent: true },
   { method: 'GET', path: `${routeGroups.admin}/gooddollar/verification-count`, access: 'administrator', idempotent: false },
   { method: 'GET', path: `${routeGroups.gameplay}/rounds`, access: 'player', idempotent: false },

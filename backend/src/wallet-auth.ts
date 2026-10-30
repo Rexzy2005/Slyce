@@ -44,14 +44,17 @@ export class PrismaWalletChallengeStore implements WalletChallengeStore {
 export class PrismaWalletPlayerStore {
   constructor(private readonly database: PrismaClient) {}
 
-  async findOrCreate(address: `0x${string}`, chainId: number): Promise<string> {
+  async findOrCreate(address: `0x${string}`, chainId: number, signInMethod?: SignInMethod): Promise<string> {
     const normalized = address.toLowerCase();
-    const existing = await this.database.wallet.findUnique({ where: { chainId_address: { chainId, address: normalized } }, select: { playerId: true } });
-    if (existing) return existing.playerId;
+    const existing = await this.database.wallet.findUnique({ where: { chainId_address: { chainId, address: normalized } }, select: { id: true, playerId: true, signInMethod: true } });
+    if (existing) {
+      if (signInMethod && !existing.signInMethod) await this.database.wallet.update({ where: { id: existing.id }, data: { signInMethod } });
+      return existing.playerId;
+    }
     const playerId = randomUUID();
     await this.database.$transaction(async transaction => {
       await transaction.player.create({ data: { id: playerId } });
-      await transaction.wallet.create({ data: { playerId, address: normalized, chainId } });
+      await transaction.wallet.create({ data: { playerId, address: normalized, chainId, ...(signInMethod ? { signInMethod } : {}) } });
     });
     return playerId;
   }
@@ -94,16 +97,22 @@ export class WalletSessionTokenVerifier implements TokenVerifier {
   }
 }
 
+export type SignInMethod = 'email' | 'social' | 'wallet';
+
+/** Checks a signed message. The default handles plain wallets only; pass a client-backed check for smart accounts (ERC-1271/6492). */
+export type SignatureVerifier = (args: { address: `0x${string}`; message: string; signature: `0x${string}` }) => Promise<boolean>;
+
 export async function verifyWalletChallenge(
   store: WalletChallengeStore,
-  input: { address: `0x${string}`; nonce: string; signature: `0x${string}`; origin: string },
+  input: { address: `0x${string}`; nonce: string; signature: `0x${string}`; origin: string; signInMethod?: SignInMethod | undefined },
   secret: string,
-  playerStore: { findOrCreate(address: `0x${string}`, chainId: number): Promise<string> },
+  playerStore: { findOrCreate(address: `0x${string}`, chainId: number, signInMethod?: SignInMethod): Promise<string> },
   now = new Date(),
+  verifySignature: SignatureVerifier = verifyMessage,
 ): Promise<{ token: string; playerId: string }> {
   const challenge = await store.consume(input.nonce, now);
   if (!challenge || challenge.origin !== input.origin || challenge.address.toLowerCase() !== input.address.toLowerCase()) throw new Error('The wallet challenge is invalid or expired.');
-  if (!await verifyMessage({ address: challenge.address, message: walletAuthMessage(challenge), signature: input.signature })) throw new Error('The wallet signature is invalid.');
-  const playerId = await playerStore.findOrCreate(challenge.address, challenge.chainId);
+  if (!await verifySignature({ address: challenge.address, message: walletAuthMessage(challenge), signature: input.signature })) throw new Error('The wallet signature is invalid.');
+  const playerId = await playerStore.findOrCreate(challenge.address, challenge.chainId, input.signInMethod);
   return { token: createWalletSessionToken({ subject: challenge.address.toLowerCase(), kind: 'player', playerId, roles: [] }, secret, now.getTime()), playerId };
 }

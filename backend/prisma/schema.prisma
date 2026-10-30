@@ -162,6 +162,7 @@ model Player {
   idempotencyKeys         IdempotencyKey[]
 
   @@index([status, createdAt])
+  @@index([createdAt])
 }
 
 model Wallet {
@@ -172,6 +173,8 @@ model Wallet {
   status                  WalletStatus             @default(ACTIVE)
   verificationStatus      WalletVerificationStatus @default(UNVERIFIED)
   verifiedAt              DateTime?
+  /// How the player signed in (email, social or wallet), as reported by the app; not verified.
+  signInMethod            String?                  @db.VarChar(16)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   player                  Player                   @relation(fields: [playerId], references: [id], onDelete: Restrict)

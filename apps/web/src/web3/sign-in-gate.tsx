@@ -27,5 +27,5 @@ function SignIn() {
       ? <><p>Your wallet is on a different network. Switch to Celo to play.</p><button className="button sign-in-action" onClick={() => void open({ view: 'Networks' })}><Icon name="reset" /> Switch to Celo</button></>
       : <><p>Sign in with your email or connect a wallet. Email sign-in creates a secure wallet for you automatically.</p>
         <button className="button sign-in-action" onClick={() => void open()}><Icon name="user" /> Sign in with email or wallet</button></>}
-    <small className="muted">Rounds cost a small G$ fee. New here? Verify with GoodDollar to claim free G$ every day.</small></div>;
+    <small className="muted">Playing is free. New here? Verify with GoodDollar to claim free G$ every day.</small></div>;
 }

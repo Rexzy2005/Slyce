@@ -187,6 +187,7 @@ test('exposes player profiles and admin list data through typed contracts', asyn
   const service = new PlayerService({
     findById: async () => profile,
     list: async () => ({ items: [profile], nextCursor: null }),
+    growth: async () => ({ total: 0, last24h: 0, last7d: 0, last30d: 0, byMethod: { email: 0, social: 0, wallet: 0, unknown: 0 }, daily: [] }),
   }, { ensure: async () => undefined });
   const playerResult = await service.getProfile(profile.id);
   assert.equal(playerResult?.id, profile.id);

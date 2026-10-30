@@ -53,7 +53,8 @@ export function VerifiedMode() {
     if (!wallet.address || !publicConfig.backendUrl) return;
     setBusy(true); setResult(null);
     try {
-      const origin = publicConfig.appUrl ?? window.location.origin;
+      // The backend requires the page's real origin, which differs from appUrl on other domains.
+      const origin = window.location.origin;
       const challenge = await post<{ address: string; chainId: number; nonce: string; message: string }>(
         '/api/v1/auth/wallet/challenge',
         { address: wallet.address, chainId: 42220, origin },

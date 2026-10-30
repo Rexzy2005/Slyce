@@ -42,6 +42,7 @@ export type WalletMinAggregateOutputType = {
   status: $Enums.WalletStatus | null
   verificationStatus: $Enums.WalletVerificationStatus | null
   verifiedAt: Date | null
+  signInMethod: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -54,6 +55,7 @@ export type WalletMaxAggregateOutputType = {
   status: $Enums.WalletStatus | null
   verificationStatus: $Enums.WalletVerificationStatus | null
   verifiedAt: Date | null
+  signInMethod: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -66,6 +68,7 @@ export type WalletCountAggregateOutputType = {
   status: number
   verificationStatus: number
   verifiedAt: number
+  signInMethod: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -88,6 +91,7 @@ export type WalletMinAggregateInputType = {
   status?: true
   verificationStatus?: true
   verifiedAt?: true
+  signInMethod?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -100,6 +104,7 @@ export type WalletMaxAggregateInputType = {
   status?: true
   verificationStatus?: true
   verifiedAt?: true
+  signInMethod?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -112,6 +117,7 @@ export type WalletCountAggregateInputType = {
   status?: true
   verificationStatus?: true
   verifiedAt?: true
+  signInMethod?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -211,6 +217,7 @@ export type WalletGroupByOutputType = {
   status: $Enums.WalletStatus
   verificationStatus: $Enums.WalletVerificationStatus
   verifiedAt: Date | null
+  signInMethod: string | null
   createdAt: Date
   updatedAt: Date
   _count: WalletCountAggregateOutputType | null
@@ -246,6 +253,7 @@ export type WalletWhereInput = {
   status?: Prisma.EnumWalletStatusFilter<"Wallet"> | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFilter<"Wallet"> | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.DateTimeNullableFilter<"Wallet"> | Date | string | null
+  signInMethod?: Prisma.StringNullableFilter<"Wallet"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Wallet"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Wallet"> | Date | string
   player?: Prisma.XOR<Prisma.PlayerScalarRelationFilter, Prisma.PlayerWhereInput>
@@ -260,6 +268,7 @@ export type WalletOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  signInMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   player?: Prisma.PlayerOrderByWithRelationInput
@@ -278,6 +287,7 @@ export type WalletWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumWalletStatusFilter<"Wallet"> | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFilter<"Wallet"> | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.DateTimeNullableFilter<"Wallet"> | Date | string | null
+  signInMethod?: Prisma.StringNullableFilter<"Wallet"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Wallet"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Wallet"> | Date | string
   player?: Prisma.XOR<Prisma.PlayerScalarRelationFilter, Prisma.PlayerWhereInput>
@@ -292,6 +302,7 @@ export type WalletOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  signInMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.WalletCountOrderByAggregateInput
@@ -312,6 +323,7 @@ export type WalletScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumWalletStatusWithAggregatesFilter<"Wallet"> | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusWithAggregatesFilter<"Wallet"> | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Wallet"> | Date | string | null
+  signInMethod?: Prisma.StringNullableWithAggregatesFilter<"Wallet"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Wallet"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Wallet"> | Date | string
 }
@@ -323,6 +335,7 @@ export type WalletCreateInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   player: Prisma.PlayerCreateNestedOneWithoutWalletsInput
@@ -337,6 +350,7 @@ export type WalletUncheckedCreateInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   goodDollarVerifications?: Prisma.GoodDollarVerificationUncheckedCreateNestedManyWithoutWalletInput
@@ -349,6 +363,7 @@ export type WalletUpdateInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   player?: Prisma.PlayerUpdateOneRequiredWithoutWalletsNestedInput
@@ -363,6 +378,7 @@ export type WalletUncheckedUpdateInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   goodDollarVerifications?: Prisma.GoodDollarVerificationUncheckedUpdateManyWithoutWalletNestedInput
@@ -376,6 +392,7 @@ export type WalletCreateManyInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -387,6 +404,7 @@ export type WalletUpdateManyMutationInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -399,6 +417,7 @@ export type WalletUncheckedUpdateManyInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -426,6 +445,7 @@ export type WalletCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrder
+  signInMethod?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -442,6 +462,7 @@ export type WalletMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrder
+  signInMethod?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -454,6 +475,7 @@ export type WalletMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   verifiedAt?: Prisma.SortOrder
+  signInMethod?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -552,6 +574,7 @@ export type WalletCreateWithoutPlayerInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   goodDollarVerifications?: Prisma.GoodDollarVerificationCreateNestedManyWithoutWalletInput
@@ -564,6 +587,7 @@ export type WalletUncheckedCreateWithoutPlayerInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   goodDollarVerifications?: Prisma.GoodDollarVerificationUncheckedCreateNestedManyWithoutWalletInput
@@ -606,6 +630,7 @@ export type WalletScalarWhereInput = {
   status?: Prisma.EnumWalletStatusFilter<"Wallet"> | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFilter<"Wallet"> | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.DateTimeNullableFilter<"Wallet"> | Date | string | null
+  signInMethod?: Prisma.StringNullableFilter<"Wallet"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Wallet"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Wallet"> | Date | string
 }
@@ -617,6 +642,7 @@ export type WalletCreateWithoutGoodDollarVerificationsInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   player: Prisma.PlayerCreateNestedOneWithoutWalletsInput
@@ -630,6 +656,7 @@ export type WalletUncheckedCreateWithoutGoodDollarVerificationsInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -657,6 +684,7 @@ export type WalletUpdateWithoutGoodDollarVerificationsInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   player?: Prisma.PlayerUpdateOneRequiredWithoutWalletsNestedInput
@@ -670,6 +698,7 @@ export type WalletUncheckedUpdateWithoutGoodDollarVerificationsInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -681,6 +710,7 @@ export type WalletCreateManyPlayerInput = {
   status?: $Enums.WalletStatus
   verificationStatus?: $Enums.WalletVerificationStatus
   verifiedAt?: Date | string | null
+  signInMethod?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -692,6 +722,7 @@ export type WalletUpdateWithoutPlayerInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   goodDollarVerifications?: Prisma.GoodDollarVerificationUpdateManyWithoutWalletNestedInput
@@ -704,6 +735,7 @@ export type WalletUncheckedUpdateWithoutPlayerInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   goodDollarVerifications?: Prisma.GoodDollarVerificationUncheckedUpdateManyWithoutWalletNestedInput
@@ -716,6 +748,7 @@ export type WalletUncheckedUpdateManyWithoutPlayerInput = {
   status?: Prisma.EnumWalletStatusFieldUpdateOperationsInput | $Enums.WalletStatus
   verificationStatus?: Prisma.EnumWalletVerificationStatusFieldUpdateOperationsInput | $Enums.WalletVerificationStatus
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signInMethod?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -759,6 +792,7 @@ export type WalletSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   status?: boolean
   verificationStatus?: boolean
   verifiedAt?: boolean
+  signInMethod?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   player?: boolean | Prisma.PlayerDefaultArgs<ExtArgs>
@@ -774,6 +808,7 @@ export type WalletSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   status?: boolean
   verificationStatus?: boolean
   verifiedAt?: boolean
+  signInMethod?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   player?: boolean | Prisma.PlayerDefaultArgs<ExtArgs>
@@ -787,6 +822,7 @@ export type WalletSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   status?: boolean
   verificationStatus?: boolean
   verifiedAt?: boolean
+  signInMethod?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   player?: boolean | Prisma.PlayerDefaultArgs<ExtArgs>
@@ -800,11 +836,12 @@ export type WalletSelectScalar = {
   status?: boolean
   verificationStatus?: boolean
   verifiedAt?: boolean
+  signInMethod?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WalletOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "playerId" | "address" | "chainId" | "status" | "verificationStatus" | "verifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["wallet"]>
+export type WalletOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "playerId" | "address" | "chainId" | "status" | "verificationStatus" | "verifiedAt" | "signInMethod" | "createdAt" | "updatedAt", ExtArgs["result"]["wallet"]>
 export type WalletInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   player?: boolean | Prisma.PlayerDefaultArgs<ExtArgs>
   goodDollarVerifications?: boolean | Prisma.Wallet$goodDollarVerificationsArgs<ExtArgs>
@@ -831,6 +868,10 @@ export type $WalletPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     status: $Enums.WalletStatus
     verificationStatus: $Enums.WalletVerificationStatus
     verifiedAt: Date | null
+    /**
+     * How the player signed in (email, social or wallet), as reported by the app; not verified.
+     */
+    signInMethod: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["wallet"]>
@@ -1265,6 +1306,7 @@ export interface WalletFieldRefs {
   readonly status: Prisma.FieldRef<"Wallet", 'WalletStatus'>
   readonly verificationStatus: Prisma.FieldRef<"Wallet", 'WalletVerificationStatus'>
   readonly verifiedAt: Prisma.FieldRef<"Wallet", 'DateTime'>
+  readonly signInMethod: Prisma.FieldRef<"Wallet", 'String'>
   readonly createdAt: Prisma.FieldRef<"Wallet", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Wallet", 'DateTime'>
 }

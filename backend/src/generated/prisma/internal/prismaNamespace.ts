@@ -2350,6 +2350,7 @@ export const WalletScalarFieldEnum = {
   status: 'status',
   verificationStatus: 'verificationStatus',
   verifiedAt: 'verifiedAt',
+  signInMethod: 'signInMethod',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

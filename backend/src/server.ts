@@ -14,6 +14,8 @@ import {
   chainUserListResponseSchema,
   chainUserQuerySchema,
   adminPlayerListResponseSchema,
+  playerGrowthQuerySchema,
+  playerGrowthSchema,
   bountyLeaderboardResponseSchema,
   bountyListResponseSchema,
   bountyParticipationSchema,
@@ -61,7 +63,9 @@ import { LeaderboardService, PrismaLeaderboardRepository } from './leaderboard-s
 import { createVerifiedFruitSliceRules, GameplayService, PrismaGameplaySessionRepository } from './gameplay-service.js';
 import { PrismaPendingScoreStore, ScoreVerificationService, VerifiedFruitSliceVerifier } from './gameplay-verifier.js';
 import { requireIdempotencyKey } from './api/validation.js';
-import { createWalletChallenge, PrismaWalletChallengeStore, PrismaWalletPlayerStore, verifyWalletChallenge, walletAuthMessage, WalletSessionTokenVerifier } from './wallet-auth.js';
+import { createPublicClient, http } from 'viem';
+import { celo } from 'viem/chains';
+import { type SignatureVerifier, createWalletChallenge, PrismaWalletChallengeStore, PrismaWalletPlayerStore, verifyWalletChallenge, walletAuthMessage, WalletSessionTokenVerifier } from './wallet-auth.js';
 import { ChallengeService, PrismaChallengeRepository } from './challenge-service.js';
 import { BountyService, PrismaBountyRepository } from './bounty-service.js';
 import { PrismaRewardRepository, RewardService } from './reward-service.js';
@@ -111,6 +115,7 @@ interface AppDependencies {
   walletPlayers?: PrismaWalletPlayerStore;
   walletVerifier?: TokenVerifier;
   walletVerifierSecret?: string;
+  walletSignatureVerifier?: SignatureVerifier;
   challengeService?: ChallengeService;
   bountyService?: BountyService;
   rewardService?: RewardService;
@@ -210,7 +215,8 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
         nonce: input.nonce,
         signature: input.signature as `0x${string}`,
         origin: input.origin,
-      }, dependencies.walletVerifierSecret, dependencies.walletPlayers);
+        signInMethod: input.signInMethod,
+      }, dependencies.walletVerifierSecret, dependencies.walletPlayers, new Date(), dependencies.walletSignatureVerifier);
       return sendJson(response, 200, { data: walletVerifyResponseSchema.parse(result) });
     } catch (error) {
       return sendJson(response, 401, { error: { code: 'wallet_auth_failed', message: error instanceof Error ? error.message : 'Wallet authentication failed.' } } satisfies ErrorResponse);
@@ -228,6 +234,15 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     const profile = await dependencies.playerService.getProfile(principal.playerId);
     if (!profile) return sendJson(response, 404, { error: { code: 'not_found', message: 'The player record was not found.' } } satisfies ErrorResponse);
     return sendJson(response, 200, { data: playerProfileSchema.parse(profile) });
+  }
+  if (pathname === `${apiPrefix}/admin/players/growth`) {
+    if (request.method !== 'GET') return methodNotAllowed(response);
+    if (!dependencies.verifier || !dependencies.playerService) {
+      return sendJson(response, 503, { error: { code: 'player_service_not_configured', message: 'The player service is not configured.' } } satisfies ErrorResponse);
+    }
+    requireAdministrator(await authenticate(request, dependencies.verifier));
+    const query = playerGrowthQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    return sendJson(response, 200, { data: playerGrowthSchema.parse(await dependencies.playerService.growth(query.days)) });
   }
   if (pathname === `${apiPrefix}/admin/players`) {
     if (request.method !== 'GET') return methodNotAllowed(response);
@@ -699,6 +714,8 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
   const prisma = createPrismaClient();
   const goodDollarClient = createGoodDollarPublicClient(config);
   const adminAuth = new AdminAuthService(prisma, config.adminEmails);
+  // A Celo client also verifies smart-account signatures (email wallets), not only plain wallets.
+  const signatureRpcUrl = config.chainActivity?.rpcUrl ?? config.goodDollarRpcUrl;
   const walletVerifier = config.authSessionSecret ? new WalletSessionTokenVerifier(config.authSessionSecret, async address => {
     const wallet = await prisma.wallet.findFirst({
       where: { address: address.toLowerCase(), status: 'ACTIVE' },
@@ -722,6 +739,7 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     scoreVerificationService: new ScoreVerificationService(new PrismaPendingScoreStore(prisma), new VerifiedFruitSliceVerifier()),
     walletChallenges: new PrismaWalletChallengeStore(prisma),
     walletPlayers: new PrismaWalletPlayerStore(prisma),
+    ...(signatureRpcUrl ? { walletSignatureVerifier: createPublicClient({ chain: celo, transport: http(signatureRpcUrl) }).verifyMessage } : {}),
     ...(config.authSessionSecret ? {
       walletVerifierSecret: config.authSessionSecret,
       walletVerifier: walletVerifier as WalletSessionTokenVerifier,

@@ -13,24 +13,27 @@ import {
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  UserPlus,
   Users,
 } from "lucide-react";
 import { signOutAdministrator } from "../../admin/admin-gate";
 import { ChainPlayers, ChainTransactions, formatGd, useChainSummary } from "../../admin/chain-activity";
+import { SignUps, useGrowth } from "../../admin/sign-ups";
 import styles from "./admin-page.module.css";
 
-type View = "overview" | "players" | "transactions";
+type View = "overview" | "signups" | "players" | "transactions";
 const navigation: { label: string; icon: typeof Users; view?: View }[] = [
   { label: "Overview", icon: LayoutDashboard, view: "overview" },
+  { label: "Sign-ups", icon: UserPlus, view: "signups" },
   { label: "Players", icon: Users, view: "players" },
   { label: "Transactions", icon: ArrowLeftRight, view: "transactions" },
-  { label: "Challenges", icon: ClipboardList },
 ];
 export default function AdminPage() {
   const signOut = signOutAdministrator;
   const [view, setView] = useState<View>("overview");
   const [account, setAccount] = useState<string | null>(null);
   const chain = useChainSummary();
+  const { growth } = useGrowth(30);
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -99,6 +102,7 @@ export default function AdminPage() {
           </div>
         </header>
         <div className="admin-scroll-area">
+        {view === "signups" && <div className="admin-section"><SignUps /></div>}
         {view === "players" && <div className="admin-section"><ChainPlayers onSelect={address => { setAccount(address); setView("transactions"); }} /></div>}
         {view === "transactions" && <div className="admin-section"><ChainTransactions account={account} onClearAccount={() => setAccount(null)} /></div>}
         {view === "overview" && <>
@@ -113,6 +117,13 @@ export default function AdminPage() {
             </span>
           </div>
           <div className={`admin-metric-grid ${styles.transactionGrid}`}>
+            <Metric
+              label="Sign-ups"
+              value={growth ? growth.total.toLocaleString() : "—"}
+              detail={growth ? `+${growth.last7d.toLocaleString()} in the last 7 days` : "Everyone who confirmed sign-in"}
+              icon={UserPlus}
+              tone="sky"
+            />
             <Metric
               label="Players"
               value={chain ? chain.users.toLocaleString() : "—"}
