@@ -116,3 +116,28 @@ await it('reads chain activity configuration only when addresses are set', () =>
   assert.throws(() => loadConfig({ GOODDOLLAR_RPC_URL: 'https://forno.celo.org', SLYYCE_ARCADE_ADDRESS: alice }), /START_BLOCK/);
   assert.throws(() => loadConfig({ SLYYCE_ARCADE_ADDRESS: 'nope', SLYYCE_CONTRACTS_START_BLOCK: '1' }), /ARCADE/);
 });
+
+await it('counts verified players by distinct GoodDollar root and refreshes expired results', async () => {
+  let now = 0;
+  const roots = new Map<string, string | null>([[alice.toLowerCase(), '0x00000000000000000000000000000000000000ff'], [bob.toLowerCase(), null]]);
+  const checked: string[][] = [];
+  const index = new ChainActivityIndex(new FakeSource(logs), 900n, { now: () => now, minSyncIntervalMs: 0, identityTtlMs: 1_000, identityRoots: async addresses => { checked.push([...addresses]); return new Map(addresses.map(address => [address, roots.get(address) ?? null])); } });
+  await index.sync();
+  assert.equal(index.summary().verifiedUsers, 1);
+  assert.deepEqual(index.listUsers({ limit: 10 }).items.map(user => user.verified), [true, false]);
+  await index.sync();
+  assert.equal(checked.length, 1, 'cached within the TTL');
+  roots.set(alice.toLowerCase(), null);
+  now = 2_000;
+  await index.sync();
+  assert.equal(index.summary().verifiedUsers, 0, 'expired verification is re-read');
+  assert.equal(new ChainActivityIndex(new FakeSource(logs), 900n).summary().verifiedUsers, null);
+});
+
+await it('keeps activity available when identity reads fail', async () => {
+  const index = new ChainActivityIndex(new FakeSource(logs), 900n, { identityRoots: async () => { throw new Error('rpc down'); } });
+  await index.sync();
+  assert.equal(index.summary().users, 2);
+  assert.equal(index.summary().verifiedUsers, 0);
+  assert.equal(index.listUsers({ limit: 1 }).items[0]!.verified, null);
+});

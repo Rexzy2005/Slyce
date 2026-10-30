@@ -9,8 +9,8 @@ import { explorerUrl, gdDecimals } from '../web3/config';
 import { formatTokenAmount } from '../web3/units';
 
 /** Admin views over on-chain player activity served by the backend index (ADR-0012). */
-export type ChainSummary = { users: number; transactions: number; games: number; earned: string; spent: string; indexedToBlock: number | null; latestBlock: number | null; catchingUp: boolean };
-type ChainUser = { address: string; firstSeen: string | null; lastSeen: string | null; transactions: number; games: number; bestScore: number; xp: number; earned: string; spent: string };
+export type ChainSummary = { users: number; verifiedUsers: number | null; transactions: number; games: number; earned: string; spent: string; indexedToBlock: number | null; latestBlock: number | null; catchingUp: boolean };
+type ChainUser = { address: string; firstSeen: string | null; lastSeen: string | null; transactions: number; games: number; bestScore: number; xp: number; earned: string; spent: string; verified: boolean | null };
 type ChainTransaction = { id: string; kind: TransactionKind; account: string; transactionHash: string; blockNumber: number; timestamp: string | null; amount: string | null; direction: 'in' | 'out' | null; details: Record<string, string | number> };
 type TransactionKind = keyof typeof kindLabels;
 type Page<T> = { data: T[]; summary: ChainSummary; pagination: { nextCursor: string | null } };
@@ -89,7 +89,7 @@ export function ChainPlayers({ onSelect }: { onSelect: (address: string) => void
       <div className="admin-chain-table" role="table" aria-label="Players">
         <div className="admin-chain-row admin-chain-head" role="row"><span role="columnheader">Wallet</span><span role="columnheader">Games</span><span role="columnheader">Best</span><span role="columnheader">XP</span><span role="columnheader">Earned</span><span role="columnheader">Spent</span><span role="columnheader">Last active</span><span role="columnheader" /></div>
         {rows.map(user => <div className="admin-chain-row" role="row" key={user.address}>
-          <span role="cell" data-label="Wallet"><Address value={user.address} /></span>
+          <span role="cell" data-label="Wallet"><Address value={user.address} />{user.verified && <span className="admin-chain-verified" title="GoodDollar-verified human"> ✓ verified</span>}</span>
           <span role="cell" data-label="Games">{user.games.toLocaleString()}</span>
           <span role="cell" data-label="Best">{user.bestScore.toLocaleString()}</span>
           <span role="cell" data-label="XP">{user.xp.toLocaleString()}</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { createElement as h, useEffect, useState } from "react";
+import { createElement as h, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
@@ -16,7 +16,6 @@ import {
   Users,
 } from "lucide-react";
 import { signOutAdministrator } from "../../admin/admin-gate";
-import { adminRequest } from "../../admin/auth-client";
 import { ChainPlayers, ChainTransactions, formatGd, useChainSummary } from "../../admin/chain-activity";
 import styles from "./admin-page.module.css";
 
@@ -28,28 +27,10 @@ const navigation: { label: string; icon: typeof Users; view?: View }[] = [
   { label: "Challenges", icon: ClipboardList },
 ];
 export default function AdminPage() {
-  const [verifiedUsers, setVerifiedUsers] = useState<number | null>(null);
   const signOut = signOutAdministrator;
   const [view, setView] = useState<View>("overview");
   const [account, setAccount] = useState<string | null>(null);
   const chain = useChainSummary();
-  useEffect(() => {
-    let active = true;
-    void (async () => {
-      const response = await adminRequest(
-        "/api/v1/admin/gooddollar/verification-count",
-      );
-      if (!response.ok || !active) return;
-      const body = (await response.json()) as {
-        data?: { verifiedCount?: number };
-      };
-      if (typeof body.data?.verifiedCount === "number")
-        setVerifiedUsers(body.data.verifiedCount);
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -133,22 +114,16 @@ export default function AdminPage() {
           </div>
           <div className={`admin-metric-grid ${styles.transactionGrid}`}>
             <Metric
-              label="Verified GoodDollar users"
-              value={
-                verifiedUsers === null ? "—" : verifiedUsers.toLocaleString()
-              }
-              detail={
-                verifiedUsers === null
-                  ? "Awaiting on-chain checks"
-                  : "Recorded from Celo Identity"
-              }
+              label="Players"
+              value={chain ? chain.users.toLocaleString() : "—"}
+              detail="Wallets that played or paid on Celo"
               icon={Users}
               tone="mango"
             />
             <Metric
-              label="Players on Celo"
-              value={chain ? chain.users.toLocaleString() : "—"}
-              detail="Wallets that used the contracts"
+              label="Verified players"
+              value={chain?.verifiedUsers != null ? chain.verifiedUsers.toLocaleString() : "—"}
+              detail="Distinct GoodDollar-verified humans"
               icon={BadgeCheck}
               tone="leaf"
             />

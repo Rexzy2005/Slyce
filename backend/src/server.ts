@@ -68,7 +68,7 @@ import { PrismaRewardRepository, RewardService } from './reward-service.js';
 import { OperationsService, PrismaOperationsRepository } from './operations-service.js';
 import { AdminAuthService, adminSessionToken, clearAdminSessionCookie, setAdminSessionCookie } from './admin-auth.js';
 import { CompositeTokenVerifier } from './security.js';
-import { ChainActivityIndex, ChainActivityService, createViemActivitySource } from './chain-activity-service.js';
+import { ChainActivityIndex, ChainActivityService, createIdentityRootResolver, createViemActivitySource } from './chain-activity-service.js';
 
 interface ErrorResponse {
   error: {
@@ -730,7 +730,7 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     bountyService: new BountyService(new PrismaBountyRepository(prisma)),
     rewardService: new RewardService(new PrismaRewardRepository(prisma)),
     operationsService: new OperationsService(new PrismaOperationsRepository(prisma), config.goodDollarEnvironment),
-    ...(config.chainActivity ? { chainActivityService: new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock)) } : {}),
+    ...(config.chainActivity ? { chainActivityService: new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock, { ...(goodDollarIdentityAddress(config) ? { identityRoots: createIdentityRootResolver(config.chainActivity.rpcUrl, goodDollarIdentityAddress(config) as `0x${string}`) } : {}) })) } : {}),
   });
   server.listen(config.port, config.host, () => {
     const address = server.address();

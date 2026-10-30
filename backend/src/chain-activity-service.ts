@@ -46,10 +46,14 @@ export interface ChainUser {
   xp: number;
   earned: string;
   spent: string;
+  /** GoodDollar-verified per the Identity contract; null when unknown. */
+  verified: boolean | null;
 }
 
 export interface ChainActivitySummary {
   users: number;
+  /** Distinct GoodDollar root identities among users; null when no identity check is configured. */
+  verifiedUsers: number | null;
   transactions: number;
   games: number;
   earned: string;
@@ -74,10 +78,29 @@ export interface ActivityLogSource {
   logs(fromBlock: bigint, toBlock: bigint): Promise<readonly ActivityLog[]>;
 }
 
+/** Maps wallets to their GoodDollar root identity (null = not verified). */
+export type IdentityRootResolver = (addresses: readonly string[]) => Promise<Map<string, string | null>>;
+
 export interface ChainActivityConfig {
   rpcUrl: string;
   contracts: readonly Address[];
   startBlock: bigint;
+}
+
+const identityAbi = parseAbi(['function getWhitelistedRoot(address account) view returns (address)']);
+
+export function createIdentityRootResolver(rpcUrl: string, identity: Address): IdentityRootResolver {
+  const client = createPublicClient({ chain: celo, transport: http(rpcUrl) });
+  return async addresses => {
+    const results = await client.multicall({ contracts: addresses.map(account => ({ address: identity, abi: identityAbi, functionName: 'getWhitelistedRoot', args: [account as Address] })), allowFailure: true });
+    const roots = new Map<string, string | null>();
+    results.forEach((result, i) => {
+      if (result.status !== 'success') return;
+      const root = String(result.result).toLowerCase();
+      roots.set(addresses[i]!, /^0x0{40}$/.test(root) ? null : root);
+    });
+    return roots;
+  };
 }
 
 export function createViemActivitySource(config: ChainActivityConfig): ActivityLogSource {
@@ -129,6 +152,9 @@ export interface ChainActivityIndexOptions {
   minSyncIntervalMs?: number;
   confirmations?: bigint;
   now?: () => number;
+  identityRoots?: IdentityRootResolver;
+  /** How long a verification result is reused; verification can expire on GoodDollar. */
+  identityTtlMs?: number;
 }
 
 const order = (a: ChainTransaction, b: ChainTransaction) => b.blockNumber - a.blockNumber || b.id.localeCompare(a.id);
@@ -147,6 +173,9 @@ export class ChainActivityIndex {
   private readonly minSyncIntervalMs: number;
   private readonly confirmations: bigint;
   private readonly now: () => number;
+  private readonly identityRoots: IdentityRootResolver | undefined;
+  private readonly identityTtlMs: number;
+  private readonly roots = new Map<string, { root: string | null; at: number }>();
 
   constructor(private readonly source: ActivityLogSource, startBlock: bigint, options: ChainActivityIndexOptions = {}) {
     this.nextBlock = startBlock;
@@ -156,6 +185,8 @@ export class ChainActivityIndex {
     this.minSyncIntervalMs = options.minSyncIntervalMs ?? 15_000;
     this.confirmations = options.confirmations ?? 2n;
     this.now = options.now ?? Date.now;
+    this.identityRoots = options.identityRoots;
+    this.identityTtlMs = options.identityTtlMs ?? 10 * 60_000;
   }
 
   /** Scans new blocks; concurrent callers share one scan and repeat calls are throttled. */
@@ -183,7 +214,27 @@ export class ChainActivityIndex {
       this.nextBlock = batch.at(-1)![1] + 1n;
     }
     this.rebuild();
+    await this.refreshRoots();
     this.lastSync = this.now();
+  }
+
+  private async refreshRoots(): Promise<void> {
+    if (!this.identityRoots) return;
+    const now = this.now();
+    const stale = [...this.users.keys()].filter(address => { const cached = this.roots.get(address); return !cached || now - cached.at > this.identityTtlMs; });
+    if (stale.length === 0) return;
+    try {
+      const found = await this.identityRoots(stale);
+      for (const [address, root] of found) this.roots.set(address, { root, at: now });
+    } catch {
+      // Identity reads are best-effort; activity stays available and counts fall back to cached roots.
+    }
+  }
+
+  private verifiedOf(address: string): boolean | null {
+    if (!this.identityRoots) return null;
+    const cached = this.roots.get(address);
+    return cached ? cached.root !== null : null;
   }
 
   private rebuild(): void {
@@ -204,7 +255,8 @@ export class ChainActivityIndex {
   summary(): ChainActivitySummary {
     let earned = 0n; let spent = 0n; let games = 0;
     for (const user of this.users.values()) { earned += user.earned; spent += user.spent; games += user.games; }
-    return { users: this.users.size, transactions: this.sorted.length, games, earned: earned.toString(), spent: spent.toString(), indexedToBlock: this.nextBlock > 0n ? Number(this.nextBlock - 1n) : null, latestBlock: this.latest === null ? null : Number(this.latest), catchingUp: this.catchingUp() };
+    const roots = new Set([...this.users.keys()].map(address => this.roots.get(address)?.root).filter((root): root is string => Boolean(root)));
+    return { users: this.users.size, verifiedUsers: this.identityRoots ? roots.size : null, transactions: this.sorted.length, games, earned: earned.toString(), spent: spent.toString(), indexedToBlock: this.nextBlock > 0n ? Number(this.nextBlock - 1n) : null, latestBlock: this.latest === null ? null : Number(this.latest), catchingUp: this.catchingUp() };
   }
 
   listTransactions(input: { cursor?: string | undefined; limit: number; kind?: ChainTransactionKind | undefined; account?: string | undefined }): { items: ChainTransaction[]; nextCursor: string | null } {
@@ -218,7 +270,7 @@ export class ChainActivityIndex {
     const users = [...this.users.values()]
       .filter(user => !search || user.address.includes(search))
       .sort((a, b) => order(a.last, b.last))
-      .map(user => ({ address: user.address, firstSeen: user.first.timestamp, lastSeen: user.last.timestamp, transactions: user.transactions, games: user.games, bestScore: user.bestScore, xp: user.xp, earned: user.earned.toString(), spent: user.spent.toString() }));
+      .map(user => ({ address: user.address, firstSeen: user.first.timestamp, lastSeen: user.last.timestamp, transactions: user.transactions, games: user.games, bestScore: user.bestScore, xp: user.xp, earned: user.earned.toString(), spent: user.spent.toString(), verified: this.verifiedOf(user.address) }));
     return page(users, input.cursor, input.limit);
   }
 }
