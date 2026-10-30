@@ -40,6 +40,8 @@ function parsePositiveInteger(value: string | undefined, name: string, defaultVa
 function parseOrigins(value: string | undefined, environment: Environment): readonly string[] {
   const origins = (value ?? '').split(',').map(origin => origin.trim()).filter(Boolean);
   if (environment === 'production' && origins.length === 0) throw new Error('CORS_ORIGINS is required in production');
+  // Credentialed CORS reflects the origin, so a wildcard would let any site use the admin session cookie.
+  if (environment === 'production' && origins.includes('*')) throw new Error('CORS_ORIGINS must list explicit origins in production');
   return origins;
 }
 

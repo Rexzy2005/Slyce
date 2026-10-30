@@ -40,6 +40,7 @@ test('validates the complete production deployment environment', () => {
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, SLYCE_ADMIN_EMAILS: '' }), /SLYCE_ADMIN_EMAILS/);
   assert.throws(() => loadConfig({ SLYCE_ADMIN_EMAILS: 'admin@example.com,not-an-email' }), /valid comma-separated/);
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, CORS_ORIGINS: '' }), /CORS_ORIGINS/);
+  assert.throws(() => verifyDeploymentEnvironment({ ...valid, CORS_ORIGINS: '*' }), /explicit origins/);
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, AUTH_SESSION_SECRET: '' }), /AUTH_SESSION_SECRET/);
   assert.throws(() => verifyDeploymentEnvironment({ ...valid, SUPABASE_CA_CERT: '-----BEGIN CERTIFICATE-----\\nreplace-with-ca\\n-----END CERTIFICATE-----' }), /SUPABASE_CA_CERT/);
 });

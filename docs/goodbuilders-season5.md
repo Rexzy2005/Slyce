@@ -6,8 +6,8 @@ Draft following the Season 5 application structure. **(proposed)** numbers are t
 
 **Slyyce** is a mobile-first fruit-slicing arcade, an installable PWA on Celo mainnet built for everyday people, not crypto users. Players sign in with **email** (an embedded wallet is created automatically) or any wallet, play for free, save each game on Celo for XP, earn G$ for score milestones once verified, and compete in G$ bounties.
 
-- Live app: _TODO: Vercel URL_
-- Live on-chain stats (no sign-in): _TODO: Vercel URL_/stats
+- Live app: https://www.slyyce.xyz
+- Live on-chain stats (no sign-in): https://www.slyyce.xyz/stats
 - Code: https://github.com/Rexzy2005/Slyyce
 
 ## 2. G$ integration
