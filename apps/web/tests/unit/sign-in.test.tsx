@@ -68,6 +68,18 @@ it('shows a loading state while connecting', () => {
   expect(screen.queryByText('secret app')).toBeNull();
   expect(screen.queryByRole('button', { name: /sign in/i })).toBeNull();
 });
+it('lets a player verified before on this device straight in, and re-checks quietly', () => {
+  const address = '0x00000000000000000000000000000000000000a1';
+  window.localStorage.setItem('slyyce.verified.v1.' + address, '1');
+  mocks.pathname = '/play';
+  mocks.verified = undefined;
+  const { rerender } = withWallet({ ...signedOut, status: 'connected', address }, <VerifiedGate><p>game</p></VerifiedGate>);
+  expect(screen.getByText('game')).toBeTruthy();
+  mocks.verified = false;
+  rerender(<WalletContext value={{ ...signedOut, status: 'connected', address }}><VerifiedGate><p>game</p></VerifiedGate></WalletContext>);
+  expect(screen.queryByText('game')).toBeNull();
+  expect(window.localStorage.getItem('slyyce.verified.v1.' + address)).toBeNull();
+});
 it('account chip shows the email name, never a wallet address, and opens the profile', async () => {
   mocks.signedInEmail.mockResolvedValue('ada@example.com');
   render(<MagicContext value={magic}><WalletContext value={{ ...signedOut, status: 'connected', address: '0x1234567890abcdef1234567890abcdef12345678' }}><AccountButton /></WalletContext></MagicContext>);

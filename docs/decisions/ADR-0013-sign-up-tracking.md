@@ -15,6 +15,8 @@ Operators want to count everyone who signs up, including people who never transa
 - Emails are not stored (product decision 2026-10-31).
 - `GET /api/v1/admin/players/growth?days=N` (administrator only) returns totals, 24 h / 7 d / 30 d counts, a by-method split, and a gap-free daily UTC series with a running total.
 
+**Update 2026-11-02:** there is no prompt any more. After sign-in, the app signs the challenge in the background once per wallet per device (`SignUpRecorder`); a failure is retried silently on the next visit.
+
 ## Consequences
 
 - One extra tap for new players. Players who skip it, or clear storage on a device that never confirmed, are not counted.

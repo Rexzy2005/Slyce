@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useConnect } from 'wagmi';
 import { Icon } from '../components/icon';
 import { LoadingScreen } from '../components/loading-screen';
@@ -53,12 +53,27 @@ function SignIn() {
 
 /** Pages a signed-in but unverified player may still open: verification itself and their account. */
 const openToUnverified = ['/get-gd', '/profile'];
-/** Only GoodDollar-verified people play (product decision 2026-11-02); everyone else is sent to verify first. */
+const verifiedKey = (address: string) => `slyyce.verified.v1.${address.toLowerCase()}`;
+function rememberedVerified(address: string | undefined): boolean {
+  if (!address) return false;
+  try { return window.localStorage.getItem(verifiedKey(address)) === '1'; } catch { return false; }
+}
+function rememberVerified(address: string, verified: boolean) {
+  try { if (verified) window.localStorage.setItem(verifiedKey(address), '1'); else window.localStorage.removeItem(verifiedKey(address)); } catch { /* storage unavailable: re-check next visit */ }
+}
+/**
+ * Only GoodDollar-verified people play (product decision 2026-11-02); everyone else is sent to verify first.
+ * A player verified before on this device goes straight in while the check re-runs quietly; if their
+ * GoodDollar verification has expired, the verify screen appears once the check finishes.
+ */
 export function VerifiedGate({ children }: { children: ReactNode }) {
   const wallet = useWallet();
   const pathname = usePathname();
   const records = useGameRecords(wallet.address);
-  if (openToUnverified.some(path => pathname.startsWith(path)) || records.verified === true) return <>{children}</>;
+  const address = wallet.address;
+  const [remembered] = useState(() => rememberedVerified(address));
+  useEffect(() => { if (address && records.verified !== undefined) rememberVerified(address, records.verified); }, [address, records.verified]);
+  if (openToUnverified.some(path => pathname.startsWith(path)) || records.verified === true || (records.verified === undefined && remembered)) return <>{children}</>;
   if (records.verified === undefined) return <LoadingScreen message="Checking your account" detail="One moment." compact />;
   return <section className="panel verify-gate">
     <span className="eyebrow">ONE QUICK STEP</span>
