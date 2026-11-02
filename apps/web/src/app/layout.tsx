@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   applicationName: 'Slyyce', manifest: '/manifest.webmanifest',
   ...(publicConfig.appUrl ? { metadataBase: new URL(publicConfig.appUrl) } : {}),
   appleWebApp: { capable: true, title: 'Slyyce', statusBarStyle: 'black-translucent' },
-  icons: { icon: '/icons/icon-192.png', apple: '/icons/icon-192.png' },
+  icons: { icon: '/icons/icon-192.png', apple: '/icons/apple-touch-icon.png' },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: tokens.night };
 export default function RootLayout({ children }: { children: ReactNode }) {

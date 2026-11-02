@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:transparent}
+#art{width:512px;height:512px}
+</style><script src="parts.js"></script></head>
+<body><div id="art"></div>
+<script>
+const W = 512;
+const mode = new URLSearchParams(location.search).get('mode') || 'full'; // full | mark
+const style = `<style>${fontFace} .word{font-family:Rajdhani;font-weight:700;letter-spacing:-6px}</style>`;
+const bg = `<defs>
+  <radialGradient id="bg" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#1B3324"/><stop offset=".6" stop-color="${C.canopy}"/><stop offset="1" stop-color="${C.night}"/></radialGradient>
+  <radialGradient id="halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${C.mango}" stop-opacity=".22"/><stop offset="1" stop-color="${C.mango}" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="${W}" height="${W}" fill="url(#bg)"/>`;
+const full = mode === 'full';
+const cy = full ? 200 : 268, r = full ? 150 : 178;
+const juice = drops([[-r*0.95, -r*0.55, 9, -40], [-r*0.7, -r*0.85, 6, -25], [r*0.95, r*0.15, 8, 120], [r*1.12, -r*0.2, 5, 100], [-r*1.1, r*0.05, 5, -70], [r*0.55, -r*0.75, 6, 30]], C.melon);
+const seedsOut = drops([[r*0.2, -r*0.95, 4, 20], [-r*0.35, r*0.85, 4, 200]], C.mango);
+const word = full ? `<text class="word" x="${W/2 - 14}" y="430" font-size="118" text-anchor="middle" fill="${C.cream}">slyyce<tspan fill="${C.mango}" dx="4">/</tspan></text>` : '';
+document.getElementById('art').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}">${style}${bg}
+  <circle cx="${W/2}" cy="${cy + 10}" r="${r * 1.45}" fill="url(#halo)"/>
+  <g transform="translate(${W/2},${cy + r*0.12})">${juice}${seedsOut}${slicedMelon(r, 'm', { angle: -30, gap: r * 0.11, streak: 1.5, cutY: r * 0.4, spin: 6 })}</g>
+  ${word}
+</svg>`;
+</script></body></html>

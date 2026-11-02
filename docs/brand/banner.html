@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:transparent}
+#art{width:1500px;height:500px}
+</style><script src="parts.js"></script></head>
+<body><div id="art"></div>
+<script>
+const W = 1500, H = 500;
+const style = `<style>${fontFace}
+  .word{font-family:Rajdhani;font-weight:700;letter-spacing:-9px}
+  .tag{font-family:Rajdhani;font-weight:700;letter-spacing:-1px}
+  .chip{font-family:Rajdhani;font-weight:700;letter-spacing:2px}
+</style>`;
+const grid = Array.from({ length: 48 }, (_, i) => `<line x1="${i * 36}" y1="0" x2="${i * 36}" y2="${H}"/>`).join('') + Array.from({ length: 15 }, (_, i) => `<line x1="0" y1="${i * 36}" x2="${W}" y2="${i * 36}"/>`).join('');
+const chipW = label => label.length * 11.5 + 34;
+const chips = list => { let x = 98; return list.map(([label, color]) => { const out = chip(x, label, color); x += chipW(label) + 14; return out; }).join(''); };
+const chip = (x, label, color) => { const w = chipW(label); return `<g transform="translate(${x},392)"><rect width="${w}" height="38" rx="19" fill="${color}" fill-opacity=".12" stroke="${color}" stroke-opacity=".45"/><text class="chip" x="${w/2}" y="25" font-size="16" text-anchor="middle" fill="${color}">${label}</text></g>`; };
+document.getElementById('art').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${style}
+<defs>
+  <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="${C.night}"/><stop offset=".55" stop-color="${C.canopy}"/><stop offset="1" stop-color="#1B3324"/></linearGradient>
+  <radialGradient id="glowR" cx="78%" cy="52%" r="38%"><stop offset="0" stop-color="${C.mango}" stop-opacity=".22"/><stop offset="1" stop-color="${C.mango}" stop-opacity="0"/></radialGradient>
+  <radialGradient id="glowL" cx="8%" cy="10%" r="40%"><stop offset="0" stop-color="${C.leaf}" stop-opacity=".14"/><stop offset="1" stop-color="${C.leaf}" stop-opacity="0"/></radialGradient>
+  <linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="#000"/><stop offset=".45" stop-color="#fff"/></linearGradient>
+  <mask id="gridMask"><rect width="${W}" height="${H}" fill="url(#fade)"/></mask>
+  <linearGradient id="slash" x1="0" x2="1"><stop offset="0" stop-color="${C.mango}" stop-opacity="0"/><stop offset=".6" stop-color="${C.mango}" stop-opacity=".9"/><stop offset="1" stop-color="#FFF4D6" stop-opacity="0"/></linearGradient>
+  <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+</defs>
+<rect width="${W}" height="${H}" fill="url(#bg)"/>
+<rect width="${W}" height="${H}" fill="url(#glowL)"/>
+<rect width="${W}" height="${H}" fill="url(#glowR)"/>
+<g stroke="${C.vine}" stroke-opacity=".55" stroke-width="1" mask="url(#gridMask)">${grid}</g>
+
+<!-- left: wordmark + promise -->
+<text class="word" x="92" y="205" font-size="168" fill="${C.cream}">slyyce<tspan fill="${C.mango}" dx="6">/</tspan></text>
+<text class="tag" x="98" y="290" font-size="54" fill="${C.cream}">Swipe. Slice. <tspan fill="${C.mango}">Earn G$.</tspan></text>
+<text class="tag" x="99" y="342" font-size="25" fill="${C.cream}" fill-opacity=".62" style="letter-spacing:0">The free fruit-slicing game on Celo that rewards real humans.</text>
+${chips([['FREE TO PLAY', C.leaf], ['ON CELO', C.mango], ['VERIFIED HUMANS', C.sky]])}
+
+<!-- right: sliced fruit scene -->
+<g transform="translate(1020,120) rotate(-18)">${citrus(54, '#E8890C', C.mango)}</g>
+<g transform="translate(1430,420) rotate(12)">${citrus(40, '#2E9E4F', '#8FD14F', '#EAF7D6')}</g>
+<g transform="translate(1405,105) rotate(25)">${citrus(30, '#E8890C', C.mango)}</g>
+<g transform="translate(1190,290)">
+  ${drops([[-210, -40, 11, -60], [-170, -120, 8, -30], [190, 40, 12, 110], [230, -60, 7, 80], [-60, 175, 8, 190], [120, -170, 9, 20], [-250, 70, 6, -80], [40, -205, 6, 10]], C.melon)}
+  ${drops([[160, 150, 7, 150], [-140, 150, 6, 210], [260, 10, 5, 90]], C.mango)}
+  ${slicedMelon(185, 'b', { angle: -24, gap: 20, streak: 1.75, cutY: 185 * 0.4, spin: 7 })}
+</g>
+<rect x="760" y="476" width="740" height="3" fill="url(#slash)" opacity=".7" transform="rotate(-6 1130 478)"/>
+</svg>`;
+</script></body></html>
