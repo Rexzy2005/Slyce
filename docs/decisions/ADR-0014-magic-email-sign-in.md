@@ -23,6 +23,8 @@ Reown showed wallet choices and crypto UI. The owner also chose email-only sign-
 - **Plain language:** player-facing text avoids chain, wallet, gas, transaction and contract terms. "Network fees" become an account "top-up". The admin console keeps technical terms.
 - **Sign-up tracking (ADR-0013):** unchanged. The method is always `email`. Magic wallets may be smart accounts; the backend already verifies those signatures.
 
+**Update 2026-11-02:** the product owner asked for wallet sign-in back as a secondary option. Below the email form, "I already have a wallet" connects a browser or in-app wallet (wagmi `injected`, for example MetaMask, MiniPay or Valora's browser). If there isn't one, it uses WalletConnect, which is enabled only when `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is set. Wallets on another network are asked to switch. Sign-ups record `signInMethod` as `email` or `wallet` from the connector.
+
 ## Consequences
 
 - Config: `NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY` (validated as `pk_live_`/`pk_test_`) replaces `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`. Allowed origins are set in the Magic dashboard.

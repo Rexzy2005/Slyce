@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { useSignMessage } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { apiFetch } from '../api/http';
 import { publicConfig } from '../config/public';
 import { useWallet } from './context';
@@ -31,6 +31,7 @@ export function SignUpRecorder() {
 /** Runs once per wallet per device, in the background; a failure is retried silently on the next visit. */
 function RecordSignUp({ address }: { address: string }) {
   const { signMessageAsync } = useSignMessage();
+  const signInMethod = useAccount().connector?.id === 'magic' ? 'email' : 'wallet';
   useEffect(() => {
     const key = storageKey(address);
     if (read(key) || attempted.has(key)) return;
@@ -40,11 +41,10 @@ function RecordSignUp({ address }: { address: string }) {
         const origin = window.location.origin;
         const challenge = await post<{ chainId: number; nonce: string; message: string }>('/api/v1/auth/wallet/challenge', { address, chainId: 42220, origin });
         const signature = await signMessageAsync({ message: challenge.message });
-        // Magic sign-in is email only (ADR-0014).
-        await post('/api/v1/auth/wallet/verify', { address, chainId: challenge.chainId, origin, nonce: challenge.nonce, signature, signInMethod: 'email' });
+        await post('/api/v1/auth/wallet/verify', { address, chainId: challenge.chainId, origin, nonce: challenge.nonce, signature, signInMethod });
         remember(key);
       } catch { /* not recorded this time; try again next visit */ }
     })();
-  }, [address, signMessageAsync]);
+  }, [address, signMessageAsync, signInMethod]);
   return null;
 }

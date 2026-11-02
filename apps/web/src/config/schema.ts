@@ -8,6 +8,8 @@ export const publicConfigSchema = z.object({
   network: z.preprocess(value => value === '' ? undefined : value, z.enum(['celo', 'celo-sepolia']).optional()),
   rpcUrl: optionalUrl,
   /** Magic publishable API key (public by design; the dashboard restricts allowed origins). */
+  /** Optional WalletConnect (Reown) project ID: lets mobile-wallet users connect from any browser. Injected wallets work without it. */
+  walletConnectProjectId: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^[a-fA-F0-9]{32}$/, 'Expected a WalletConnect project ID').optional()),
   magicPublishableKey: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^pk_(live|test)_[A-Za-z0-9]+$/, 'Expected a Magic publishable key (pk_live_…)').optional()),
   gdAddress: address,
   shopAddress: address,

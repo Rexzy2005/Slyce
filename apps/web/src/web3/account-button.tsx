@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 import { Icon } from '../components/icon';
 import { useWallet } from './context';
 import { useMagic } from './magic-context';
@@ -9,14 +9,15 @@ import { useMagic } from './magic-context';
 export function useSignedInEmail(): string | null {
   const magic = useMagic();
   const wallet = useWallet();
+  const viaEmail = useAccount().connector?.id === 'magic';
   const [email, setEmail] = useState<string | null>(null);
   useEffect(() => {
-    if (!magic || wallet.status !== 'connected') return;
+    if (!magic || !viaEmail || wallet.status !== 'connected') return;
     let active = true;
     void import('./magic').then(({ signedInEmail }) => signedInEmail(magic)).then(value => { if (active) setEmail(value); });
     return () => { active = false; };
-  }, [magic, wallet.status]);
-  return wallet.status === 'connected' ? email : null;
+  }, [magic, viaEmail, wallet.status]);
+  return wallet.status === 'connected' && viaEmail ? email : null;
 }
 /** Header chip: who is signed in; opens the profile, where they can sign out. */
 export function AccountButton() {

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, type ReactNode } from 'react';
 import { WagmiProvider, createConfig, http, type Config } from 'wagmi';
+import { injected, walletConnect } from 'wagmi/connectors';
 import type { Magic } from 'magic-sdk';
 import type { Chain } from 'viem';
 import { publicConfig } from '../config/public';
@@ -11,14 +12,20 @@ import { MagicContext } from './magic-context';
 import { WalletContext } from './context';
 
 let created: { config: Config; magic: Magic } | undefined;
-/** Module-level so remounts (Strict Mode, layout changes) never create a second Magic iframe or wagmi config. */
+/** Browser-only (called after hydration). Module-level so remounts (Strict Mode, layout changes) never create a second Magic iframe or wagmi config. */
 function createWallets() {
   if (created) return created;
   if (!publicConfig.network || !publicConfig.rpcUrl || !publicConfig.magicPublishableKey) throw new Error('Sign-in configuration is incomplete');
   // Widened to Chain so wagmi types the transports map for this one configured network.
   const chain: Chain = chainFor(publicConfig.network);
   const magic = getMagic(publicConfig.magicPublishableKey, chain, publicConfig.rpcUrl);
-  const config = createConfig({ chains: [chain], connectors: [magicConnector(magic)], transports: { [chain.id]: http(publicConfig.rpcUrl) }, ssr: true });
+  // Email (Magic) first; players who already have a wallet can use a browser/in-app wallet or WalletConnect.
+  const connectors = [
+    magicConnector(magic),
+    injected({ shimDisconnect: true }),
+    ...(publicConfig.walletConnectProjectId ? [walletConnect({ projectId: publicConfig.walletConnectProjectId, showQrModal: true, metadata: { name: 'Slyyce', description: 'Swipe. Slice. Stack your G$.', url: window.location.origin, icons: [window.location.origin + '/icons/icon-192.png'] } })] : []),
+  ];
+  const config = createConfig({ chains: [chain], connectors, transports: { [chain.id]: http(publicConfig.rpcUrl) }, ssr: true });
   created = { config, magic };
   return created;
 }
