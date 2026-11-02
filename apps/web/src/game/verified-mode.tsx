@@ -66,7 +66,7 @@ export function VerifiedMode() {
       );
       setToken(verified.token);
     } catch (error) {
-      setResult({ status: 'rejected', reason: error instanceof Error ? error.message : 'Wallet authentication failed.' });
+      setResult({ status: 'rejected', reason: error instanceof Error ? error.message : 'Sign-in could not be confirmed.' });
     } finally { setBusy(false); }
   }
 
@@ -119,7 +119,7 @@ export function VerifiedMode() {
   return <section className="admin-panel" aria-label="Verified Slyyce mode">
     <p className="eyebrow">VERIFIED MODE</p>
     <h2>Fruit Slice · server checked</h2>
-    {!token && <><p>Sign one short-lived wallet challenge to enter the verified leaderboard.</p><button className="button" disabled={busy} onClick={() => void enable()}>{busy ? 'Signing…' : 'Enable verified mode'}</button></>}
+    {!token && <><p>Confirm it's you to enter the verified leaderboard.</p><button className="button" disabled={busy} onClick={() => void enable()}>{busy ? 'Confirming…' : 'Enable verified mode'}</button></>}
     {token && !session && <><p>Practice scores stay local. Verified rounds use deterministic replay validation.</p><button className="button" disabled={busy} onClick={() => void start()}>{busy ? 'Starting…' : 'Start verified round'}</button></>}
     {session && <><div ref={board} className="chopping-board" onPointerDown={down} onPointerUp={up} onPointerCancel={up} style={{ position: 'relative', minHeight: 280, touchAction: 'none' }}>
       {targets.filter(target => target.spawnedAt <= elapsed() && elapsed() <= target.spawnedAt + 900).map((target, index) => <span key={index} aria-hidden="true" style={{ position: 'absolute', left: `${target.x * 100}%`, top: `${target.y * 100}%`, width: 32, height: 32, borderRadius: '50%', transform: 'translate(-50%, -50%)', background: target.bomb ? '#e5383b' : '#ffb627', boxShadow: '0 0 18px currentColor' }} />)}

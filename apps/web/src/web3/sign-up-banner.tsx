@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useSignMessage } from 'wagmi';
-import { useAppKitAccount } from '@reown/appkit/react';
 import { apiFetch } from '../api/http';
 import { publicConfig } from '../config/public';
 import { useWallet } from './context';
@@ -28,13 +27,12 @@ export function SignUpBanner() {
 }
 
 function SignUpPrompt({ address }: { address: string }) {
-  const account = useAppKitAccount();
   const { signMessageAsync } = useSignMessage();
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'later' | 'error'>(() => read(storageKey(address)) ? 'done' : 'idle');
   const [message, setMessage] = useState('');
   if (state === 'done' || state === 'later') return null;
-  const provider = account.embeddedWalletInfo?.authProvider;
-  const signInMethod = !provider ? 'wallet' : provider === 'email' ? 'email' : 'social';
+  // Magic sign-in is email only (ADR-0014).
+  const signInMethod = 'email';
 
   async function confirm() {
     setState('busy'); setMessage('');
@@ -53,7 +51,7 @@ function SignUpPrompt({ address }: { address: string }) {
 
   return <div className="gas-banner sign-up-banner" role="status">
     <strong>Finish signing up</strong>
-    <span>Tap to confirm it's you. It's free: no fee, no transaction.</span>
+    <span>Tap to confirm it's you. It's free.</span>
     {message && <span className="error-text">{message}</span>}
     <span className="sign-up-actions">
       <button className="button" disabled={state === 'busy'} onClick={() => void confirm()}>{state === 'busy' ? 'Confirming…' : 'Confirm'}</button>

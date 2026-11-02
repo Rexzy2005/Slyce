@@ -7,8 +7,8 @@ import { useGameRecords } from './game-records';
 export function PlayerCard({ player }: { player: Address }) {
   const records = useGameRecords(player);
   const s = records.stats;
-  if (records.loading) return <p className="loading-state" role="status">Reading Celo…</p>;
-  if (records.error) return <p className="error-text" role="alert">Stats could not be read from Celo.</p>;
+  if (records.loading) return <p className="loading-state" role="status">Loading stats…</p>;
+  if (records.error) return <p className="error-text" role="alert">Stats couldn't be loaded.</p>;
   return <dl className="stat-grid player-card">
     <div><dt>XP</dt><dd className="mango">{s ? s.xp.toLocaleString() : '0'}</dd></div>
     <div><dt>Best score</dt><dd>{s ? s.bestScore.toLocaleString() : '—'}</dd></div>

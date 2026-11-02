@@ -61,21 +61,21 @@ export function createTransactionController(publish: (state: TransactionState) =
     try {
       if (await operations.synchronized(receipt)) move({ status: 'success', hash: receipt.transactionHash, receipt });
     } catch {
-      move({ status: 'failed', kind: 'synchronization', message: 'Transaction confirmed. Application synchronization failed; retry checking its status.', hash: receipt.transactionHash, receipt });
+      move({ status: 'failed', kind: 'synchronization', message: 'Done, but your account didn\'t update. Tap retry.', hash: receipt.transactionHash, receipt });
     }
   };
   const confirmationFailure = (error: unknown, hash: Hash) => {
     const kind = classifyTransactionError(error);
     move({ status: 'failed', kind: kind === 'rejected' ? 'rpc' : kind, hash,
       message: kind === 'reverted'
-        ? 'The transaction reverted. No purchase or reward was granted.'
-        : 'A transaction was submitted, but its outcome could not be confirmed. Check its status before trying again.' });
+        ? 'That didn\'t go through. Nothing was charged.'
+        : 'We couldn\'t confirm whether that went through. Check your balance before trying again.' });
   };
   const confirm = async (operations: TransactionOperations, hash: Hash) => {
     move({ status: 'confirming', hash });
     const receipt = await operations.receipt(hash);
     // Validate identity before interpreting success OR revert: a replacement is a different transaction.
-    if (receipt.transactionHash !== hash) throw new TransactionFailure('rpc', 'The wallet replaced this transaction. Review its final outcome in the explorer.');
+    if (receipt.transactionHash !== hash) throw new TransactionFailure('rpc', 'That request was replaced. Check your balance before trying again.');
     if (receipt.status !== 'success') throw new TransactionFailure('reverted', 'The transaction reverted.');
     move({ status: 'confirmed', hash, receipt });
     await sync(operations, receipt);
@@ -95,9 +95,9 @@ export function createTransactionController(publish: (state: TransactionState) =
         await confirm(operations, hash);
       } catch (error) {
         const kind = classifyTransactionError(error);
-        if (kind === 'rejected' && awaitingWallet && !hash) move({ status: 'rejected', message: 'You declined the wallet request. Nothing was submitted.' });
+        if (kind === 'rejected' && awaitingWallet && !hash) move({ status: 'rejected', message: 'Cancelled. Nothing was charged.' });
         else move({ status: 'failed', kind: kind === 'rejected' ? 'rpc' : kind,
-          message: kind === 'reverted' ? 'The transaction reverted. No purchase or reward was granted.' : hash ? 'A transaction was submitted, but its outcome could not be confirmed. Check the explorer before trying again.' : 'The transaction could not be completed.', ...(hash ? { hash } : {}) });
+          message: kind === 'reverted' ? 'That didn\'t go through. Nothing was charged.' : hash ? 'We couldn\'t confirm whether that went through. Check your balance before trying again.' : 'The transaction could not be completed.', ...(hash ? { hash } : {}) });
       } finally { busy = false; }
     },
     async retryConfirmation(operations: TransactionOperations) {

@@ -467,3 +467,5 @@ body { font-weight:500; } button,input,select,textarea { font-family:inherit; }
 .admin-chain-row.admin-signup-row { grid-template-columns:minmax(130px,1fr) minmax(100px,.8fr) minmax(150px,1fr); }
 @media (max-width: 640px) { .admin-growth-stats strong { font-size:18px; }.admin-growth-bars { height:120px; } }
 @media (max-width: 900px) { .admin-chain-row.admin-signup-row { grid-template-columns:1fr 1fr; }.admin-chain-row.admin-signup-row > span:last-child { grid-column:1/-1; } }
+.sign-in-form { display:grid; gap:10px; width:min(100%,380px); margin:4px auto 0; }.sign-in-form input { min-height:50px; padding:0 16px; border:1px solid var(--color-vine); border-radius:12px; color:var(--color-cream); background:var(--color-canopy); font-size:16px; }.sign-in-form input:focus-visible { border-color:var(--color-mango); outline:none; }.sign-in-form .sign-in-action { width:100%; justify-content:center; }
+.verify-gate { display:grid; gap:12px; justify-items:start; max-width:520px; margin:24px auto; }.verify-gate h1 { margin:0; font-size:30px; }.verify-gate p { margin:0; color:var(--color-mist); line-height:1.5; }

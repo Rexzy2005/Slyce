@@ -9,7 +9,7 @@ Mobile-first Next.js frontend foundation. Product rules live in [docs/PROJECT.md
 
 Use Node 24.21.0 and pnpm. The user runs pnpm install from the root to create the lockfile; the implementation agent must not install dependencies or start a server. Direct dependencies are exact. The lockfile/resolved graph must be reviewed before release. No GoodDollar SDK is included.
 
-Copy .env.example to apps/web/.env.local only when configuring integrations. Empty settings intentionally render an unconnected shell. Selecting a network requires its RPC URL; standard-web wallets also require a Reown project ID. Supply only verified token/contract addresses for that network. Never map mainnet deployments onto Sepolia. See [API contracts](docs/API_CONTRACTS.md) for the deliberately unavailable backend boundary.
+Copy .env.example to apps/web/.env.local only when configuring integrations. Empty settings intentionally render an unconnected shell. Selecting a network requires its RPC URL; email sign-in also requires a Magic publishable key (`NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY`, ADR-0014). Supply only verified token/contract addresses for that network. Never map mainnet deployments onto Sepolia. See [API contracts](docs/API_CONTRACTS.md) for the deliberately unavailable backend boundary.
 
 ## Commands
 

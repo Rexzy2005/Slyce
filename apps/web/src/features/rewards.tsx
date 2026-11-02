@@ -26,7 +26,7 @@ async function fetchResults(id: bigint, signal: AbortSignal) {
 }
 export function Rewards() {
   const wallet = useWallet();
-  if (!wallet.live) return <section className="panel"><EmptyState icon="gift" title="Rewards are getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
+  if (!wallet.live) return <section className="panel"><EmptyState icon="gift" title="Rewards are getting ready"><p>{wallet.message ?? 'Sign-in is not available right now.'}</p></EmptyState></section>;
   return <TournamentPrizes />;
 }
 function TournamentPrizes() {
@@ -34,8 +34,8 @@ function TournamentPrizes() {
   const address = contractsFor(publicConfig).tournament;
   const chain = publicConfig.network ? chainFor(publicConfig.network) : undefined;
   const count = useReadContract({ address, abi: tournamentAbi, functionName: 'tournamentCount', chainId: chain?.id, query: { enabled: !!address && !!chain } });
-  if (!address) return <section className="panel"><EmptyState icon="gift" title="Rewards are getting ready"><p>The tournament contract is not configured for this environment.</p></EmptyState></section>;
-  if (!account.address) return <section className="panel"><EmptyState icon="gift" title="Connect to see your rewards"><p>Tournament prizes are tied to your wallet.</p></EmptyState></section>;
+  if (!address) return <section className="panel"><EmptyState icon="gift" title="Rewards are getting ready"><p>Rewards aren't available right now. Check back soon.</p></EmptyState></section>;
+  if (!account.address) return <section className="panel"><EmptyState icon="gift" title="Sign in to see your rewards"><p>Your prizes are saved to your account.</p></EmptyState></section>;
   if (count.isPending) return <section className="panel"><p className="loading-state" role="status">Checking your rewards…</p></section>;
   if (count.isError) return <section className="panel"><EmptyState icon="gift" title="Rewards could not load"><button className="text-button" onClick={() => void count.refetch()}>Try again</button></EmptyState></section>;
   const ids = Array.from({ length: Number(count.data) }, (_, index) => count.data - BigInt(index)).slice(0, 10);

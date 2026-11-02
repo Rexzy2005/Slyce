@@ -31,7 +31,7 @@ export function useShopItems() {
 export function Shop() {
   const wallet = useWallet();
   // Wagmi hooks need the wallet provider, which only mounts when Web3 is configured.
-  if (!wallet.live) return <section className="panel"><EmptyState title="The market is getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
+  if (!wallet.live) return <section className="panel"><EmptyState title="The market is getting ready"><p>{wallet.message ?? 'Sign-in is not available right now.'}</p></EmptyState></section>;
   return <Market />;
 }
 function Market() {
@@ -39,9 +39,9 @@ function Market() {
   const [equipped, setEquipped] = useState<bigint | null>(null);
   useEffect(() => setEquipped(readEquippedBlade()), []);
   function equip(id: bigint | null) { writeEquippedBlade(id); setEquipped(id); }
-  if (!shop) return <section className="panel"><EmptyState title="The market is getting ready"><p>The shop contract is not configured for this environment.</p></EmptyState></section>;
+  if (!shop) return <section className="panel"><EmptyState title="The market is getting ready"><p>The market isn't open right now. Check back soon.</p></EmptyState></section>;
   if (reads.isPending) return <section className="panel"><p className="loading-state" role="status">Loading the market…</p></section>;
-  if (reads.isError) return <section className="panel"><EmptyState title="The market could not load"><p>Prices could not be read from the blockchain.</p><button className="text-button" onClick={() => void reads.refetch()}>Try again</button></EmptyState></section>;
+  if (reads.isError) return <section className="panel"><EmptyState title="The market could not load"><p>Prices couldn't be loaded.</p><button className="text-button" onClick={() => void reads.refetch()}>Try again</button></EmptyState></section>;
   return <section className="panel"><p className="eyebrow">BLADE TRAILS · COSMETIC</p>
     <ul className="shop-grid">{items.map(item => <li key={item.id.toString()} className="shop-item">
       <span className="blade-swatch" style={{ background: 'linear-gradient(120deg, #' + item.colors.glow.toString(16).padStart(6, '0') + ', #' + item.colors.core.toString(16).padStart(6, '0') + ')' }} aria-hidden="true" />
@@ -54,5 +54,5 @@ function Market() {
               call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }} onConfirmed={() => reads.refetch()} />
           : <button className="button" disabled>Not for sale</button>}
     </li>)}</ul>
-    <p className="muted">Purchases are paid in G$ to the Slyyce treasury and recorded on-chain. Equipped blades show in the arena.</p></section>;
+    <p className="muted">Purchases are paid in G$ and saved to your account. Equipped blades show in the arena.</p></section>;
 }

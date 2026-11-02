@@ -12,17 +12,17 @@ export function HowToPlay() {
     <h1>How to play</h1>
     <h2>Slice</h2>
     <p>Swipe across fruit to slice it. Each fruit is 10 points, and slicing 3 or more in one swipe adds a combo bonus. Avoid bombs: one hit ends the round. Miss three fruit and it's game over. Playing is free.</p>
-    <h2>Save your game on Celo</h2>
-    <p>When a round ends, tap <strong>Save on Celo</strong>. Your score is recorded on-chain as a permanent record, and you earn <strong>1 XP for every 10 points</strong>. You need to be signed in (email or wallet), plus a little CELO for the network fee. You don't need to verify unless you want G$ rewards.</p>
+    <h2>Save your score</h2>
+    <p>When a round ends, tap <strong>Save score</strong>. Your score is kept as a permanent record, and you earn <strong>1 XP for every 10 points</strong>.</p>
     <h2>Milestone rewards in G$</h2>
     <p>Reach these scores in a single round to earn G$, each milestone once per day:</p>
-    {wallet.live ? <MilestoneList /> : <p className="muted">Live rewards appear here once Celo is connected.</p>}
-    <h2>Verify with GoodDollar</h2>
-    <p>GoodDollar (G$) is a universal basic income token with real value. To earn G$ rewards and enter bounties, verify once with GoodDollar's identity system (one face, one wallet). It takes under a minute on the <Link href="/get-gd">Get G$</Link> tab, and you can then claim free G$ every day. Without verification you can still play and earn XP, but no G$ is sent to you and you can't enter bounties.</p>
+    {wallet.live ? <MilestoneList /> : <p className="muted">Rewards appear here once you're signed in.</p>}
+    <h2>Only real people</h2>
+    <p>Slyyce is only for real people. Before you play, verify once with GoodDollar: a quick face check that takes under a minute, one person per account. Verified players can also claim free G$ (GoodDollar's universal basic income) every day on the <Link href="/get-gd">Get G$</Link> tab.</p>
     <h2>Bounties</h2>
-    <p>Bounties are time-limited competitions with real G$ prize pools. A new one starts automatically when the last ends. Verified players enter on the <Link href="/tournament">Compete</Link> tab, play during the bounty, and submit their best score. When it closes, prizes go to the top finishers, who claim them on the Rewards tab.</p>
+    <p>Bounties are time-limited competitions with real G$ prize pools. A new one starts automatically when the last ends. Enter on the <Link href="/tournament">Compete</Link> tab, play during the bounty, and submit their best score. When it closes, prizes go to the top finishers, who claim them on the Rewards tab.</p>
     <h2>Your profile</h2>
-    <p>Your profile shows your total XP, best score, games played, current daily streak and G$ earned, all read from Celo. Profiles are public and shareable: send your profile link to friends.</p>
+    <p>Your profile shows your total XP, best score, games played, current daily streak and G$ earned. Profiles are public and shareable: send your profile link to friends.</p>
     <Link className="button" href="/play/arena">Start slicing</Link>
   </article>;
 }

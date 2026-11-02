@@ -7,7 +7,7 @@ import { publicConfig } from '../config/public';
 import { Providers } from '../components/providers';
 export const metadata: Metadata = {
   title: { default: 'Slyyce · Swipe. Slice. Stack your G$.', template: '%s · Slyyce' },
-  description: 'Your next slice starts here. Off-chain play, tournaments and GoodDollar rewards.',
+  description: 'Swipe. Slice. Stack your G$. A free fruit-slicing game for real people, with G$ rewards and tournaments.',
   applicationName: 'Slyyce', manifest: '/manifest.webmanifest',
   ...(publicConfig.appUrl ? { metadataBase: new URL(publicConfig.appUrl) } : {}),
   appleWebApp: { capable: true, title: 'Slyyce', statusBarStyle: 'black-translucent' },

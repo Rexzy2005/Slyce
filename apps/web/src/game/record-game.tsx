@@ -18,8 +18,8 @@ export function RecordGame({ result }: { result: GameResult }) {
   const records = useGameRecords(account.address);
   const write = useContractWrite();
   const [saved, setSaved] = useState<{ xp: bigint; earned: bigint } | null>(null);
-  if (!records.arcade || records.loading) return <p className="muted" role="status">Checking Celo…</p>;
-  if (!records.open) return <p className="muted">Saving games on Celo opens soon.</p>;
+  if (!records.arcade || records.loading) return <p className="muted" role="status">One moment…</p>;
+  if (!records.open) return <p className="muted">Saving scores opens soon.</p>;
   const score = Math.min(result.score, records.maxScore);
   const xp = BigInt(Math.floor(score / 10));
   const pending = newMilestones(records.milestones, score, records.rewardedMask);
@@ -31,11 +31,11 @@ export function RecordGame({ result }: { result: GameResult }) {
   let remaining = records.budget ?? 0n;
   const payable = pending.reduce((sum, m) => m.reward <= remaining ? (remaining -= m.reward, sum + m.reward) : sum, 0n);
   if (saved) return <div className="record-game saved" role="status">
-    <p><strong className="leaf">Saved on Celo.</strong> +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong> sent to your wallet</> : null}</p>
+    <p><strong className="leaf">Score saved.</strong> +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong> added to your balance</> : null}</p>
     <Link className="text-button" href="/profile">View your profile →</Link>
   </div>;
   return <div className="record-game">
-    <p><strong>Save this game on Celo</strong> for +{xp.toString()} XP{records.verified && payable > 0n ? <> and <strong className="leaf">{g(payable)} G$</strong></> : null}.</p>
+    <p><strong>Save this score</strong> for +{xp.toString()} XP{records.verified && payable > 0n ? <> and <strong className="leaf">{g(payable)} G$</strong></> : null}.</p>
     {!rewardsLive && records.budget !== undefined && <p className="muted">G$ rewards haven't started yet. Your XP, best score and streak still count.</p>}
     {rewardsLive && records.verified === false && pending.length > 0 && <p className="muted">This score hits a G$ milestone. <Link href="/get-gd">Verify with GoodDollar</Link> to earn {g(reward)} G$ for it.</p>}
     {rewardsLive && records.verified && payable < reward && <p className="muted">The reward pot is running low, so milestones it can't cover aren't paid for this game.</p>}
@@ -47,7 +47,7 @@ export function RecordGame({ result }: { result: GameResult }) {
         wallet.refreshBalance?.();
         setSaved({ xp, earned: records.verified ? payable : 0n });
       } },
-    )}>Save on Celo</button>
+    )}>Save score</button>
     {write.state.status !== 'idle' && write.state.status !== 'success' && <TransactionStatus state={write.state} />}
   </div>;
 }

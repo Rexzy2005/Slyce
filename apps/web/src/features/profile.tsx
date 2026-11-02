@@ -17,8 +17,8 @@ export function Profile() {
   return <div className={styles.profileCards}>
     <div className={styles.walletCard}><WalletPanel /></div>
     <section className={`panel ${styles.panel}`}><p className="eyebrow">PRACTICE BESTS · THIS DEVICE</p><dl className="stat-grid">{difficulties.map((difficulty, index) => <div key={difficulty}><dt>{difficulty}</dt><dd>{bests[index]?.toLocaleString() ?? '—'}</dd></div>)}</dl></section>
-    {connected ? <Collection /> : <section className={`panel ${styles.panel}`}><EmptyState title="Your collection"><p>Connect your wallet to see the blades you own.</p></EmptyState></section>}
-    {connected && wallet.address && <section className={`panel ${styles.panel} ${styles.recordCard}`}><p className="eyebrow">YOUR RECORD · ON CELO</p><PlayerCard player={wallet.address} /><p className="muted fine-print">Public profile: <Link href={'/player?address=' + wallet.address}>share your stats</Link></p></section>}
+    {connected ? <Collection /> : <section className={`panel ${styles.panel}`}><EmptyState title="Your collection"><p>Sign in to see the blades you own.</p></EmptyState></section>}
+    {connected && wallet.address && <section className={`panel ${styles.panel} ${styles.recordCard}`}><p className="eyebrow">YOUR RECORD</p><PlayerCard player={wallet.address} /><p className="muted fine-print">Public profile: <Link href={'/player?address=' + wallet.address}>share your stats</Link></p></section>}
   </div>;
 }
 function Collection() {

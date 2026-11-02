@@ -7,5 +7,5 @@ export function GasBanner() {
   const wallet = useWallet();
   const pathname = usePathname();
   if (wallet.status !== 'connected' || wallet.gas !== 'low' || pathname === '/get-gd') return null;
-  return <Link href="/get-gd" className="gas-banner" role="status"><strong>You need a little CELO for network fees.</strong> Verify with GoodDollar and claim your daily G$; GoodDollar tops up gas for free. →</Link>;
+  return <Link href="/get-gd" className="gas-banner" role="status"><strong>One more step before you can save scores.</strong> Get a free account top-up from GoodDollar on the Get G$ tab. →</Link>;
 }

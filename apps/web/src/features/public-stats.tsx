@@ -10,7 +10,7 @@ import { formatTokenAmount } from '../web3/units';
 export function PublicStats() {
   const wallet = useWallet();
   if (wallet.status === 'unavailable') return <p className="muted">Live stats are not configured for this environment.</p>;
-  if (!wallet.live) return <p className="loading-state" role="status">Reading Celo…</p>;
+  if (!wallet.live) return <p className="loading-state" role="status">Loading stats…</p>;
   return <Stats />;
 }
 function Stats() {
@@ -35,9 +35,9 @@ function Stats() {
   const g = (value: unknown) => typeof value === 'bigint' ? Number(formatTokenAmount(value, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' G$' : '—';
   return <div className="stats">
     <Link href="/play" className="brand">slyyce<span className="brand-dot">/</span></Link>
-    <h1>Live on Celo</h1>
-    <p className="muted">Every number below is read directly from Slyyce's contracts on Celo mainnet{reads.isPending ? '…' : '.'}</p>
-    {reads.isError && <p className="error-text" role="alert">On-chain data could not be read right now. <button className="text-button" onClick={() => void reads.refetch()}>Try again</button></p>}
+    <h1>Live stats</h1>
+    <p className="muted">Every number below is public and independently verifiable{reads.isPending ? '…' : '.'}</p>
+    {reads.isError && <p className="error-text" role="alert">Stats couldn't be loaded right now. <button className="text-button" onClick={() => void reads.refetch()}>Try again</button></p>}
     <dl className="stat-grid">
       <div><dt>Games recorded</dt><dd>{typeof games === 'bigint' ? games.toLocaleString() : '—'}</dd></div>
       <div><dt>G$ paid to players</dt><dd className="leaf">{g(paid)}</dd></div>
@@ -47,7 +47,7 @@ function Stats() {
       <div><dt>Tournaments run</dt><dd>{typeof tournaments === 'bigint' ? tournaments.toLocaleString() : '—'}</dd></div>
       <div><dt>Bounty open now</dt><dd>{typeof openId === 'bigint' && openId > 0n ? '#' + openId.toString() : 'None'}</dd></div>
     </dl>
-    <h2>Contracts</h2>
+    <h2>Public records</h2>
     <ul className="stats-links">{link(arcade, 'SlyceArcade')}{link(tournament, 'SlyceTournament')}{link(shop, 'SlyceShop')}{link(gd, 'G$ token')}</ul>
     <p className="muted fine-print">Events: GameRecorded, MilestoneRewarded, Entered, ScoreSubmitted, ResultsPosted, PrizeClaimed, Purchased.</p>
     <Link className="button" href="/play">Play Slyyce</Link>

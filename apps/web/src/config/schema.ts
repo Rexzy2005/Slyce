@@ -7,7 +7,8 @@ export const publicConfigSchema = z.object({
   backendUrl: optionalUrl,
   network: z.preprocess(value => value === '' ? undefined : value, z.enum(['celo', 'celo-sepolia']).optional()),
   rpcUrl: optionalUrl,
-  walletConnectProjectId: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^[a-fA-F0-9]{32}$/, 'Expected a Reown project ID').optional()),
+  /** Magic publishable API key (public by design; the dashboard restricts allowed origins). */
+  magicPublishableKey: z.preprocess(value => value === '' ? undefined : value, z.string().regex(/^pk_(live|test)_[A-Za-z0-9]+$/, 'Expected a Magic publishable key (pk_live_…)').optional()),
   gdAddress: address,
   shopAddress: address,
   tournamentAddress: address,
@@ -15,12 +16,10 @@ export const publicConfigSchema = z.object({
   /** GoodDollar contract set on Celo mainnet: production (real G$) or development/staging (test G$). */
   goodDollarEnv: z.preprocess(value => value === '' ? undefined : value, z.enum(['production', 'staging', 'development']).optional()),
 }).superRefine((config, context) => {
-  if ((config.rpcUrl || config.gdAddress || config.shopAddress || config.tournamentAddress || config.arcadeAddress || config.walletConnectProjectId) && !config.network) {
+  if ((config.rpcUrl || config.gdAddress || config.shopAddress || config.tournamentAddress || config.arcadeAddress || config.magicPublishableKey) && !config.network) {
     context.addIssue({ code: 'custom', path: ['network'], message: 'Select a network for Web3 configuration' });
   }
   if (config.goodDollarEnv && config.network !== 'celo') context.addIssue({ code: 'custom', path: ['goodDollarEnv'], message: 'GoodDollar identity and UBI contracts are deployed on Celo mainnet only' });
-  // AppKit initializes during pre-rendering (no window) and Reown verifies the domain, so the URL must be explicit.
-  if (config.walletConnectProjectId && !config.appUrl) context.addIssue({ code: 'custom', path: ['appUrl'], message: 'NEXT_PUBLIC_APP_URL is required for wallet sign-in' });
   if (config.network && !config.rpcUrl) context.addIssue({ code: 'custom', path: ['rpcUrl'], message: 'An explicit RPC endpoint is required for the selected network' });
 });
 export type PublicConfig = z.infer<typeof publicConfigSchema>;

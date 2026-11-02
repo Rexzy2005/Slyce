@@ -28,7 +28,7 @@ Updated: 2026-10-31. Product name: Slyyce. Target: GoodDollar Season 5. Web + in
 ## Implemented and verified
 
 - **App shell:** `/` redirects to `/play`, and the PWA `start_url` is `/play`. Top bar with G$ balance and account; bottom tabs (Play, Compete, Shop, Get G$, Me). The landing page, sidebar and drawer were removed.
-- **Sign-in (Reown AppKit 1.8.24):** email (embedded wallet) or external wallet. Every app route sits behind `SignInGate`, and wrong-network wallets are asked to switch to Celo. A low-CELO banner points players to the GoodDollar faucet path.
+- **Sign-in (Magic, `magic-sdk` 33.13.0, ADR-0014):** email with a one-time code only, so there are no external wallets and no wallet UI. Magic's embedded wallet is wired into wagmi through a custom connector. Every app route sits behind `SignInGate`, and play routes also sit behind `VerifiedGate`: only GoodDollar-verified people can play, while unverified players see a "Verify now" screen and can open only Get G$ and Profile. Player-facing copy uses plain language with no blockchain terms (the admin console keeps technical terms). A top-up banner points to the GoodDollar faucet when the account is low on network fees.
 - **Paid rounds:** each round calls `SlyceArcade.play` (default 1 G$). The arena starts only after confirmation. One approval covers 10 rounds.
 - **Game (ADR-0003):** practice scoring with lives, bombs, combos, game over and a device-local best.
 - **Contracts (UUPS, ADR-0005):** `SlyceShop`, `SlyceTournament` (cancel/refund, liabilities accounting) and `SlyceArcade`. 57 Foundry tests: unit, fuzz (1,000 runs), invariant (256×64), upgrade and a Celo fork test with real G$. Coverage is 96% of lines and 100% of functions. `@openzeppelin/upgrades-core` 1.46.0 validation passes, including V1→V2 layouts.
@@ -38,8 +38,7 @@ Updated: 2026-10-31. Product name: Slyyce. Target: GoodDollar Season 5. Web + in
 ## Not verified
 
 - No browser/device testing (the user prohibits use of their PC browser). The Playwright specs were rewritten for the gate but not run.
-- Real email sign-in, face verification, UBI claim and faucet top-up: these need Reown dashboard setup and a real account.
-- Reown AppKit analytics is enabled in source, but project-level AppKit Analytics API activation and a Vercel production build using the configured Project ID have not been confirmed.
+- Magic sign-in is not yet verified end to end: it needs a real Magic publishable key (`NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY`) with the site's domains allowlisted. The sign-in screen renders, and Magic's iframe loads, with a placeholder key. Face verification, UBI claim and faucet top-up with a Magic wallet are also untested. Magic wallets are new addresses, so anyone who signed in with Reown before must sign in and verify again.
 - Contracts are live on Celo mainnet with real G$ (addresses in `contracts/README.md`): Tournament v1.3.0 with 24h auto-rolling prize tournaments, Arcade v2.0.0 with free play, on-chain game records, XP, streaks and G$ milestones for verified humans. The milestone reward pot is intentionally unfunded (0 G$): G$ rewards have not started, and the app says so. Rewards start when the owner calls `fundRewards`. They are not audited.
 
 ## Known gaps

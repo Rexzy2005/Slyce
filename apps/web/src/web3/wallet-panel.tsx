@@ -1,16 +1,17 @@
 'use client';
 import { useWallet } from './context';
-import { AccountButton } from './account-button';
-import { explorerUrl } from './config';
-import { publicConfig } from '../config/public';
+import { SignOutButton, useSignedInEmail } from './account-button';
+/** Balance and account; plain language only (no addresses or networks shown to players). */
 export function WalletPanel() {
   const wallet = useWallet();
-  return <section className="wallet-panel" aria-label="Wallet">
-    <div><span className="eyebrow">YOUR WALLET</span><p className="balance">{wallet.balance.status === 'ready' ? wallet.balance.formatted + ' G$' : wallet.balance.status === 'loading' ? 'Loading G$…' : 'G$ balance unavailable'}</p></div>
-    <AccountButton />
-    {wallet.address && publicConfig.network && <a className="address" href={explorerUrl(publicConfig.network, 'address', wallet.address)} target="_blank" rel="noreferrer">{wallet.address.slice(0, 6)}…{wallet.address.slice(-4)} ↗</a>}
-    {wallet.wrongNetwork && <p role="alert" className="error-text">Your wallet is on a different network. Switch to the configured Celo network before continuing.</p>}
+  return <section className="wallet-panel" aria-label="Your account">
+    <div><span className="eyebrow">YOUR BALANCE</span><p className="balance">{wallet.balance.status === 'ready' ? wallet.balance.formatted + ' G$' : wallet.balance.status === 'loading' ? 'Loading G$…' : 'G$ balance unavailable'}</p></div>
+    {wallet.live && <SignedInAs />}
     {wallet.balance.status === 'offline' && <p role="status">You’re offline. Reconnect to refresh your G$ balance.</p>}
-    {wallet.balance.status === 'error' && <p role="status">Balance could not be loaded. No cached amount is shown.</p>}
+    {wallet.balance.status === 'error' && <p role="status">Your balance couldn't be loaded right now.</p>}
   </section>;
+}
+function SignedInAs() {
+  const email = useSignedInEmail();
+  return <div className="wallet-panel-account">{email && <p className="muted">Signed in as <strong>{email}</strong></p>}<SignOutButton /></div>;
 }

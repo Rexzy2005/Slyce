@@ -25,7 +25,7 @@ export function formatRemaining(seconds: number): string {
 }
 export function Tournament() {
   const wallet = useWallet();
-  if (!wallet.live) return <section className="panel"><EmptyState icon="trophy" title="Tournaments are getting ready"><p>{wallet.message ?? 'Wallet connection is not configured for this environment.'}</p></EmptyState></section>;
+  if (!wallet.live) return <section className="panel"><EmptyState icon="trophy" title="Tournaments are getting ready"><p>{wallet.message ?? 'Sign-in is not available right now.'}</p></EmptyState></section>;
   return <CurrentTournament />;
 }
 function CurrentTournament() {
@@ -48,9 +48,9 @@ function CurrentTournament() {
   const human = useVerifiedHuman(address);
   const [practiceBest, setPracticeBest] = useState<number | null>(null);
   useEffect(() => setPracticeBest(readBestScore('normal')), []);
-  if (!address) return <section className="panel"><EmptyState icon="trophy" title="Tournaments are getting ready"><p>The tournament contract is not configured for this environment.</p></EmptyState></section>;
+  if (!address) return <section className="panel"><EmptyState icon="trophy" title="Tournaments are getting ready"><p>Tournaments aren't running right now. Check back soon.</p></EmptyState></section>;
   if (count.isPending || (id && reads.isPending)) return <section className="panel"><p className="loading-state" role="status">Loading the tournament…</p></section>;
-  if (count.isError || reads.isError) return <section className="panel"><EmptyState icon="trophy" title="The tournament could not load"><p>Tournament details could not be read from the blockchain.</p><button className="text-button" onClick={() => { void count.refetch(); void reads.refetch(); }}>Try again</button></EmptyState></section>;
+  if (count.isError || reads.isError) return <section className="panel"><EmptyState icon="trophy" title="The tournament could not load"><p>Tournament details couldn't be loaded.</p><button className="text-button" onClick={() => { void count.refetch(); void reads.refetch(); }}>Try again</button></EmptyState></section>;
   if (!id || !reads.data) return <section className="panel"><EmptyState icon="trophy" title="No tournament yet"><p>The first tournament hasn't been scheduled. Sharpen your skills in practice.</p><Link className="button" href="/play/arena">Practice now</Link></EmptyState></section>;
   const [details, entered, submitted] = reads.data as readonly [{ startTime: bigint; endTime: bigint; resultsPostedAt: bigint; entrants: number; maxEntrants: number; cancelled: boolean; entryFee: bigint; pool: bigint }, boolean, number];
   const { startTime, endTime, resultsPostedAt, entrants, maxEntrants, cancelled, entryFee, pool } = details;
@@ -67,7 +67,7 @@ function CurrentTournament() {
       <div><dt>{phase === 'upcoming' ? 'Starts in' : 'Time left'}</dt><dd>{phase === 'upcoming' ? formatRemaining(start - now) : phase === 'open' ? formatRemaining(end - now) : 'Closed'}</dd></div>
       <div><dt>Players</dt><dd>{entrants}{maxEntrants > 0 ? ' / ' + maxEntrants : ''}</dd></div>
     </dl>
-    {!signedIn ? <p className="muted" role="status">Connect your wallet to enter.</p>
+    {!signedIn ? <p className="muted" role="status">Sign in to enter.</p>
       : phase === 'cancelled' ? <Refund id={id} address={address} onDone={() => reads.refetch()} />
       : !entered ? phase === 'open' && !full
         ? human === 'unverified'
@@ -81,7 +81,7 @@ function CurrentTournament() {
           {submit.state.status !== 'idle' && <TransactionStatus state={submit.state} />}</>}
         {phase === 'results' && <Link className="button" href="/rewards">Check your rewards</Link>}</div>}
     {(phase === 'closed' || phase === 'results' || phase === 'cancelled') && <NextTournament address={address} onStarted={async () => { await Promise.all([count.refetch(), reads.refetch()]); }} />}
-    <p className="muted fine-print">Tournament play uses Normal difficulty. Scores are self-reported from your device and reviewed by the Slyyce operator, who posts the winners on-chain after the tournament closes. Default split: 50% / 30% / 20% of the pool to the top three. One entry per GoodDollar-verified human. Prize pools are funded by Slyyce and sponsors.</p>
+    <p className="muted fine-print">Tournament play uses Normal difficulty. Scores are reviewed by the Slyyce team, who announce the winners after the tournament closes. Default split: 50% / 30% / 20% of the pool to the top three. One entry per verified person. Prize pools are funded by Slyyce and sponsors.</p>
   </section>;
 }
 function Refund({ id, address, onDone }: { id: bigint; address: `0x${string}`; onDone: () => Promise<unknown> }) {
@@ -89,7 +89,7 @@ function Refund({ id, address, onDone }: { id: bigint; address: `0x${string}`; o
   const chain = publicConfig.network ? chainFor(publicConfig.network) : undefined;
   const refunded = useReadContract({ address, abi: tournamentAbi, functionName: 'refunded', args: [id, account.address ?? zero], chainId: chain?.id });
   const write = useContractWrite();
-  if (refunded.data) return <p className="muted">Your refund has been returned to your wallet.</p>;
+  if (refunded.data) return <p className="muted">Your entry fee has been refunded to your balance.</p>;
   return <div className="entered-state"><p>This tournament was cancelled. Entry fees and sponsorships are refunded in full.</p>
     <button className="button" disabled={!write.ready || !['idle', 'success', 'rejected', 'failed'].includes(write.state.status)} onClick={() => void write.execute({ address, abi: tournamentAbi, functionName: 'refund', args: [id] }, { onConfirmed: async () => { await Promise.all([refunded.refetch(), onDone()]); } })}>Claim refund</button>
     {write.state.status !== 'idle' && <TransactionStatus state={write.state} />}</div>;

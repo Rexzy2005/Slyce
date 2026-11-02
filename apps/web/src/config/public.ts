@@ -11,7 +11,7 @@ export const publicConfig = parsePublicConfig({
   backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL,
   network: process.env.NEXT_PUBLIC_NETWORK,
   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL,
-  walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+  magicPublishableKey: process.env.NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY,
   gdAddress: process.env.NEXT_PUBLIC_GD_ADDRESS,
   shopAddress: process.env.NEXT_PUBLIC_SHOP_ADDRESS,
   tournamentAddress: process.env.NEXT_PUBLIC_TOURNAMENT_ADDRESS,

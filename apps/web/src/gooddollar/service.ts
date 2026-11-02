@@ -35,12 +35,12 @@ export function goodDollarEnvForToken(address: string | undefined): NonNullable<
 }
 
 export function goodDollarAvailability(config: PublicConfig): GoodDollarAvailability {
-  if (config.network !== 'celo') return { status: 'blocked', reason: 'GoodDollar verification and daily G$ run on Celo. This site is not connected to Celo.' };
+  if (config.network !== 'celo') return { status: 'blocked', reason: 'GoodDollar verification and daily G$ aren\'t available on this site.' };
   // An explicit environment must agree with the token; without one, the token identifies the environment.
   const env = config.goodDollarEnv ?? goodDollarEnvForToken(config.gdAddress);
-  if (!env) return { status: 'blocked', reason: 'This site has no G$ token configured, so GoodDollar verification is switched off.' };
+  if (!env) return { status: 'blocked', reason: 'GoodDollar verification is switched off on this site.' };
   if (!config.gdAddress || config.gdAddress.toLowerCase() !== goodDollarTokens[env].toLowerCase()) {
-    return { status: 'blocked', reason: 'The configured G$ token does not match the GoodDollar ' + env + ' environment.' };
+    return { status: 'blocked', reason: 'GoodDollar verification is misconfigured on this site (' + env + ').' };
   }
   return { status: 'ready', env };
 }
