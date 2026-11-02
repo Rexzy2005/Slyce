@@ -17,6 +17,8 @@ The forno RPC rejects `eth_getLogs` ranges over 5,000 blocks (verified 2026-10-3
 - Verified players are counted from the GoodDollar Identity contract (`getWhitelistedRoot` via multicall), as distinct root identities among those wallets. Results are cached for 10 minutes because verification can expire. This replaces the admin overview card that was based on backend verification records, so both user counts come from the chain.
 - Config: `SLYYCE_ARCADE_ADDRESS`, `SLYYCE_TOURNAMENT_ADDRESS`, `SLYYCE_SHOP_ADDRESS`, `SLYYCE_CONTRACTS_START_BLOCK`, and `CHAIN_RPC_URL` (falls back to `GOODDOLLAR_RPC_URL`). Without addresses, the endpoints return 503 and the admin page says so.
 
+**Update 2026-11-02:** a public, read-only `GET /api/v1/chain/transactions` (max 50 per page; type and account filters) serves the same rows to the public `/stats` "All activity" feed. The data is already public on Celo.
+
 ## Consequences
 
 - No database migration, and no new dependency (viem was already a backend dependency).

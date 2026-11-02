@@ -13,6 +13,7 @@ import {
   chainTransactionQuerySchema,
   chainUserListResponseSchema,
   chainUserQuerySchema,
+  publicChainTransactionQuerySchema,
   adminPlayerListResponseSchema,
   playerGrowthQuerySchema,
   playerGrowthSchema,
@@ -642,6 +643,13 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     const query = auditLogQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
     const result = await dependencies.operationsService.auditLogs(principal, query);
     return sendJson(response, 200, auditLogListResponseSchema.parse({ data: result.items, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
+  }
+
+  if (pathname === `${apiPrefix}/chain/transactions` && request.method === 'GET') {
+    if (!dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
+    const query = publicChainTransactionQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const result = await dependencies.chainActivityService.publicTransactions(query);
+    return sendJson(response, 200, chainTransactionListResponseSchema.parse({ data: result.items, summary: result.summary, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
   }
 
   if ((pathname === `${apiPrefix}/admin/chain/users` || pathname === `${apiPrefix}/admin/chain/transactions`) && request.method === 'GET') {

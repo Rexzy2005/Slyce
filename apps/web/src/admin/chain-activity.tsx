@@ -5,34 +5,13 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ArrowLeftRight, ExternalLink, RefreshCw, Search, Users } from 'lucide-react';
 import { adminRequest } from './auth-client';
 import { publicConfig } from '../config/public';
-import { explorerUrl, gdDecimals } from '../web3/config';
-import { formatTokenAmount } from '../web3/units';
+import { explorerUrl } from '../web3/config';
+import { describe, formatGd, kindLabels, shortAddress, when, type ChainSummary, type ChainTransaction, type TransactionKind } from '../activity/format';
 
 /** Admin views over on-chain player activity served by the backend index (ADR-0012). */
-export type ChainSummary = { users: number; verifiedUsers: number | null; transactions: number; games: number; earned: string; spent: string; indexedToBlock: number | null; latestBlock: number | null; catchingUp: boolean };
 type ChainUser = { address: string; firstSeen: string | null; lastSeen: string | null; transactions: number; games: number; bestScore: number; xp: number; earned: string; spent: string; verified: boolean | null };
-type ChainTransaction = { id: string; kind: TransactionKind; account: string; transactionHash: string; blockNumber: number; timestamp: string | null; amount: string | null; direction: 'in' | 'out' | null; details: Record<string, string | number> };
-type TransactionKind = keyof typeof kindLabels;
 type Page<T> = { data: T[]; summary: ChainSummary; pagination: { nextCursor: string | null } };
-
-const kindLabels = {
-  game: 'Game saved',
-  milestone_reward: 'Milestone reward',
-  round_fee: 'Round fee',
-  rewards_funded: 'Reward pot funded',
-  purchase: 'Shop purchase',
-  tournament_entry: 'Tournament entry',
-  sponsor: 'Tournament sponsor',
-  tournament_score: 'Tournament score',
-  prize_claim: 'Prize claimed',
-  refund: 'Refund',
-} as const;
-
-const detailLabels: Record<string, string> = { gameId: 'game #', tournamentId: 'tournament #', itemId: 'item #', round: 'round #', bestCombo: 'combo', milestone: 'milestone' };
-const describe = (details: Record<string, string | number>) => Object.entries(details).map(([name, value]) => `${detailLabels[name] ?? name} ${typeof value === 'number' ? value.toLocaleString() : value}`.replace('# ', '#')).join(' · ') || '—';
-const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
-const gd = (amount: string) => `${Number(formatTokenAmount(BigInt(amount), gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} G$`;
-const when = (value: string | null) => value ? new Date(value).toLocaleString() : '—';
+const gd = formatGd;
 const link = (kind: 'address' | 'tx', value: string) => publicConfig.network ? explorerUrl(publicConfig.network, kind, value) : null;
 
 async function loadPage<T>(path: string, query: URLSearchParams): Promise<Page<T>> {
@@ -146,4 +125,5 @@ export function useChainSummary(): ChainSummary | undefined {
   return summary;
 }
 
-export const formatGd = gd;
+export { formatGd };
+export type { ChainSummary };

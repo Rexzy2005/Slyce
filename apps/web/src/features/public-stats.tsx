@@ -6,6 +6,7 @@ import { arcadeAbi, tournamentAbi } from '../web3/abis';
 import { chainFor, contractsFor, explorerUrl, gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
 import { formatTokenAmount } from '../web3/units';
+import { RecentActivity } from './recent-activity';
 /** Public, sign-in-free view of Slyyce's on-chain activity for players, judges and funders. */
 export function PublicStats() {
   const wallet = useWallet();
@@ -47,6 +48,7 @@ function Stats() {
       <div><dt>Tournaments run</dt><dd>{typeof tournaments === 'bigint' ? tournaments.toLocaleString() : '—'}</dd></div>
       <div><dt>Bounty open now</dt><dd>{typeof openId === 'bigint' && openId > 0n ? '#' + openId.toString() : 'None'}</dd></div>
     </dl>
+    <RecentActivity />
     <h2>Public records</h2>
     <ul className="stats-links">{link(arcade, 'SlyceArcade')}{link(tournament, 'SlyceTournament')}{link(shop, 'SlyceShop')}{link(gd, 'G$ token')}</ul>
     <p className="muted fine-print">Events: GameRecorded, MilestoneRewarded, Entered, ScoreSubmitted, ResultsPosted, PrizeClaimed, Purchased.</p>

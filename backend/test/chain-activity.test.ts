@@ -141,3 +141,19 @@ await it('keeps activity available when identity reads fail', async () => {
   assert.equal(index.summary().verifiedUsers, 0);
   assert.equal(index.listUsers({ limit: 1 }).items[0]!.verified, null);
 });
+
+await it('serves a public, read-only activity feed with smaller pages', async () => {
+  const service = new ChainActivityService(new ChainActivityIndex(new FakeSource(logs), 900n));
+  const server = createApp({ port: 0, host: '127.0.0.1', environment: 'test', corsOrigins: [], rateLimitWindowMs: 60_000, rateLimitMaxRequests: 100, maxRequestBytes: 1_048_576, adminEmails: [], goodDollarEnvironment: 'development' }, { chainActivityService: service });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v1/chain/transactions`;
+  try {
+    const response = await fetch(`${base}?limit=2`);
+    assert.equal(response.status, 200);
+    const body = await response.json() as { data: unknown[]; pagination: { nextCursor: string | null } };
+    assert.equal(body.data.length, 2);
+    assert.equal(body.pagination.nextCursor, '2');
+    assert.equal((await fetch(`${base}?limit=100`)).status, 400, 'public pages are capped at 50');
+    assert.equal((await fetch(`${base}?kind=purchase`)).status, 200);
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});

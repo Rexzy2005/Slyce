@@ -286,5 +286,7 @@ export class ChainActivityService {
   private async ready(principal: AuthenticatedPrincipal) { requireAdministrator(principal); await this.index.sync(); }
   async summary(principal: AuthenticatedPrincipal) { await this.ready(principal); return this.index.summary(); }
   async transactions(principal: AuthenticatedPrincipal, input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.ready(principal); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
+  /** Public activity feed for the /stats page: the same on-chain rows anyone can read on the explorer. */
+  async publicTransactions(input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.index.sync(); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
   async users(principal: AuthenticatedPrincipal, input: Parameters<ChainActivityIndex['listUsers']>[0]) { await this.ready(principal); return { ...this.index.listUsers(input), summary: this.index.summary() }; }
 }
