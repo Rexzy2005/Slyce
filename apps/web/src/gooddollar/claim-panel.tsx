@@ -7,6 +7,7 @@ import { EmptyState } from '../components/ui';
 import { celo } from 'viem/chains';
 import { gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
+import { links } from '../config/links';
 import { formatTokenAmount } from '../web3/units';
 import { classifyTransactionError } from '../web3/transactions';
 import { formatRemaining, useNow } from '../features/tournament';
@@ -136,7 +137,7 @@ function Claimer({ env }: { env: 'production' | 'staging' | 'development' }) {
     {view.status === 'can_claim' && <EmptyState icon="leaf" title={formatTokenAmount(view.entitlement, gdDecimals) + ' G$ is ready'} action={<button className="button" disabled={busy} onClick={() => void claim()}>Claim daily G$</button>}>
       <p>Your daily GoodDollar UBI is waiting. Use it in the market or for tournament entries.</p></EmptyState>}
     {view.status === 'already_claimed' && <EmptyState icon="clock" title="You've claimed today"><p>{view.next ? 'Next claim in ' + formatRemaining(Math.floor(view.next.getTime() / 1000) - now) + '.' : 'Come back tomorrow for more G$.'}</p></EmptyState>}
-    {wallet.gas === 'low' && view.status !== 'not_whitelisted' && view.status !== 'loading' && <p className="status-card" role="status">Your account needs a free top-up before you can save scores. <button className="text-button" disabled={busy} onClick={() => void topUpGas()}>Top up for free</button></p>}
+    {wallet.gas === 'low' && view.status !== 'not_whitelisted' && view.status !== 'loading' && <p className="status-card" role="status">Your account needs a free top-up before you can save scores. <button className="text-button" disabled={busy} onClick={() => void topUpGas()}>Top up from GoodDollar</button> or <a href={links.gasHelpTelegram} target="_blank" rel="noreferrer">ask on Telegram</a></p>}
     {action.status === 'working' && <p className="status-card" role="status">{action.label}</p>}
     {action.status === 'failed' && <p className="status-card error-text" role="alert">{action.message}</p>}
     {action.status === 'done' && <p className="status-card" role="status"><strong className="leaf">Claimed!</strong> Your G$ is in your balance.</p>}

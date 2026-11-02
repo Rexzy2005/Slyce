@@ -5,6 +5,7 @@ import { useAccount, useReadContract } from 'wagmi';
 import { publicConfig } from '../config/public';
 import { chainFor, contractsFor, gdDecimals } from './config';
 import { useWallet } from './context';
+import { links } from '../config/links';
 import { TransactionStatus } from '../components/transaction-status';
 import { TransactionFailure } from './transactions';
 import { useContractWrite, type WriteCall } from './use-contract-write';
@@ -39,7 +40,7 @@ export function TokenSpend<abi extends Abi, name extends ContractFunctionName<ab
     <Link className="button" href="/get-gd">Get free G$</Link>
   </div>;
   return <div className="token-spend">
-    {wallet.gas === 'low' && <p className="error-text" role="status">Your account needs a free top-up first. <Link href="/get-gd">Top up for free</Link></p>}
+    {wallet.gas === 'low' && <p className="error-text" role="status">Your account needs a free top-up first. <a href={links.gasHelpTelegram} target="_blank" rel="noreferrer">Ask on Telegram</a></p>}
     {needsApproval
       ? <><p className="spend-step"><strong>Step 1 of 2 · Allow G$ payments</strong><br /><span className="muted">A one-time permission for up to {formatTokenAmount(allowAmount, gdDecimals)} G$. Nothing is spent yet, and you still confirm each payment.</span></p>
         <button className="button" disabled={disabled || pending || allowance.isPending} onClick={() => void approve.execute({ address: token, abi: erc20Abi, functionName: 'approve', args: [spender, allowAmount] }, { check: checkBalance, onConfirmed: () => allowance.refetch() })}>{allowance.isPending ? 'Checking…' : 'Allow ' + formatTokenAmount(allowAmount, gdDecimals) + ' G$'}</button></>
