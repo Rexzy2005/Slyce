@@ -134,7 +134,7 @@ export default function AdminPage() {
             <Metric
               label="Verified players"
               value={chain?.verifiedUsers != null ? chain.verifiedUsers.toLocaleString() : "—"}
-              detail="Distinct GoodDollar-verified humans"
+              detail={chain && chain.verifiedUsers == null && chain.users > 0 ? "Verification lookup unavailable: check GoodDollar settings on the backend" : "Distinct GoodDollar-verified humans"}
               icon={BadgeCheck}
               tone="leaf"
             />

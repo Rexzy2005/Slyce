@@ -138,7 +138,7 @@ await it('keeps activity available when identity reads fail', async () => {
   const index = new ChainActivityIndex(new FakeSource(logs), 900n, { identityRoots: async () => { throw new Error('rpc down'); } });
   await index.sync();
   assert.equal(index.summary().users, 2);
-  assert.equal(index.summary().verifiedUsers, 0);
+  assert.equal(index.summary().verifiedUsers, null, 'unknown, not zero, when no verification could be read');
   assert.equal(index.listUsers({ limit: 1 }).items[0]!.verified, null);
 });
 
@@ -156,4 +156,10 @@ await it('serves a public, read-only activity feed with smaller pages', async ()
     assert.equal((await fetch(`${base}?limit=100`)).status, 400, 'public pages are capped at 50');
     assert.equal((await fetch(`${base}?kind=purchase`)).status, 200);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+await it('reports verified players as unknown when every identity read fails', async () => {
+  const index = new ChainActivityIndex(new FakeSource(logs), 900n, { identityRoots: async () => new Map() });
+  await index.sync();
+  assert.equal(index.summary().verifiedUsers, null);
 });

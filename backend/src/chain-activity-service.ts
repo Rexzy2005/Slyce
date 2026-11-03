@@ -2,6 +2,7 @@ import { createPublicClient, http, parseAbi, type Address } from 'viem';
 import { celo } from 'viem/chains';
 import type { AuthenticatedPrincipal } from './security.js';
 import { requireAdministrator } from './security.js';
+import { logger } from './logger.js';
 
 /**
  * Admin visibility of player activity on the Slyyce contracts (ADR-0012).
@@ -94,6 +95,9 @@ export function createIdentityRootResolver(rpcUrl: string, identity: Address): I
   return async addresses => {
     const results = await client.multicall({ contracts: addresses.map(account => ({ address: identity, abi: identityAbi, functionName: 'getWhitelistedRoot', args: [account as Address] })), allowFailure: true });
     const roots = new Map<string, string | null>();
+    const failed = results.filter(result => result.status !== 'success');
+    // A wrong Identity address or RPC makes every read fail; surface it instead of silently counting zero.
+    if (failed.length) logger.error('GoodDollar Identity reads failed', { identity, failed: failed.length, of: results.length, error: String(failed[0]?.error ?? 'unknown').slice(0, 300) });
     results.forEach((result, i) => {
       if (result.status !== 'success') return;
       const root = String(result.result).toLowerCase();
@@ -226,8 +230,9 @@ export class ChainActivityIndex {
     try {
       const found = await this.identityRoots(stale);
       for (const [address, root] of found) this.roots.set(address, { root, at: now });
-    } catch {
+    } catch (error) {
       // Identity reads are best-effort; activity stays available and counts fall back to cached roots.
+      logger.error('GoodDollar Identity lookup failed', { error: error instanceof Error ? error.message.slice(0, 300) : 'unknown' });
     }
   }
 
@@ -256,7 +261,9 @@ export class ChainActivityIndex {
     let earned = 0n; let spent = 0n; let games = 0;
     for (const user of this.users.values()) { earned += user.earned; spent += user.spent; games += user.games; }
     const roots = new Set([...this.users.keys()].map(address => this.roots.get(address)?.root).filter((root): root is string => Boolean(root)));
-    return { users: this.users.size, verifiedUsers: this.identityRoots ? roots.size : null, transactions: this.sorted.length, games, earned: earned.toString(), spent: spent.toString(), indexedToBlock: this.nextBlock > 0n ? Number(this.nextBlock - 1n) : null, latestBlock: this.latest === null ? null : Number(this.latest), catchingUp: this.catchingUp() };
+    // Unknown (null), not 0, while no player's verification could be read: a failing lookup must not look like "nobody is verified".
+    const resolved = [...this.users.keys()].some(address => this.roots.has(address));
+    return { users: this.users.size, verifiedUsers: this.identityRoots && (resolved || this.users.size === 0) ? roots.size : null, transactions: this.sorted.length, games, earned: earned.toString(), spent: spent.toString(), indexedToBlock: this.nextBlock > 0n ? Number(this.nextBlock - 1n) : null, latestBlock: this.latest === null ? null : Number(this.latest), catchingUp: this.catchingUp() };
   }
 
   listTransactions(input: { cursor?: string | undefined; limit: number; kind?: ChainTransactionKind | undefined; account?: string | undefined }): { items: ChainTransaction[]; nextCursor: string | null } {
