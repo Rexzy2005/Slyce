@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, type ReactNode } from 'react';
 import { WagmiProvider, createConfig, http, type Config } from 'wagmi';
-import { injected, walletConnect } from 'wagmi/connectors';
+import { coinbaseWallet, injected, metaMask, walletConnect } from 'wagmi/connectors';
 import type { Magic } from 'magic-sdk';
 import type { Chain } from 'viem';
 import { publicConfig } from '../config/public';
@@ -19,11 +19,15 @@ function createWallets() {
   // Widened to Chain so wagmi types the transports map for this one configured network.
   const chain: Chain = chainFor(publicConfig.network);
   const magic = getMagic(publicConfig.magicPublishableKey, chain, publicConfig.rpcUrl);
-  // Email (Magic) first; players who already have a wallet can use a browser/in-app wallet or WalletConnect.
+  // Email (Magic) first. Wallet players pick from: wallets detected in the browser (EIP-6963, added by wagmi),
+  // MetaMask and Coinbase Wallet (open their apps on phones), and WalletConnect for every other wallet app.
+  const origin = window.location.origin;
   const connectors = [
     magicConnector(magic),
     injected({ shimDisconnect: true }),
-    ...(publicConfig.walletConnectProjectId ? [walletConnect({ projectId: publicConfig.walletConnectProjectId, showQrModal: true, metadata: { name: 'Slyyce', description: 'Swipe. Slice. Stack your G$.', url: window.location.origin, icons: [window.location.origin + '/icons/icon-192.png'] } })] : []),
+    metaMask({ dappMetadata: { name: 'Slyyce', url: origin, iconUrl: origin + '/icons/icon-192.png' } }),
+    coinbaseWallet({ appName: 'Slyyce', appLogoUrl: origin + '/icons/icon-192.png' }),
+    ...(publicConfig.walletConnectProjectId ? [walletConnect({ projectId: publicConfig.walletConnectProjectId, showQrModal: true, metadata: { name: 'Slyyce', description: 'Swipe. Slice. Stack your G$.', url: origin, icons: [origin + '/icons/icon-192.png'] } })] : []),
   ];
   const config = createConfig({ chains: [chain], connectors, transports: { [chain.id]: http(publicConfig.rpcUrl) }, ssr: true });
   created = { config, magic };
