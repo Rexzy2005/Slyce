@@ -1,4 +1,4 @@
-import { defaultPreviewSettings, difficultyPacing, type PreviewSettings } from './preview-settings';
+import { defaultPreviewSettings, pacingAt, type PreviewSettings } from './preview-settings';
 import Phaser from 'phaser';
 import type { GameBridge } from './bridge';
 import type { GameRuntime } from './lifecycle';
@@ -35,6 +35,9 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     private clock = 0;
     private nextLaunch = 0;
     private waveRemaining = 0;
+    /** Juice stains change slowly, so they are redrawn a few times a second rather than every frame (low-end phones). */
+    private stainsDirty = true;
+    private stainClock = 0;
     private halves: { image: Phaser.GameObjects.Image; body: FruitMotion; life: number }[] = [];
     create() {
       for (const kind of fruitKinds) for (const part of ['whole', 'upper', 'lower'] as const) {
@@ -69,7 +72,7 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       this.fruits.forEach(f => f.image.destroy()); this.fruits = [];
       this.halves.forEach(half => half.image.destroy()); this.halves = [];
       this.nextLaunch = this.clock + .12; this.waveRemaining = 0;
-      this.ink?.clear(); this.blade?.clear();
+      this.ink?.clear(); this.blade?.clear(); this.stainsDirty = true;
     }
     /** Enabling starts a fresh practice round; disabling leaves the board idle. */
     preview(enabled: boolean) {
@@ -88,11 +91,12 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       bridge.emit({ type: 'game-over', score: this.practice.score, cause, bestCombo: this.practice.bestCombo, fruits: this.practice.fruits });
     }
     private launch() {
-      if (this.fruits.length >= difficultyPacing[this.settings.difficulty].maxFruit) return;
+      const pace = pacingAt(this.settings.difficulty, this.practice.score);
+      if (this.fruits.length >= pace.maxFruit) return;
       const width = this.scale.width, height = this.scale.height;
       const radius = Math.max(25, Math.min(53, width * .065)) * (.85 + Math.random() * .25);
       const body = launchFruit(width, height, radius);
-      const speed = difficultyPacing[this.settings.difficulty].speed;
+      const speed = pace.speed;
       body.vx *= speed; body.vy *= speed; body.gravity *= speed * speed;
       if (reducedMotion) body.spin *= .3;
       const kind = this.settings.fruits[Math.floor(Math.random() * this.settings.fruits.length)] ?? 'melon';
@@ -102,8 +106,8 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     }
     private burst(x: number, y: number, color = 0xff3158, cutAngle = -.6) {
       this.stains.push({ marks: juiceMarks(x, y, cutAngle).filter(mark => mark.x > 35 + mark.radius * 3 && mark.x < this.scale.width - 35 - mark.radius * 3 && mark.y > 35 + mark.radius * 3 && mark.y < this.scale.height - 35 - mark.radius * 3), color, life: 35 });
-      this.stains = this.stains.slice(-40);
-      const count = reducedMotion ? 10 : 28;
+      this.stains = this.stains.slice(-24); this.stainsDirty = true;
+      const count = reducedMotion ? 8 : 18;
       for (let i = 0; i < count; i++) {
         const angle = cutAngle + (Math.random() - .5) * Math.PI * 2; const speed = 70 + Math.random() * 230;
         this.drops.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 60, life: .7 + Math.random() * .35, duration: 1.1, radius: 2 + Math.random() * 7, color });
@@ -139,13 +143,33 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       if (cue === 'splash' || cue === 'boom') this.burst(this.scale.width / 2, this.scale.height / 2, cue === 'boom' ? 0xffb627 : 0xff3158);
       bridge.emit({ type: 'effect', cue });
     }
+    private drawStains() {
+      const elapsed = this.stainClock; this.stainClock = 0; this.stainsDirty = false;
+      this.boardInk?.clear();
+      for (const stain of this.stains) stain.life -= elapsed;
+      this.stains = this.stains.filter(stain => stain.life > 0);
+      for (const stain of this.stains) {
+        const opacity = Math.min(1, Math.max(0, stain.life / 7));
+        for (const mark of stain.marks) {
+          // Layered translucent pools let wood grain show through the juice.
+          const dx = Math.cos(mark.angle) * mark.radius * mark.stretch, dy = Math.sin(mark.angle) * mark.radius * mark.stretch;
+          this.boardInk?.lineStyle(Math.max(1, mark.radius * .45), stain.color, opacity * .22).lineBetween(mark.x, mark.y, mark.x + dx, mark.y + dy);
+          this.boardInk?.fillStyle(stain.color, opacity * .22).fillCircle(mark.x + dx, mark.y + dy, Math.max(1, mark.radius * .22));
+          this.boardInk?.fillStyle(stain.color, opacity * .26).fillCircle(mark.x, mark.y, mark.radius);
+          this.boardInk?.fillStyle(stain.color, opacity * .14).fillCircle(mark.x - mark.radius * .2, mark.y + mark.radius * .2, mark.radius * .8);
+          const wet = Math.max(0, (stain.life - 28) / 7);
+          this.boardInk?.fillStyle(0xfff4d6, opacity * wet * .25).fillCircle(mark.x - mark.radius * .3, mark.y - mark.radius * .3, mark.radius * .18);
+        }
+      }
+    }
     override update(_time: number, delta: number) {
       if (!this.active || !this.ink || !this.blade) return;
       const dt = Math.min(delta, 40) / 1000; this.clock += dt;
       if (!this.practice.over && this.clock >= this.nextLaunch) {
-        if (this.waveRemaining === 0) this.waveRemaining = 1 + Math.floor(Math.random() * difficultyPacing[this.settings.difficulty].maxWave);
+        const pace = pacingAt(this.settings.difficulty, this.practice.score);
+        if (this.waveRemaining === 0) this.waveRemaining = 1 + Math.floor(Math.random() * pace.maxWave);
         this.launch(); this.waveRemaining--;
-        this.nextLaunch = this.clock + (this.waveRemaining > 0 ? .16 + Math.random() * .12 : difficultyPacing[this.settings.difficulty].delay + Math.random() * .6);
+        this.nextLaunch = this.clock + (this.waveRemaining > 0 ? .16 + Math.random() * .12 : pace.delay + Math.random() * .6);
       }
       this.fruits = this.fruits.filter(fruit => {
         advanceFruit(fruit.body, dt);
@@ -167,22 +191,8 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
         return true;
       });
       this.ink.clear(); this.blade.clear();
-      this.boardInk?.clear();
-      this.stains = this.stains.filter(stain => stain.life > 0);
-      for (const stain of this.stains) {
-        stain.life -= dt;
-        const opacity = Math.min(1, Math.max(0, stain.life / 7));
-        for (const mark of stain.marks) {
-          // Layered translucent pools let wood grain show through the juice.
-          const dx = Math.cos(mark.angle) * mark.radius * mark.stretch, dy = Math.sin(mark.angle) * mark.radius * mark.stretch;
-          this.boardInk?.lineStyle(Math.max(1, mark.radius * .45), stain.color, opacity * .22).lineBetween(mark.x, mark.y, mark.x + dx, mark.y + dy);
-          this.boardInk?.fillStyle(stain.color, opacity * .22).fillCircle(mark.x + dx, mark.y + dy, Math.max(1, mark.radius * .22));
-          this.boardInk?.fillStyle(stain.color, opacity * .26).fillCircle(mark.x, mark.y, mark.radius);
-          this.boardInk?.fillStyle(stain.color, opacity * .14).fillCircle(mark.x - mark.radius * .2, mark.y + mark.radius * .2, mark.radius * .8);
-          const wet = Math.max(0, (stain.life - 28) / 7);
-          this.boardInk?.fillStyle(0xfff4d6, opacity * wet * .25).fillCircle(mark.x - mark.radius * .3, mark.y - mark.radius * .3, mark.radius * .18);
-        }
-      }
+      this.stainClock += dt;
+      if (this.stainsDirty || this.stainClock >= .25) this.drawStains();
       this.drops = this.drops.filter(drop => drop.life > 0);
       for (const drop of this.drops) { drop.life -= dt; drop.x += drop.vx * dt; drop.y += drop.vy * dt; drop.vy += 260 * dt; const alpha = Math.max(0, drop.life / drop.duration); this.ink.lineStyle(drop.radius * 1.2, drop.color, alpha).lineBetween(drop.x, drop.y, drop.x - drop.vx * .025, drop.y - drop.vy * .025); this.ink.fillStyle(drop.color, alpha).fillCircle(drop.x, drop.y, drop.radius); }
       this.trail = this.trail.filter(point => point.life > 0);

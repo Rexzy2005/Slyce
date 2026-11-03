@@ -34,6 +34,7 @@ export function TokenSpend<abi extends Abi, name extends ContractFunctionName<ab
   const needsApproval = amount > 0n && (allowance.data === undefined || allowance.data < amount);
   const allowAmount = approveAmount > amount ? approveAmount : amount;
   const have = wallet.balance.raw === undefined ? undefined : formatTokenAmount(wallet.balance.raw, gdDecimals);
+  const run = () => action.execute(call, { check: checkBalance, onConfirmed: async () => { await Promise.all([onConfirmed(), allowance.refetch()]); wallet.refreshBalance?.(); } });
   if (insufficient) return <div className="token-spend need-gd" role="status">
     <p><strong>You need {formatTokenAmount(amount, gdDecimals)} G$</strong> · you have {have ?? '0'} G$.</p>
     <p className="muted">Verified humans can claim free G$ every day from GoodDollar. It takes a minute.</p>
@@ -42,10 +43,11 @@ export function TokenSpend<abi extends Abi, name extends ContractFunctionName<ab
   return <div className="token-spend">
     {wallet.gas === 'low' && <p className="error-text" role="status">Your account needs a free top-up first. <a href={links.gasHelpTelegram} target="_blank" rel="noreferrer">Ask on Telegram</a></p>}
     {needsApproval
-      ? <><p className="spend-step"><strong>Step 1 of 2 · Allow G$ payments</strong><br /><span className="muted">A one-time permission for up to {formatTokenAmount(allowAmount, gdDecimals)} G$. Nothing is spent yet, and you still confirm each payment.</span></p>
-        <button className="button" disabled={disabled || pending || allowance.isPending} onClick={() => void approve.execute({ address: token, abi: erc20Abi, functionName: 'approve', args: [spender, allowAmount] }, { check: checkBalance, onConfirmed: () => allowance.refetch() })}>{allowance.isPending ? 'Checking…' : 'Allow ' + formatTokenAmount(allowAmount, gdDecimals) + ' G$'}</button></>
-      : <>{allowAmount > amount && <p className="spend-step"><strong>Step 2 of 2</strong></p>}
-        <button className="button" disabled={disabled || pending} onClick={() => void action.execute(call, { check: checkBalance, onConfirmed: async () => { await Promise.all([onConfirmed(), allowance.refetch()]); wallet.refreshBalance?.(); } })}>{label}</button></>}
+      ? <><p className="spend-step"><span className="muted">The first time, you confirm twice: allowing G$ payments (up to {formatTokenAmount(allowAmount, gdDecimals)} G$), then the payment itself. Both start from this one button.</span></p>
+        {/* One tap: once the permission confirms, the payment starts automatically. */}
+        <button className="button" disabled={disabled || pending || allowance.isPending} onClick={() => void approve.execute({ address: token, abi: erc20Abi, functionName: 'approve', args: [spender, allowAmount] }, { check: checkBalance, onConfirmed: async () => { await allowance.refetch(); void run(); } })}>{allowance.isPending ? 'Checking…' : busy(approve.state) ? 'Allowing G$…' : label}</button></>
+      : <>
+        <button className="button" disabled={disabled || pending} onClick={() => void run()}>{label}</button></>}
     {approve.state.status !== 'idle' && approve.state.status !== 'success' && <TransactionStatus state={approve.state} />}
     {action.state.status !== 'idle' && <TransactionStatus state={action.state} />}
   </div>;

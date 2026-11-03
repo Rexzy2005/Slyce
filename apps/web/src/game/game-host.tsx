@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createGameAudio, type GameAudio } from './audio';
-import { defaultPreviewSettings, type PreviewSettings } from './preview-settings';
+import { defaultPreviewSettings, type Difficulty, type PreviewSettings } from './preview-settings';
 import { PauseSettings } from './pause-settings';
 import { LoadingScreen } from '../components/loading-screen';
 import { Icon } from '../components/icon';
@@ -12,7 +12,7 @@ import { attachGameHost } from './host-lifecycle';
 import { readBestScore, recordBestScore } from './best-score';
 import type { GameOverCause } from './practice-rules';
 /** `blade` must already be verified as owned on-chain; the default trail needs no ownership. */
-export interface GameResult { score: number; bestCombo: number; fruits: number; cause: GameOverCause }
+export interface GameResult { score: number; bestCombo: number; fruits: number; cause: GameOverCause; difficulty: Difficulty }
 export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number; core: number }; /** When set, every round must be paid before it starts. */ payGate?: (start: () => void) => ReactNode; /** Rendered on the game-over screen, e.g. saving the result on-chain. */ afterGame?: (result: GameResult) => ReactNode } = {}) {
   const [pendingStart, setPendingStart] = useState<(() => void) | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -39,7 +39,7 @@ export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number
   const [attempt, setAttempt] = useState(0);
   const [combo, setCombo] = useState<{ count: number; bonus: number } | null>(null);
   const [best, setBest] = useState<number | null>(null);
-  const [gameOver, setGameOver] = useState<{ score: number; cause: GameOverCause; bestCombo: number; fruits: number; best: number; improved: boolean; round: number } | null>(null);
+  const [gameOver, setGameOver] = useState<{ score: number; cause: GameOverCause; bestCombo: number; fruits: number; difficulty: Difficulty; best: number; improved: boolean; round: number } | null>(null);
   useEffect(() => { setBest(readBestScore(previewSettings.difficulty)); }, [previewSettings.difficulty]);
   useEffect(() => { if (ready && blade) bridgeRef.current?.send({ type: 'set-blade', colors: blade }); }, [ready, blade?.glow, blade?.core]);
   useEffect(() => {
@@ -56,7 +56,7 @@ export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number
       if (event.type === 'combo') setCombo({ count: event.count, bonus: event.bonus });
       if (event.type === 'game-over') {
         const record = recordBestScore(settingsRef.current.difficulty, event.score);
-        setBest(record.best || null); setGameOver({ score: event.score, cause: event.cause, bestCombo: event.bestCombo, fruits: event.fruits, round: Date.now(), ...record });
+        setBest(record.best || null); setGameOver({ score: event.score, cause: event.cause, bestCombo: event.bestCombo, fruits: event.fruits, difficulty: settingsRef.current.difficulty, round: Date.now(), ...record });
       }
       if (event.type === 'error') { setStatus(event.message); setFailed(true); setReady(false); setPaused(false); }
     });
@@ -156,7 +156,7 @@ export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number
       {!ready && !failed && <div className="board-loading"><LoadingScreen message="Preparing your board" detail="Getting everything ready for your first cut." compact /></div>}
       {gameOver && !failed && <div className="board-center game-over"><span className="board-symbol"><Icon name={gameOver.cause === 'bomb' ? 'sparkles' : 'heart'} /></span><p className="eyebrow">{gameOver.cause === 'bomb' ? 'YOU HIT A BOMB' : 'OUT OF LIVES'}</p><h2>Game over</h2>
         <p role="status">Final score <strong className="final-score">{gameOver.score.toLocaleString()}</strong> · {gameOver.improved ? 'New best!' : 'Best ' + gameOver.best.toLocaleString()}</p>
-        {afterGame && <div className="after-game" key={gameOver.round}>{afterGame({ score: gameOver.score, bestCombo: gameOver.bestCombo, fruits: gameOver.fruits, cause: gameOver.cause })}</div>}
+        {afterGame && <div className="after-game" key={gameOver.round}>{afterGame({ score: gameOver.score, bestCombo: gameOver.bestCombo, fruits: gameOver.fruits, cause: gameOver.cause, difficulty: gameOver.difficulty })}</div>}
         <button className="button" onClick={playAgain}><Icon name="reset" /> Play again</button>
         {!afterGame && <p className="board-boundary">Practice score saved on this device only · Not verified</p>}</div>}
       {(ready || failed) && !gameOver && (!effectsPreview || paused || failed) && <div className={paused || failed ? 'board-center' : 'board-center board-ready'}>{!paused && !failed && <Image className="ready-fruit-art" src="/game/fruit-splash-v1.webp" alt="" width={1672} height={941} priority unoptimized />}<span className="board-symbol"><Icon name={paused ? 'pause' : 'scissors'} /></span><p className="eyebrow">{paused ? 'TAKE A BREATHER' : 'SLICE INTO SOMETHING GOOD'}</p><h2>{failed ? 'Canvas unavailable' : paused ? 'Your board is paused.' : 'Ready to slice?'}</h2><p className={!paused && !failed ? 'sr-only' : undefined} role={failed ? 'alert' : 'status'}>{paused ? 'Resume the canvas whenever you are ready.' : status}</p>

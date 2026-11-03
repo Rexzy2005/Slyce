@@ -172,6 +172,6 @@ it('hands the finished round to the after-game slot (e.g. saving on Celo)', () =
   fireEvent.click(screen.getByRole('button', { name: 'Start practice round' }));
   act(() => observed.bridge?.emit({ type: 'game-over', score: 640, cause: 'lives', bestCombo: 4, fruits: 52 }));
   expect(screen.getByText('Save 640 on Celo')).toBeTruthy();
-  expect(seen.at(-1)).toEqual({ score: 640, bestCombo: 4, fruits: 52, cause: 'lives' });
+  expect(seen.at(-1)).toEqual({ score: 640, bestCombo: 4, fruits: 52, cause: 'lives', difficulty: 'normal' });
   window.localStorage.clear();
 });

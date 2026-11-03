@@ -5,7 +5,8 @@ import { useShopItems } from '../features/shop';
 import { readEquippedBlade } from '../features/catalog';
 import { GameHost, type GameResult } from './game-host';
 import { RecordGame } from './record-game';
-const afterGame = (result: GameResult) => <RecordGame result={result} />;
+import { TournamentSubmit } from './tournament-submit';
+const afterGame = (result: GameResult) => <><RecordGame result={result} /><TournamentSubmit result={result} /></>;
 /**
  * Signed-in arena: free to play. Each finished round can be saved on Celo (SlyceArcade v2) for XP and,
  * for GoodDollar-verified humans, milestone G$. An equipped blade is applied only if the shop confirms ownership.

@@ -75,7 +75,7 @@ function CurrentTournament() {
           : <TokenSpend spender={address} amount={entryFee} label={entryFee === 0n ? 'Enter for free' : 'Enter for ' + formatTokenAmount(entryFee, gdDecimals) + ' G$'} call={{ address, abi: tournamentAbi, functionName: 'enter', args: [id] }} onConfirmed={() => reads.refetch()} />
         : <p className="muted">{full ? 'This tournament is full.' : 'Entries are closed for this tournament.'}</p>
       : <div className="entered-state"><p><strong className="leaf">You're in.</strong> Your submitted score: <strong>{submitted > 0 ? submitted.toLocaleString() : 'none yet'}</strong></p>
-        {phase === 'open' && <><p className="muted">Your best Normal-difficulty practice score on this device: <strong>{practiceBest?.toLocaleString() ?? 'none yet'}</strong></p>
+        {phase === 'open' && <><p className="muted">Your best Normal-difficulty score on this device: <strong>{practiceBest?.toLocaleString() ?? 'none yet'}</strong>. Tip: after each round you can also submit straight from the game-over screen.</p>
           <div className="action-row"><Link className="button secondary" href="/play/arena">Play a round</Link>
             <button className="button" disabled={!canSubmit || !submit.ready || !['idle', 'success', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => { if (practiceBest !== null) void submit.execute({ address, abi: tournamentAbi, functionName: 'submitScore', args: [id, practiceBest] }, { onConfirmed: () => reads.refetch() }); }}>Submit {practiceBest?.toLocaleString() ?? ''}</button></div>
           {submit.state.status !== 'idle' && <TransactionStatus state={submit.state} />}</>}
