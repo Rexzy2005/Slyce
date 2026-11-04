@@ -120,7 +120,7 @@ const dismissKey = 'slyyce.verify-banner.dismissed';
 /**
  * Play first, verify later (GoodDollar reviewer feedback, 2026-11-04; supersedes verified-only play in ADR-0014).
  * Anyone signed in can play and save scores. Verification only unlocks G$ rewards and tournaments, which the
- * contracts enforce. Unverified players see this non-blocking banner, which also explains the common case of
+ * contracts enforce. Unverified players see this short, non-blocking banner, which also covers the common case of
  * a verified person signed in with a different account (email sign-in creates a new wallet).
  */
 export function VerifyBanner() {
@@ -133,9 +133,8 @@ export function VerifyBanner() {
   const close = () => { try { window.sessionStorage.setItem(dismissKey, '1'); } catch { /* hides for this view only */ } setDismissed(true); };
   return <div className="verify-banner" role="region" aria-label="Verify with GoodDollar">
     <div>
-      <strong>Verify with GoodDollar to earn G$</strong>
-      <span>Playing is free for everyone. A quick, one-time face check unlocks G$ rewards, tournaments and free daily G$.</span>
-      <small className="muted">Already verified? Make sure you signed in with that same wallet (Wallet tab). Your account here is {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}.</small>
+      <strong>Verify to earn G$</strong>
+      <small className="muted">Already verified? Sign in with that wallet.</small>
     </div>
     <span className="verify-banner-actions"><Link className="button" href="/get-gd">Verify</Link><button className="text-button" onClick={close} aria-label="Not now">✕</button></span>
   </div>;

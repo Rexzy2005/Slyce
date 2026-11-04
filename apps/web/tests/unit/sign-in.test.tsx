@@ -68,7 +68,7 @@ it('lets everyone play and only nudges unverified players to verify', () => {
   const { rerender } = withWallet({ ...signedOut, status: 'connected', address }, <><VerifyBanner /><p>game</p></>);
   expect(screen.getByText('game')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Verify' }).getAttribute('href')).toBe('/get-gd');
-  expect(screen.getByRole('region', { name: /verify/i }).textContent).toContain('0x0000…00a1');
+  expect(screen.getByRole('region', { name: /verify/i }).textContent).toContain('Already verified? Sign in with that wallet.');
   fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
   expect(screen.queryByRole('region', { name: /verify/i })).toBeNull();
   window.sessionStorage.clear();

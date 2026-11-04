@@ -5,14 +5,19 @@
  */
 export interface InstallPromptEvent extends Event { prompt(): Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> }
 let deferred: InstallPromptEvent | undefined;
+// Remembers an install so the browser tab (not only the home-screen app) stops offering it.
+const installedKey = 'slyyce.installed';
+export function rememberInstalled(installed: boolean) { try { if (installed) window.localStorage.setItem(installedKey, '1'); else window.localStorage.removeItem(installedKey); } catch { /* best effort */ } }
+export function wasInstalled() { try { return window.localStorage.getItem(installedKey) === '1'; } catch { return false; } }
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(listener => listener());
 export function captureInstallPrompt(): () => void {
   const before = (event: Event) => {
     if (!('prompt' in event) || typeof event.prompt !== 'function' || !('userChoice' in event)) return;
-    event.preventDefault(); deferred = event as InstallPromptEvent; notify();
+    // Chrome only offers this while the app is not installed, so an earlier install was removed.
+    event.preventDefault(); deferred = event as InstallPromptEvent; rememberInstalled(false); notify();
   };
-  const installed = () => { deferred = undefined; notify(); };
+  const installed = () => { deferred = undefined; rememberInstalled(true); notify(); };
   window.addEventListener('beforeinstallprompt', before); window.addEventListener('appinstalled', installed);
   return () => { window.removeEventListener('beforeinstallprompt', before); window.removeEventListener('appinstalled', installed); };
 }
@@ -22,7 +27,12 @@ export async function showInstallPrompt(): Promise<'accepted' | 'dismissed' | 'u
   const event = deferred;
   if (!event) return 'unavailable';
   deferred = undefined; notify();
-  try { await event.prompt(); return (await event.userChoice).outcome; } catch { return 'unavailable'; }
+  try {
+    await event.prompt();
+    const { outcome } = await event.userChoice;
+    if (outcome === 'accepted') { rememberInstalled(true); notify(); }
+    return outcome;
+  } catch { return 'unavailable'; }
 }
 
 export type InstallContext = 'installed' | 'native' | 'ios' | 'in-app' | 'manual';

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { installContext, installPrompt, onInstallPromptChange, showInstallPrompt, type InstallContext } from './install-prompt';
+import { installContext, installPrompt, onInstallPromptChange, rememberInstalled, showInstallPrompt, wasInstalled, type InstallContext } from './install-prompt';
 
 const dismissKey = 'slyyce.install.dismissed-until';
 const hidden = () => { try { return Number(window.localStorage.getItem(dismissKey) ?? 0) > Date.now(); } catch { return false; } };
@@ -9,7 +9,11 @@ const snooze = () => { try { window.localStorage.setItem(dismissKey, String(Date
 function useInstallContext(): InstallContext | undefined {
   const [context, setContext] = useState<InstallContext>();
   useEffect(() => {
-    const update = () => setContext(installContext(navigator.userAgent, window.matchMedia('(display-mode: standalone)').matches || ('standalone' in navigator && navigator.standalone === true), !!installPrompt()));
+    const update = () => {
+      const standalone = ['standalone', 'fullscreen', 'minimal-ui'].some(mode => window.matchMedia(`(display-mode: ${mode})`).matches) || ('standalone' in navigator && navigator.standalone === true);
+      if (standalone) rememberInstalled(true);
+      setContext(installContext(navigator.userAgent, standalone || (wasInstalled() && !installPrompt()), !!installPrompt()));
+    };
     update();
     return onInstallPromptChange(update);
   }, []);
@@ -34,7 +38,7 @@ export function InstallButton() {
   </div>;
 }
 
-/** Dismissible banner in the app shell; hidden once installed or for a week after "Not now". */
+/** Dismissible banner in the app shell; never shown once installed (also in the browser tab), hidden for a week after "Not now". */
 export function InstallBanner() {
   const context = useInstallContext();
   const [closed, setClosed] = useState(true);
