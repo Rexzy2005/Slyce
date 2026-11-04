@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useWallet } from '../web3/context';
 import { PlayerCard } from '../game/player-card';
 import { WalletPanel } from '../web3/wallet-panel';
+import { InstallButton } from '../pwa/install-button';
 import { EmptyState } from '../components/ui';
 import { useShopItems } from './shop';
 import { readBestScore } from '../game/best-score';
@@ -16,6 +17,7 @@ export function Profile() {
   const connected = wallet.live && wallet.status === 'connected' && Boolean(wallet.address);
   return <div className={styles.profileCards}>
     <div className={styles.walletCard}><WalletPanel /></div>
+    <InstallButton />
     <section className={`panel ${styles.panel}`}><p className="eyebrow">PRACTICE BESTS · THIS DEVICE</p><dl className="stat-grid">{difficulties.map((difficulty, index) => <div key={difficulty}><dt>{difficulty}</dt><dd>{bests[index]?.toLocaleString() ?? '—'}</dd></div>)}</dl></section>
     {connected ? <Collection /> : <section className={`panel ${styles.panel}`}><EmptyState title="Your collection"><p>Sign in to see the blades you own.</p></EmptyState></section>}
     {connected && wallet.address && <section className={`panel ${styles.panel} ${styles.recordCard}`}><p className="eyebrow">YOUR RECORD</p><PlayerCard player={wallet.address} /><p className="muted fine-print">Public profile: <Link href={'/player?address=' + wallet.address}>share your stats</Link></p></section>}
