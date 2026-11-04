@@ -60,7 +60,7 @@ function SignIn() {
       <button type="button" role="tab" aria-selected={mode === 'wallet'} aria-pressed={mode === 'wallet'} onClick={() => setMode('wallet')}>Wallet</button>
     </div>
     {mode === 'email' ? <EmailSignIn /> : <WalletSignIn />}
-    <small className="muted">Free to play. Only verified real people can play and earn G$.</small></div>;
+    <small className="muted">Free to play. Verify with GoodDollar anytime to earn G$.</small></div>;
 }
 function EmailSignIn() {
   const magic = useMagic();
@@ -116,34 +116,27 @@ function WalletSignIn() {
   </>;
 }
 
-/** Pages a signed-in but unverified player may still open: verification itself and their account. */
-const openToUnverified = ['/get-gd', '/profile'];
-const verifiedKey = (address: string) => `slyyce.verified.v1.${address.toLowerCase()}`;
-function rememberedVerified(address: string | undefined): boolean {
-  if (!address) return false;
-  try { return window.localStorage.getItem(verifiedKey(address)) === '1'; } catch { return false; }
-}
-function rememberVerified(address: string, verified: boolean) {
-  try { if (verified) window.localStorage.setItem(verifiedKey(address), '1'); else window.localStorage.removeItem(verifiedKey(address)); } catch { /* storage unavailable: re-check next visit */ }
-}
+const dismissKey = 'slyyce.verify-banner.dismissed';
 /**
- * Only GoodDollar-verified people play (product decision 2026-11-02); everyone else is sent to verify first.
- * A player verified before on this device goes straight in while the check re-runs quietly; if their
- * GoodDollar verification has expired, the verify screen appears once the check finishes.
+ * Play first, verify later (GoodDollar reviewer feedback, 2026-11-04; supersedes verified-only play in ADR-0014).
+ * Anyone signed in can play and save scores. Verification only unlocks G$ rewards and tournaments, which the
+ * contracts enforce. Unverified players see this non-blocking banner, which also explains the common case of
+ * a verified person signed in with a different account (email sign-in creates a new wallet).
  */
-export function VerifiedGate({ children }: { children: ReactNode }) {
+export function VerifyBanner() {
   const wallet = useWallet();
   const pathname = usePathname();
   const records = useGameRecords(wallet.address);
-  const address = wallet.address;
-  const [remembered] = useState(() => rememberedVerified(address));
-  useEffect(() => { if (address && records.verified !== undefined) rememberVerified(address, records.verified); }, [address, records.verified]);
-  if (openToUnverified.some(path => pathname.startsWith(path)) || records.verified === true || (records.verified === undefined && remembered)) return <>{children}</>;
-  if (records.verified === undefined) return <LoadingScreen message="Checking your account" detail="One moment." compact />;
-  return <section className="panel verify-gate">
-    <span className="eyebrow">ONE QUICK STEP</span>
-    <h1>Verify you're a real person</h1>
-    <p>Slyyce is only for real people. Verify once with GoodDollar (a quick face check, under a minute) and you can play, win G$ and claim free G$ every day.</p>
-    <Link className="button" href="/get-gd">Verify now</Link>
-  </section>;
+  const [dismissed, setDismissed] = useState(true);
+  useEffect(() => { try { setDismissed(window.sessionStorage.getItem(dismissKey) === '1'); } catch { setDismissed(false); } }, []);
+  if (records.verified !== false || dismissed || pathname.startsWith('/get-gd') || !wallet.address) return null;
+  const close = () => { try { window.sessionStorage.setItem(dismissKey, '1'); } catch { /* hides for this view only */ } setDismissed(true); };
+  return <div className="verify-banner" role="region" aria-label="Verify with GoodDollar">
+    <div>
+      <strong>Verify with GoodDollar to earn G$</strong>
+      <span>Playing is free for everyone. A quick, one-time face check unlocks G$ rewards, tournaments and free daily G$.</span>
+      <small className="muted">Already verified? Make sure you signed in with that same wallet (Wallet tab). Your account here is {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}.</small>
+    </div>
+    <span className="verify-banner-actions"><Link className="button" href="/get-gd">Verify</Link><button className="text-button" onClick={close} aria-label="Not now">✕</button></span>
+  </div>;
 }

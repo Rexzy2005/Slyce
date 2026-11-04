@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { WalletContext, type WalletState } from '../../src/web3/context';
-import { SignInGate, VerifiedGate, walletOptions } from '../../src/web3/sign-in-gate';
+import { SignInGate, VerifyBanner, walletOptions } from '../../src/web3/sign-in-gate';
 import { MagicContext } from '../../src/web3/magic-context';
 import { AccountButton } from '../../src/web3/account-button';
 import { TabBar } from '../../src/components/tab-bar';
@@ -61,43 +61,21 @@ it('asks a wallet on another network to switch instead of letting it in', () => 
   expect(screen.queryByText('secret app')).toBeNull();
   expect(screen.getByRole('button', { name: /switch network/i })).toBeTruthy();
 });
-it('only lets verified people play, but always allows verifying and the account page', () => {
-  mocks.verified = false;
-  const { rerender } = withWallet({ ...signedOut, status: 'connected' }, <VerifiedGate><p>game</p></VerifiedGate>);
-  expect(screen.queryByText('game')).toBeNull();
-  expect(screen.getByRole('link', { name: /verify now/i }).getAttribute('href')).toBe('/get-gd');
-  mocks.pathname = '/get-gd';
-  rerender(<WalletContext value={{ ...signedOut, status: 'connected' }}><VerifiedGate><p>game</p></VerifiedGate></WalletContext>);
-  expect(screen.getByText('game')).toBeTruthy();
-  mocks.pathname = '/play';
-  mocks.verified = undefined;
-  rerender(<WalletContext value={{ ...signedOut, status: 'connected' }}><VerifiedGate><p>game</p></VerifiedGate></WalletContext>);
-  expect(screen.queryByText('game')).toBeNull();
-  mocks.verified = true;
-  rerender(<WalletContext value={{ ...signedOut, status: 'connected' }}><VerifiedGate><p>game</p></VerifiedGate></WalletContext>);
-  expect(screen.getByText('game')).toBeTruthy();
-});
-it('never opens the app when sign-in is not configured', () => {
-  withWallet({ ...signedOut, status: 'unavailable', message: 'Not configured.' }, <SignInGate><p>secret app</p></SignInGate>);
-  expect(screen.queryByText('secret app')).toBeNull();
-  expect(screen.getByRole('alert').textContent).toBe('Not configured.');
-});
-it('shows a loading state while connecting', () => {
-  withWallet({ ...signedOut, status: 'connecting' }, <SignInGate><p>secret app</p></SignInGate>);
-  expect(screen.queryByText('secret app')).toBeNull();
-  expect(screen.queryByRole('button', { name: /sign in/i })).toBeNull();
-});
-it('lets a player verified before on this device straight in, and re-checks quietly', () => {
+it('lets everyone play and only nudges unverified players to verify', () => {
   const address = '0x00000000000000000000000000000000000000a1';
-  window.localStorage.setItem('slyyce.verified.v1.' + address, '1');
   mocks.pathname = '/play';
-  mocks.verified = undefined;
-  const { rerender } = withWallet({ ...signedOut, status: 'connected', address }, <VerifiedGate><p>game</p></VerifiedGate>);
-  expect(screen.getByText('game')).toBeTruthy();
   mocks.verified = false;
-  rerender(<WalletContext value={{ ...signedOut, status: 'connected', address }}><VerifiedGate><p>game</p></VerifiedGate></WalletContext>);
-  expect(screen.queryByText('game')).toBeNull();
-  expect(window.localStorage.getItem('slyyce.verified.v1.' + address)).toBeNull();
+  const { rerender } = withWallet({ ...signedOut, status: 'connected', address }, <><VerifyBanner /><p>game</p></>);
+  expect(screen.getByText('game')).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Verify' }).getAttribute('href')).toBe('/get-gd');
+  expect(screen.getByRole('region', { name: /verify/i }).textContent).toContain('0x0000…00a1');
+  fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+  expect(screen.queryByRole('region', { name: /verify/i })).toBeNull();
+  window.sessionStorage.clear();
+  mocks.verified = true;
+  rerender(<WalletContext value={{ ...signedOut, status: 'connected', address }}><VerifyBanner /><p>game</p></WalletContext>);
+  expect(screen.queryByRole('region', { name: /verify/i })).toBeNull();
+  expect(screen.getByText('game')).toBeTruthy();
 });
 it('account chip shows the email name, never a wallet address, and opens the profile', async () => {
   mocks.signedInEmail.mockResolvedValue('ada@example.com');

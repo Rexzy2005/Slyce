@@ -17,8 +17,8 @@ export function HowToPlay() {
     <h2>Milestone rewards in G$</h2>
     <p>Reach these scores in a single round to earn G$, each milestone once per day:</p>
     {wallet.live ? <MilestoneList /> : <p className="muted">Rewards appear here once you're signed in.</p>}
-    <h2>Only real people</h2>
-    <p>Slyyce is only for real people. Before you play, verify once with GoodDollar: a quick face check that takes under a minute, one person per account. Verified players can also claim free G$ (GoodDollar's universal basic income) every day on the <Link href="/get-gd">Get G$</Link> tab.</p>
+    <h2>Earn G$ as a real person</h2>
+    <p>Anyone can play for free. To earn G$ rewards and enter tournaments, verify once with GoodDollar: a quick face check that takes under a minute, one person per account. Verified players can also claim free G$ (GoodDollar's universal basic income) every day on the <Link href="/get-gd">Get G$</Link> tab. Already verified? Sign in with that same wallet using the Wallet tab.</p>
     <h2>Bounties</h2>
     <p>Bounties are time-limited competitions with real G$ prize pools. A new one starts automatically when the last ends. Enter on the <Link href="/tournament">Compete</Link> tab, play during the bounty, and submit their best score. When it closes, prizes go to the top finishers, who claim them on the Rewards tab.</p>
     <h2>Daily streak</h2>

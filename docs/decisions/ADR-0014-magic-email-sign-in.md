@@ -25,6 +25,8 @@ Reown showed wallet choices and crypto UI. The owner also chose email-only sign-
 
 **Update 2026-11-02:** the product owner asked for wallet sign-in back as a secondary option. Below the email form, "I already have a wallet" connects a browser or in-app wallet (wagmi `injected`, for example MetaMask, MiniPay or Valora's browser). If there isn't one, it uses WalletConnect, which is enabled only when `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is set. Wallets on another network are asked to switch. Sign-ups record `signInMethod` as `email` or `wallet` from the connector. **Update 2026-11-03:** sign-in is now an Email/Wallet toggle. The Wallet tab lists browser-detected wallets (EIP-6963, with their own name and icon), MetaMask (`metaMask`, which opens the app on phones), Coinbase Wallet (`coinbaseWallet`) and "Other wallets" (WalletConnect). These connectors ship with `@wagmi/connectors` 6.2.0, so no new dependencies were added.
 
+**Update 2026-11-04 (reverses verified-only play):** GoodDollar's GoodBuilders reviewer asked that players can try the game before verifying, because gating slows growth. Everyone signed in can now play and save scores. Verification only unlocks G$ milestone rewards and tournaments, which the contracts already enforce. `VerifiedGate` was replaced by a non-blocking `VerifyBanner`. The banner also shows the signed-in account and reminds verified people to sign in with the wallet they verified, since email sign-in creates a different wallet.
+
 ## Consequences
 
 - Config: `NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY` (validated as `pk_live_`/`pk_test_`) replaces `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`. Allowed origins are set in the Magic dashboard.
