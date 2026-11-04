@@ -465,8 +465,8 @@ export const operationalMetricsSchema = z.object({
 });
 
 const chainCursor = z.string().regex(/^\d{1,9}$/).optional();
-const chainSummarySchema = z.object({ users: z.number().int().nonnegative(), verifiedUsers: z.number().int().nonnegative().nullable(), transactions: z.number().int().nonnegative(), games: z.number().int().nonnegative(), earned: z.string().regex(/^\d+$/), spent: z.string().regex(/^\d+$/), indexedToBlock: z.number().int().nullable(), latestBlock: z.number().int().nullable(), catchingUp: z.boolean() });
 export const chainTransactionKindSchema = z.enum(['game', 'milestone_reward', 'round_fee', 'rewards_funded', 'purchase', 'tournament_entry', 'sponsor', 'tournament_score', 'prize_claim', 'refund']);
+const chainSummarySchema = z.object({ users: z.number().int().nonnegative(), verifiedUsers: z.number().int().nonnegative().nullable(), transactions: z.number().int().nonnegative(), games: z.number().int().nonnegative(), earned: z.string().regex(/^\d+$/), spent: z.string().regex(/^\d+$/), indexedToBlock: z.number().int().nullable(), latestBlock: z.number().int().nullable(), catchingUp: z.boolean(), byKind: z.partialRecord(chainTransactionKindSchema, z.object({ count: z.number().int().nonnegative(), amount: z.string().regex(/^\d+$/) })) });
 export const chainTransactionQuerySchema = paginationQuerySchema.extend({ cursor: chainCursor, kind: chainTransactionKindSchema.optional(), account: z.string().regex(/^0x[0-9a-fA-F]{40}$/).optional() });
 /** Public feed: smaller pages; account filter allowed (wallet activity is public on-chain). */
 export const publicChainTransactionQuerySchema = chainTransactionQuerySchema.extend({ limit: z.coerce.number().int().min(1).max(50).default(20) });

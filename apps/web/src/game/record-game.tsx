@@ -9,7 +9,7 @@ import { formatTokenAmount } from '../web3/units';
 import { useContractWrite } from '../web3/use-contract-write';
 import { TransactionStatus } from '../components/transaction-status';
 import type { GameResult } from './game-host';
-import { newMilestones, useGameRecords } from './game-records';
+import { liveStreak, newMilestones, useGameRecords } from './game-records';
 const g = (value: bigint) => formatTokenAmount(value, gdDecimals);
 /** Game-over panel: saves the round on Celo (XP, best score, streak) and pays milestone G$ to verified humans. */
 export function RecordGame({ result }: { result: GameResult }) {
@@ -17,7 +17,7 @@ export function RecordGame({ result }: { result: GameResult }) {
   const wallet = useWallet();
   const records = useGameRecords(account.address);
   const write = useContractWrite();
-  const [saved, setSaved] = useState<{ xp: bigint; earned: bigint } | null>(null);
+  const [saved, setSaved] = useState<{ xp: bigint; earned: bigint; streak: number } | null>(null);
   if (!records.arcade || records.loading) return <p className="muted" role="status">One moment…</p>;
   if (!records.open) return <p className="muted">Saving scores opens soon.</p>;
   const score = Math.min(result.score, records.maxScore);
@@ -27,11 +27,14 @@ export function RecordGame({ result }: { result: GameResult }) {
   const next = records.milestones.find(m => score < m.score);
   // An empty pot means G$ rewards have not started; the contract then skips milestones without marking them earned.
   const rewardsLive = records.budget !== undefined && records.budget > 0n;
+  // The streak the contract will record for this save (computed before the save, from today's stats).
+  const streakAfter = liveStreak(records.stats).next;
   // Mirrors the contract: each milestone is paid only if the remaining pot covers it.
   let remaining = records.budget ?? 0n;
   const payable = pending.reduce((sum, m) => m.reward <= remaining ? (remaining -= m.reward, sum + m.reward) : sum, 0n);
   if (saved) return <div className="record-game saved" role="status">
     <p><strong className="leaf">Score saved.</strong> +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong> added to your balance</> : null}</p>
+    <p className="muted">🔥 {saved.streak}-day streak. Save a score tomorrow to keep it going.</p>
     <Link className="text-button" href="/profile">View your profile →</Link>
   </div>;
   return <div className="record-game">
@@ -45,7 +48,7 @@ export function RecordGame({ result }: { result: GameResult }) {
       { onConfirmed: async () => {
         await records.refetch();
         wallet.refreshBalance?.();
-        setSaved({ xp, earned: records.verified ? payable : 0n });
+        setSaved({ xp, earned: records.verified ? payable : 0n, streak: streakAfter });
       } },
     )}>Save score</button>
     {write.state.status !== 'idle' && write.state.status !== 'success' && <TransactionStatus state={write.state} />}

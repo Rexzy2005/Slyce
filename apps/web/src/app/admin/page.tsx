@@ -19,6 +19,8 @@ import {
 import { signOutAdministrator } from "../../admin/admin-gate";
 import { ChainPlayers, ChainTransactions, formatGd, useChainSummary } from "../../admin/chain-activity";
 import { SignUps, useGrowth } from "../../admin/sign-ups";
+import { GdFlow } from "../../activity/gd-flow";
+import { gdTotal, spendKinds } from "../../activity/format";
 import styles from "./admin-page.module.css";
 
 type View = "overview" | "signups" | "players" | "transactions";
@@ -146,6 +148,13 @@ export default function AdminPage() {
               tone="sky"
             />
             <Metric
+              label="G$ spent in Slyyce"
+              value={chain ? formatGd(gdTotal(chain, spendKinds).amount.toString()) : "—"}
+              detail="Shop, tournament entries, fees and sponsorships"
+              icon={ArrowLeftRight}
+              tone="mango"
+            />
+            <Metric
               label="G$ paid to players"
               value={chain ? formatGd(chain.earned) : "—"}
               detail="Milestones, prizes and refunds"
@@ -160,6 +169,7 @@ export default function AdminPage() {
               tone="sky"
             />
           </div>
+          {chain?.byKind && <div style={{ marginTop: 15 }}><GdFlow summary={chain} /></div>}
         </section>
         <section className="admin-lower-grid">
           <div className="admin-panel">

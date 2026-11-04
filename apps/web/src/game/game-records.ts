@@ -5,7 +5,7 @@ import { publicConfig } from '../config/public';
 import { arcadeAbi } from '../web3/abis';
 import { chainFor, contractsFor } from '../web3/config';
 export interface Milestone { score: number; reward: bigint }
-export interface PlayerStats { xp: bigint; bestScore: number; games: number; streak: number; earned: bigint }
+export interface PlayerStats { xp: bigint; bestScore: number; games: number; streak: number; lastDay: number; earned: bigint }
 const identityAbi = [{ type: 'function', name: 'getWhitelistedRoot', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'address' }] }] as const;
 const zero = '0x0000000000000000000000000000000000000000';
 /** On-chain game records (SlyceArcade v2): milestones, a player's stats, verification and today's rewarded milestones. */
@@ -37,8 +37,8 @@ export function useGameRecords(player: Address | undefined) {
   });
   const rootValue = root.data?.[0]?.result;
   const milestones: Milestone[] = Array.isArray(milestonesRaw) ? (milestonesRaw as readonly { score: number; reward: bigint }[]).map(m => ({ score: Number(m.score), reward: m.reward })) : [];
-  const s = statsRaw as { xp: bigint; bestScore: number; games: number; streak: number; earned: bigint } | undefined;
-  const stats: PlayerStats | undefined = s ? { xp: s.xp, bestScore: Number(s.bestScore), games: Number(s.games), streak: Number(s.streak), earned: s.earned } : undefined;
+  const s = statsRaw as { xp: bigint; bestScore: number; games: number; streak: number; lastDay: number; earned: bigint } | undefined;
+  const stats: PlayerStats | undefined = s ? { xp: s.xp, bestScore: Number(s.bestScore), games: Number(s.games), streak: Number(s.streak), lastDay: Number(s.lastDay), earned: s.earned } : undefined;
   const rules = rulesRaw as readonly [number, number] | undefined;
   return {
     arcade, loading: base.isPending, error: base.isError, milestones, stats,
@@ -49,6 +49,18 @@ export function useGameRecords(player: Address | undefined) {
     verified: identityRaw === undefined ? undefined : identity ? (rootValue === undefined ? undefined : rootValue !== zero) : false,
     refetch: async () => { await Promise.all([base.refetch(), mine.refetch(), root.refetch()]); },
   };
+}
+/** UTC day number, matching SlyceArcade (`block.timestamp / 1 days`). */
+export const utcDay = (ms = Date.now()) => Math.floor(ms / 86_400_000);
+/**
+ * The streak as it stands today. The contract only resets a broken streak on the player's next save, so a streak
+ * whose last saved day is before yesterday is shown as 0 here. `next` is the streak a save today would produce.
+ */
+export function liveStreak(stats: PlayerStats | undefined, today = utcDay()): { current: number; savedToday: boolean; next: number } {
+  if (!stats || stats.games === 0) return { current: 0, savedToday: false, next: 1 };
+  const savedToday = stats.lastDay === today;
+  const alive = stats.lastDay >= today - 1;
+  return { current: alive ? stats.streak : 0, savedToday, next: savedToday ? stats.streak : alive ? stats.streak + 1 : 1 };
 }
 /** Milestones this score reaches that have not been rewarded today. */
 export function newMilestones(milestones: Milestone[], score: number, rewardedMask: bigint) {

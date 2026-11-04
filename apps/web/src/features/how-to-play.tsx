@@ -21,6 +21,8 @@ export function HowToPlay() {
     <p>Slyyce is only for real people. Before you play, verify once with GoodDollar: a quick face check that takes under a minute, one person per account. Verified players can also claim free G$ (GoodDollar's universal basic income) every day on the <Link href="/get-gd">Get G$</Link> tab.</p>
     <h2>Bounties</h2>
     <p>Bounties are time-limited competitions with real G$ prize pools. A new one starts automatically when the last ends. Enter on the <Link href="/tournament">Compete</Link> tab, play during the bounty, and submit their best score. When it closes, prizes go to the top finishers, who claim them on the Rewards tab.</p>
+    <h2>Daily streak</h2>
+    <p>Save at least one score each day to grow your streak. Several rounds on the same day count once, and missing a day starts it again from 1. Days run on UTC time.</p>
     <h2>Your profile</h2>
     <p>Your profile shows your total XP, best score, games played, current daily streak and G$ earned. Profiles are public and shareable: send your profile link to friends.</p>
     <Link className="button" href="/play/arena">Start slicing</Link>

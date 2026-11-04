@@ -48,6 +48,9 @@ await it('indexes contract logs into transactions and per-user totals', async ()
   assert.equal(summary.games, 2);
   assert.equal(summary.indexedToBlock, 12_008);
   assert.equal(summary.catchingUp, false);
+  assert.deepEqual(summary.byKind.purchase, { count: 1, amount: (100n * G).toString() });
+  assert.deepEqual(summary.byKind.tournament_entry, { count: 1, amount: (10n * G).toString() });
+  assert.equal(summary.byKind.game?.count, 2);
 
   const users = index.listUsers({ limit: 10 }).items;
   assert.equal(users[0]!.address, alice.toLowerCase(), 'most recently active first');

@@ -62,6 +62,8 @@ export interface ChainActivitySummary {
   indexedToBlock: number | null;
   latestBlock: number | null;
   catchingUp: boolean;
+  /** Count and G$ volume (smallest units) per transaction type, e.g. shop purchases and tournament entries. */
+  byKind: Partial<Record<ChainTransactionKind, { count: number; amount: string }>>;
 }
 
 /** A decoded log as returned by viem `getLogs({ events })`. */
@@ -260,10 +262,17 @@ export class ChainActivityIndex {
   summary(): ChainActivitySummary {
     let earned = 0n; let spent = 0n; let games = 0;
     for (const user of this.users.values()) { earned += user.earned; spent += user.spent; games += user.games; }
+    const totals = new Map<ChainTransactionKind, { count: number; amount: bigint }>();
+    for (const row of this.sorted) {
+      const total = totals.get(row.kind) ?? { count: 0, amount: 0n };
+      total.count += 1; if (row.amount) total.amount += BigInt(row.amount);
+      totals.set(row.kind, total);
+    }
+    const byKind = Object.fromEntries([...totals].map(([kind, total]) => [kind, { count: total.count, amount: total.amount.toString() }]));
     const roots = new Set([...this.users.keys()].map(address => this.roots.get(address)?.root).filter((root): root is string => Boolean(root)));
     // Unknown (null), not 0, while no player's verification could be read: a failing lookup must not look like "nobody is verified".
     const resolved = [...this.users.keys()].some(address => this.roots.has(address));
-    return { users: this.users.size, verifiedUsers: this.identityRoots && (resolved || this.users.size === 0) ? roots.size : null, transactions: this.sorted.length, games, earned: earned.toString(), spent: spent.toString(), indexedToBlock: this.nextBlock > 0n ? Number(this.nextBlock - 1n) : null, latestBlock: this.latest === null ? null : Number(this.latest), catchingUp: this.catchingUp() };
+    return { users: this.users.size, verifiedUsers: this.identityRoots && (resolved || this.users.size === 0) ? roots.size : null, transactions: this.sorted.length, games, earned: earned.toString(), spent: spent.toString(), indexedToBlock: this.nextBlock > 0n ? Number(this.nextBlock - 1n) : null, latestBlock: this.latest === null ? null : Number(this.latest), catchingUp: this.catchingUp(), byKind };
   }
 
   listTransactions(input: { cursor?: string | undefined; limit: number; kind?: ChainTransactionKind | undefined; account?: string | undefined }): { items: ChainTransaction[]; nextCursor: string | null } {
