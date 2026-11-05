@@ -18,7 +18,7 @@ afterEach(() => { cleanup(); observed.commands.length = 0; observed.bridge = und
 it('does not invent readings and uses bridge commands to pause and resume', () => {
   render(<GameHost />);
   expect(screen.queryByRole('button', { name: 'Start round' })).toBeNull();
-  expect(screen.getAllByText('Not started')).toHaveLength(1);
+  expect(screen.getAllByText('—')).toHaveLength(4);
   fireEvent.click(screen.getByRole('button', { name: 'Pause canvas' }));
   expect(observed.commands).toEqual([{ type: 'pause' }]);
   expect(screen.getByRole('heading', { name: 'Your board is paused.' })).toBeTruthy();
