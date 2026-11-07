@@ -6,6 +6,7 @@ import { EmptyState } from '../components/ui';
 import { useWallet } from '../web3/context';
 import { shopAbi } from '../web3/abis';
 import { chainFor, contractsFor, gdDecimals } from '../web3/config';
+import { refetchUntil } from '../web3/receipt';
 import { TokenSpend } from '../web3/token-spend';
 import { formatTokenAmount } from '../web3/units';
 import { bladeItems, readEquippedBlade, writeEquippedBlade } from './catalog';
@@ -43,7 +44,7 @@ function Market() {
   if (reads.isPending) return <section className="panel"><p className="loading-state" role="status">Loading the market…</p></section>;
   if (reads.isError) return <section className="panel"><EmptyState title="The market could not load"><p>Prices couldn't be loaded.</p><button className="text-button" onClick={() => void reads.refetch()}>Try again</button></EmptyState></section>;
   return <section className="panel"><p className="eyebrow">BLADE TRAILS · COSMETIC</p>
-    <ul className="shop-grid">{items.map(item => <li key={item.id.toString()} className="shop-item">
+    <ul className="shop-grid">{items.map((item, index) => <li key={item.id.toString()} className="shop-item">
       <span className="blade-swatch" style={{ background: 'linear-gradient(120deg, #' + item.colors.glow.toString(16).padStart(6, '0') + ', #' + item.colors.core.toString(16).padStart(6, '0') + ')' }} aria-hidden="true" />
       <div><h2>{item.name}</h2><p className="muted">{item.description}</p>
         <p className="price">{item.price !== undefined ? formatTokenAmount(item.price, gdDecimals) + ' G$' : 'Price unavailable'}</p></div>
@@ -51,8 +52,10 @@ function Market() {
         ? <button className="button secondary" aria-pressed={equipped === item.id} onClick={() => equip(equipped === item.id ? null : item.id)}>{equipped === item.id ? 'Equipped · Unequip' : 'Equip'}</button>
         : item.active && item.price !== undefined
           ? <TokenSpend spender={shop} amount={item.price} label={'Buy for ' + formatTokenAmount(item.price, gdDecimals) + ' G$'}
-              call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }} onConfirmed={() => reads.refetch()} />
+              call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }}
+              // A new blade is equipped straight away, so the next round shows it without a separate tap.
+              onConfirmed={async () => { equip(item.id); await refetchUntil(reads.refetch, data => ((data?.[index * 2 + 1]?.result as bigint | undefined) ?? 0n) > 0n); }} />
           : <button className="button" disabled>Not for sale</button>}
     </li>)}</ul>
-    <p className="muted">Purchases are paid in G$ and saved to your account. Equipped blades show in the arena.</p></section>;
+    <p className="muted">Paid in G$ and saved to your account. A new blade is equipped right away and shows as your slice trail in the next round.</p></section>;
 }
