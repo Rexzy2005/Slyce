@@ -29,7 +29,8 @@ function createWallets() {
     coinbaseWallet({ appName: 'Slyyce', appLogoUrl: origin + '/icons/icon-192.png' }),
     ...(publicConfig.walletConnectProjectId ? [walletConnect({ projectId: publicConfig.walletConnectProjectId, showQrModal: true, metadata: { name: 'Slyyce', description: 'Swipe. Slice. Stack your G$.', url: origin, icons: [origin + '/icons/icon-192.png'] } })] : []),
   ];
-  const config = createConfig({ chains: [chain], connectors, transports: { [chain.id]: http(publicConfig.rpcUrl) }, ssr: true });
+  // Celo makes a block about every second; viem's 4 s default made every confirmation feel slow.
+  const config = createConfig({ chains: [chain], connectors, transports: { [chain.id]: http(publicConfig.rpcUrl) }, pollingInterval: 1_000, ssr: true });
   created = { config, magic };
   return created;
 }

@@ -5,6 +5,7 @@ import { useAccount, useReadContracts } from 'wagmi';
 import { publicConfig } from '../config/public';
 import { tournamentAbi } from '../web3/abis';
 import { chainFor, contractsFor } from '../web3/config';
+import { refetchUntil } from '../web3/receipt';
 import { useContractWrite } from '../web3/use-contract-write';
 import { TransactionStatus } from '../components/transaction-status';
 import type { GameResult } from './game-host';
@@ -42,7 +43,7 @@ export function TournamentSubmit({ result }: { result: GameResult }) {
   if (result.difficulty !== 'normal') return <p className="muted fine-print">Tournament scores count on Normal difficulty only. Switch to Normal in settings to compete.</p>;
   if (result.score <= best) return <p className="muted fine-print">Your tournament #{id.toString()} score is {best.toLocaleString()}. Beat it to improve your place.</p>;
   return <div className="tournament-submit">
-    <button className="button secondary" disabled={!submit.ready || !['idle', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => void submit.execute({ address: tournament, abi: tournamentAbi, functionName: 'submitScore', args: [id, result.score] }, { onConfirmed: async () => { await reads.refetch(); setSent(true); } })}>Submit {result.score.toLocaleString()} to tournament #{id.toString()}</button>
+    <button className="button secondary" disabled={!submit.ready || !['idle', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => void submit.execute({ address: tournament, abi: tournamentAbi, functionName: 'submitScore', args: [id, result.score] }, { onConfirmed: async () => { setSent(true); await refetchUntil(reads.refetch, data => Number(data?.[2]?.result ?? 0) >= result.score); } })}>Submit {result.score.toLocaleString()} to tournament #{id.toString()}</button>
     {submit.state.status !== 'idle' && submit.state.status !== 'success' && <TransactionStatus state={submit.state} />}
   </div>;
 }

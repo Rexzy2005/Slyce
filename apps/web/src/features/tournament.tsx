@@ -10,6 +10,7 @@ import { tournamentAbi } from '../web3/abis';
 import { chainFor, contractsFor, gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
 import { TokenSpend } from '../web3/token-spend';
+import { refetchUntil } from '../web3/receipt';
 import { formatTokenAmount } from '../web3/units';
 import { useContractWrite } from '../web3/use-contract-write';
 const zero = '0x0000000000000000000000000000000000000000' as const;
@@ -72,12 +73,12 @@ function CurrentTournament() {
       : !entered ? phase === 'open' && !full
         ? human === 'unverified'
           ? <div className="entered-state"><p><strong>Prizes are for verified humans.</strong> Verify once with GoodDollar (a quick face check) to enter. You'll also unlock free daily G$.</p><Link className="button" href="/get-gd">Verify with GoodDollar</Link></div>
-          : <TokenSpend spender={address} amount={entryFee} label={entryFee === 0n ? 'Enter for free' : 'Enter for ' + formatTokenAmount(entryFee, gdDecimals) + ' G$'} call={{ address, abi: tournamentAbi, functionName: 'enter', args: [id] }} onConfirmed={() => reads.refetch()} />
+          : <TokenSpend spender={address} amount={entryFee} label={entryFee === 0n ? 'Enter for free' : 'Enter for ' + formatTokenAmount(entryFee, gdDecimals) + ' G$'} call={{ address, abi: tournamentAbi, functionName: 'enter', args: [id] }} onConfirmed={() => refetchUntil(reads.refetch, data => data?.[1] === true)} />
         : <p className="muted">{full ? 'This tournament is full.' : 'Entries are closed for this tournament.'}</p>
       : <div className="entered-state"><p><strong className="leaf">You're in.</strong> Your submitted score: <strong>{submitted > 0 ? submitted.toLocaleString() : 'none yet'}</strong></p>
         {phase === 'open' && <><p className="muted">Your best Normal-difficulty score on this device: <strong>{practiceBest?.toLocaleString() ?? 'none yet'}</strong>. Tip: after each round you can also submit straight from the game-over screen.</p>
           <div className="action-row"><Link className="button secondary" href="/play/arena">Play a round</Link>
-            <button className="button" disabled={!canSubmit || !submit.ready || !['idle', 'success', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => { if (practiceBest !== null) void submit.execute({ address, abi: tournamentAbi, functionName: 'submitScore', args: [id, practiceBest] }, { onConfirmed: () => reads.refetch() }); }}>Submit {practiceBest?.toLocaleString() ?? ''}</button></div>
+            <button className="button" disabled={!canSubmit || !submit.ready || !['idle', 'success', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => { if (practiceBest !== null) void submit.execute({ address, abi: tournamentAbi, functionName: 'submitScore', args: [id, practiceBest] }, { onConfirmed: () => refetchUntil(reads.refetch, data => (data?.[2] ?? 0) >= practiceBest) }); }}>Submit {practiceBest?.toLocaleString() ?? ''}</button></div>
           {submit.state.status !== 'idle' && <TransactionStatus state={submit.state} />}</>}
         {phase === 'results' && <Link className="button" href="/rewards">Check your rewards</Link>}</div>}
     {(phase === 'closed' || phase === 'results' || phase === 'cancelled') && <NextTournament address={address} onStarted={async () => { await Promise.all([count.refetch(), reads.refetch()]); }} />}
