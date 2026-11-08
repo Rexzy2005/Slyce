@@ -5,7 +5,7 @@ import { publicConfig } from '../config/public';
 import { arcadeAbi } from '../web3/abis';
 import { chainFor, contractsFor } from '../web3/config';
 export interface Milestone { score: number; reward: bigint }
-export interface PlayerStats { xp: bigint; bestScore: number; games: number; streak: number; lastDay: number; earned: bigint }
+export interface PlayerStats { xp: bigint; bestScore: number; games: number; streak: number; lastDay: number; earned: bigint; /** Unix seconds of the last save. */ lastSubmit: number }
 const identityAbi = [{ type: 'function', name: 'getWhitelistedRoot', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'address' }] }] as const;
 const zero = '0x0000000000000000000000000000000000000000';
 /** On-chain game records (SlyceArcade v2): milestones, a player's stats, verification and today's rewarded milestones. */
@@ -37,12 +37,14 @@ export function useGameRecords(player: Address | undefined) {
   });
   const rootValue = root.data?.[0]?.result;
   const milestones: Milestone[] = Array.isArray(milestonesRaw) ? (milestonesRaw as readonly { score: number; reward: bigint }[]).map(m => ({ score: Number(m.score), reward: m.reward })) : [];
-  const s = statsRaw as { xp: bigint; bestScore: number; games: number; streak: number; lastDay: number; earned: bigint } | undefined;
-  const stats: PlayerStats | undefined = s ? { xp: s.xp, bestScore: Number(s.bestScore), games: Number(s.games), streak: Number(s.streak), lastDay: Number(s.lastDay), earned: s.earned } : undefined;
+  const s = statsRaw as { xp: bigint; bestScore: number; games: number; streak: number; lastDay: number; earned: bigint; lastSubmit: bigint } | undefined;
+  const stats: PlayerStats | undefined = s ? { xp: s.xp, bestScore: Number(s.bestScore), games: Number(s.games), streak: Number(s.streak), lastDay: Number(s.lastDay), earned: s.earned, lastSubmit: Number(s.lastSubmit) } : undefined;
   const rules = rulesRaw as readonly [number, number] | undefined;
   return {
     arcade, loading: base.isPending, error: base.isError, milestones, stats,
     open: !!rules && Number(rules[0]) > 0, maxScore: rules ? Number(rules[0]) : 0,
+    /** Seconds the contract requires between a player's saves. */
+    minInterval: rules ? Number(rules[1]) : 0,
     budget: typeof budgetRaw === 'bigint' ? budgetRaw : undefined,
     rewardedMask: typeof rewardedRaw === 'bigint' ? rewardedRaw : 0n,
     // Unknown (undefined) when the contract can't answer yet; false only when no identity gate is configured.

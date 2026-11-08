@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { useState } from 'react';
 import { useAccount, useReadContracts } from 'wagmi';
 import { publicConfig } from '../config/public';
@@ -7,7 +6,6 @@ import { tournamentAbi } from '../web3/abis';
 import { chainFor, contractsFor } from '../web3/config';
 import { refetchUntil } from '../web3/receipt';
 import { useContractWrite } from '../web3/use-contract-write';
-import { TransactionStatus } from '../components/transaction-status';
 import type { GameResult } from './game-host';
 import { signRound, useScoreSigning, type RoundTicket } from './score-tickets';
 
@@ -41,10 +39,9 @@ export function TournamentSubmit({ result, ticket }: { result: GameResult; ticke
   if (!details || details.cancelled || now < details.startTime || now >= details.endTime) return null;
   const entered = enteredRaw === true;
   const best = typeof bestRaw === 'number' ? bestRaw : 0;
-  if (!entered) return <p className="muted fine-print">Tournament #{id.toString()} is open. <Link href="/tournament">Enter it</Link> to compete with your next round.</p>;
+  // Only offer a submit when it would count; otherwise stay quiet so the game-over screen stays clean.
   if (sent) return <p className="muted fine-print"><strong className="leaf">Sent to tournament #{id.toString()}.</strong></p>;
-  if (result.difficulty !== 'normal') return <p className="muted fine-print">Tournament scores count on Normal difficulty only. Switch to Normal in settings to compete.</p>;
-  if (result.score <= best) return <p className="muted fine-print">Your tournament #{id.toString()} score is {best.toLocaleString()}. Beat it to improve your place.</p>;
+  if (!entered || result.difficulty !== 'normal' || result.score <= best) return null;
   const onConfirmed = async () => { setSent(true); await refetchUntil(reads.refetch, data => Number(data?.[2]?.result ?? 0) >= result.score); };
   async function send(tournamentId: bigint) {
     if (!signing) {
@@ -66,8 +63,7 @@ export function TournamentSubmit({ result, ticket }: { result: GameResult; ticke
   }
   return <div className="tournament-submit">
     <button className="button secondary" disabled={!submit.ready || check?.status === 'checking' || !['idle', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => void send(id)}>Submit {result.score.toLocaleString()} to tournament #{id.toString()}</button>
-    {check?.status === 'checking' && <p className="muted" role="status">Checking your score…</p>}
-    {check?.status === 'failed' && <p className="error-text" role="alert">{check.message}</p>}
-    {submit.state.status !== 'idle' && submit.state.status !== 'success' && <TransactionStatus state={submit.state} />}
+    {(check?.status === 'checking' || ['preparing', 'awaiting_wallet', 'submitted', 'confirming', 'confirmed', 'synchronizing'].includes(submit.state.status)) && <p className="muted fine-print" role="status">Sending…</p>}
+    {(check?.status === 'failed' || ['failed', 'rejected'].includes(submit.state.status)) && <p className="muted fine-print" role="status">Not sent. Tap to try again.</p>}
   </div>;
 }

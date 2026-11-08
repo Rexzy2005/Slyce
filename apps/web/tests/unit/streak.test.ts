@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { liveStreak, utcDay, type PlayerStats } from '../../src/game/game-records';
-const stats = (streak: number, lastDay: number): PlayerStats => ({ xp: 0n, bestScore: 0, games: 3, streak, lastDay, earned: 0n });
+const stats = (streak: number, lastDay: number): PlayerStats => ({ xp: 0n, bestScore: 0, games: 3, streak, lastDay, earned: 0n, lastSubmit: 0 });
 it('shows the streak as it stands today and what a save today would make it', () => {
   const today = 20761;
   expect(liveStreak(stats(2, today), today)).toEqual({ current: 2, savedToday: true, next: 2 });
