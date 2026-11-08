@@ -11,6 +11,7 @@ import { chainFor, contractsFor, gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
 import { TokenSpend } from '../web3/token-spend';
 import { refetchUntil } from '../web3/receipt';
+import { useScoreSigning } from '../game/score-tickets';
 import { formatTokenAmount } from '../web3/units';
 import { useContractWrite } from '../web3/use-contract-write';
 const zero = '0x0000000000000000000000000000000000000000' as const;
@@ -46,6 +47,8 @@ function CurrentTournament() {
     query: { enabled: !!address && !!id },
   });
   const submit = useContractWrite();
+  // With signed scores (ADR-0015) only a just-finished round can be submitted, from the game-over screen.
+  const signing = useScoreSigning(address);
   const human = useVerifiedHuman(address);
   const [practiceBest, setPracticeBest] = useState<number | null>(null);
   useEffect(() => setPracticeBest(readBestScore('normal')), []);
@@ -76,7 +79,9 @@ function CurrentTournament() {
           : <TokenSpend spender={address} amount={entryFee} label={entryFee === 0n ? 'Enter for free' : 'Enter for ' + formatTokenAmount(entryFee, gdDecimals) + ' G$'} call={{ address, abi: tournamentAbi, functionName: 'enter', args: [id] }} onConfirmed={() => refetchUntil(reads.refetch, data => data?.[1] === true)} />
         : <p className="muted">{full ? 'This tournament is full.' : 'Entries are closed for this tournament.'}</p>
       : <div className="entered-state"><p><strong className="leaf">You're in.</strong> Your submitted score: <strong>{submitted > 0 ? submitted.toLocaleString() : 'none yet'}</strong></p>
-        {phase === 'open' && <><p className="muted">Your best Normal-difficulty score on this device: <strong>{practiceBest?.toLocaleString() ?? 'none yet'}</strong>. Tip: after each round you can also submit straight from the game-over screen.</p>
+        {phase === 'open' && signing && <><p className="muted">Play a round on Normal difficulty, then submit it from the game-over screen.</p>
+          <div className="action-row"><Link className="button" href="/play/arena">Play a round</Link></div></>}
+        {phase === 'open' && signing === false && <><p className="muted">Your best Normal-difficulty score on this device: <strong>{practiceBest?.toLocaleString() ?? 'none yet'}</strong>. Tip: after each round you can also submit straight from the game-over screen.</p>
           <div className="action-row"><Link className="button secondary" href="/play/arena">Play a round</Link>
             <button className="button" disabled={!canSubmit || !submit.ready || !['idle', 'success', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => { if (practiceBest !== null) void submit.execute({ address, abi: tournamentAbi, functionName: 'submitScore', args: [id, practiceBest] }, { onConfirmed: () => refetchUntil(reads.refetch, data => (data?.[2] ?? 0) >= practiceBest) }); }}>Submit {practiceBest?.toLocaleString() ?? ''}</button></div>
           {submit.state.status !== 'idle' && <TransactionStatus state={submit.state} />}</>}

@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { ZodError } from 'zod';
 import { loadConfig, type BackendConfig } from './config.js';
 import { logger } from './logger.js';
+import { ScoreRejected, ScoreSigningService } from './score-signing-service.js';
 import { applyCors, authenticate, FixedWindowRateLimiter, requestContentLength, type TokenVerifier } from './security.js';
 import {
   apiPrefix,
@@ -10,6 +11,10 @@ import {
   adminLoginRequestSchema,
   auditLogQuerySchema,
   chainTransactionListResponseSchema,
+  scoreFinishRequestSchema,
+  scoreFinishResponseSchema,
+  scoreTicketRequestSchema,
+  scoreTicketResponseSchema,
   chainTransactionQuerySchema,
   chainUserListResponseSchema,
   chainUserQuerySchema,
@@ -122,6 +127,7 @@ interface AppDependencies {
   rewardService?: RewardService;
   operationsService?: OperationsService;
   chainActivityService?: ChainActivityService;
+  scoreSigningService?: ScoreSigningService;
 }
 
 async function readJsonBody(request: IncomingMessage, maxBytes: number): Promise<unknown> {
@@ -645,6 +651,24 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     return sendJson(response, 200, auditLogListResponseSchema.parse({ data: result.items, pagination: { limit: query.limit, nextCursor: result.nextCursor } }));
   }
 
+  if (pathname === `${apiPrefix}/score-tickets` || pathname === `${apiPrefix}/score-tickets/finish`) {
+    if (request.method !== 'POST') return methodNotAllowed(response);
+    if (!dependencies.scoreSigningService) return sendJson(response, 503, { error: { code: 'score_signing_not_configured', message: 'Score signing is not configured.' } } satisfies ErrorResponse);
+    if (pathname.endsWith('/score-tickets')) {
+      const input = scoreTicketRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
+      return sendJson(response, 201, { data: scoreTicketResponseSchema.parse(dependencies.scoreSigningService.issue(input.address as `0x${string}`)) });
+    }
+    const input = scoreFinishRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
+    try {
+      const signed = await dependencies.scoreSigningService.finish(input.address as `0x${string}`, input.token, input, input.tournamentId === undefined ? undefined : BigInt(input.tournamentId));
+      return sendJson(response, 200, { data: scoreFinishResponseSchema.parse(signed) });
+    } catch (error) {
+      if (!(error instanceof ScoreRejected)) throw error;
+      logger.info('Score rejected', { code: error.code, address: input.address, score: input.score, fruits: input.fruits });
+      return sendJson(response, 422, { error: { code: error.code, message: error.message } } satisfies ErrorResponse);
+    }
+  }
+
   if (pathname === `${apiPrefix}/chain/transactions` && request.method === 'GET') {
     if (!dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
     const query = publicChainTransactionQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
@@ -756,6 +780,7 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     bountyService: new BountyService(new PrismaBountyRepository(prisma)),
     rewardService: new RewardService(new PrismaRewardRepository(prisma)),
     operationsService: new OperationsService(new PrismaOperationsRepository(prisma), config.goodDollarEnvironment),
+    ...(config.scoreSigning ? { scoreSigningService: new ScoreSigningService(config.scoreSigning) } : {}),
     ...(config.chainActivity ? { chainActivityService: new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock, { ...(goodDollarIdentityAddress(config) ? { identityRoots: createIdentityRootResolver(config.chainActivity.rpcUrl, goodDollarIdentityAddress(config) as `0x${string}`) } : {}) })) } : {}),
   });
   server.listen(config.port, config.host, () => {

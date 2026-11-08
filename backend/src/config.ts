@@ -15,6 +15,8 @@ export interface BackendConfig {
   goodDollarIdentityAddress?: string;
   /** Slyyce contracts indexed for the admin users/transactions view (ADR-0012). */
   chainActivity?: { rpcUrl: string; contracts: readonly `0x${string}`[]; startBlock: bigint };
+  /** Backend-signed scores (ADR-0015). Celo mainnet only, like wallet sign-in. */
+  scoreSigning?: { privateKey: `0x${string}`; chainId: number; arcade: `0x${string}`; tournament?: `0x${string}` };
 }
 
 function parsePort(value: string | undefined): number {
@@ -59,6 +61,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
   if (environment === 'production' && adminEmails.length === 0) throw new Error('SLYCE_ADMIN_EMAILS is required in production');
   if (environment === 'production' && !authSessionSecret) throw new Error('AUTH_SESSION_SECRET is required in production');
   const chainActivity = parseChainActivity(env);
+  const scoreSigning = parseScoreSigning(env);
   return {
     environment,
     port: parsePort(env.PORT),
@@ -73,6 +76,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BackendConfig 
     goodDollarEnvironment: env.GOODDOLLAR_ENV === 'staging' || env.GOODDOLLAR_ENV === 'development' ? env.GOODDOLLAR_ENV : 'production',
     ...(env.GOODDOLLAR_IDENTITY_ADDRESS?.trim() ? { goodDollarIdentityAddress: env.GOODDOLLAR_IDENTITY_ADDRESS.trim() } : {}),
     ...(chainActivity ? { chainActivity } : {}),
+    ...(scoreSigning ? { scoreSigning } : {}),
   };
 }
 
@@ -87,6 +91,17 @@ function parseChainActivity(env: NodeJS.ProcessEnv): BackendConfig['chainActivit
   if (!start || !/^\d+$/.test(start)) throw new Error('SLYYCE_CONTRACTS_START_BLOCK must be the block number the contracts were deployed at');
   if (!rpcUrl) throw new Error('CHAIN_RPC_URL or GOODDOLLAR_RPC_URL is required when Slyyce contract addresses are set');
   return { rpcUrl, contracts: values as `0x${string}`[], startBlock: BigInt(start) };
+}
+
+function parseScoreSigning(env: NodeJS.ProcessEnv): BackendConfig['scoreSigning'] {
+  const privateKey = env.SCORE_SIGNER_PRIVATE_KEY?.trim();
+  if (!privateKey) return undefined;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey)) throw new Error('SCORE_SIGNER_PRIVATE_KEY must be a 0x-prefixed 32-byte hex key');
+  const arcade = env.SLYYCE_ARCADE_ADDRESS?.trim();
+  if (!arcade) throw new Error('SLYYCE_ARCADE_ADDRESS is required when SCORE_SIGNER_PRIVATE_KEY is set');
+  const tournament = env.SLYYCE_TOURNAMENT_ADDRESS?.trim();
+  // Addresses are validated by parseChainActivity.
+  return { privateKey: privateKey as `0x${string}`, chainId: 42220, arcade: arcade as `0x${string}`, ...(tournament ? { tournament: tournament as `0x${string}` } : {}) };
 }
 
 function parseSecret(value: string | undefined, name: string): string | undefined {

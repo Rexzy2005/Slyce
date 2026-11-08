@@ -491,3 +491,23 @@ export const routeGroups = {
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 export type LeaderboardQuery = z.infer<typeof leaderboardQuerySchema>;
+
+const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+const uint32 = z.number().int().min(0).max(4_294_967_295);
+
+export const scoreTicketRequestSchema = z.object({ address });
+export const scoreTicketResponseSchema = z.object({ token: z.string(), ticket: z.string(), issuedAt: z.string() });
+export const scoreFinishRequestSchema = z.object({
+  address,
+  token: z.string().min(10).max(1_000),
+  score: uint32,
+  bestCombo: uint32,
+  fruits: uint32,
+  tournamentId: z.string().regex(/^\d{1,30}$/).optional(),
+});
+export const scoreFinishResponseSchema = z.object({
+  ticket: z.string(),
+  deadline: z.number().int(),
+  gameSignature: z.string(),
+  tournamentSignature: z.string().optional(),
+});

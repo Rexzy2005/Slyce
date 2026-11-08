@@ -48,7 +48,7 @@ Updated: 2026-11-04. Product name: Slyyce. Target: GoodDollar Season 5. Web + in
 
 ## Known gaps
 
-- Legacy tournament scores are still self-reported and must not be confused with the separate server-verified leaderboard path.
+- Live scores are still self-reported: Arcade v2.0.0 and Tournament v1.3.0 accept any score up to `maxScore`. Signed scores (ADR-0015) are implemented and tested (contracts Arcade v2.1.0 and Tournament v1.4.0, backend `/api/v1/score-tickets`, app ticket flow) but not rolled out: the proxies are not upgraded, `SCORE_SIGNER_PRIVATE_KEY` is not set on Render and no signer is registered. Rollout steps are in `docs/exec-plans/active/current.md`. Even after rollout, a modified client can report believable scores until phase 2 (server replay).
 - Challenge and bounty backend capabilities do not yet have their required admin/player interfaces.
 - Reward backend workflows exist, but the administrator dashboard does not yet expose their controls.
 - The restored exact local toolchain passes Prisma generation, backend compilation, all 43 backend tests, backend/web/shared typechecks, architecture checks, core checks, whitespace checks, and git diff --check.

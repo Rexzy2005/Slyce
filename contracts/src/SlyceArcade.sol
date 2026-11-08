@@ -62,6 +62,8 @@ contract SlyceArcade is SlyceBase {
     uint256 public constant MAX_MILESTONES = 8;
     uint256 public constant MAX_MILESTONE_REWARD = 1000 ether;
     uint32 public constant XP_DIVISOR = 10; // 1 XP per 10 points
+    bytes32 public constant GAME_TYPEHASH =
+        keccak256("Game(address player,uint256 ticket,uint32 score,uint32 bestCombo,uint32 fruits,uint64 deadline)");
 
     event PlayFeeChanged(uint128 playFee);
     /// @param round Global round number, unique per paid round.
@@ -91,7 +93,7 @@ contract SlyceArcade is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "2.0.0";
+        return "2.1.0";
     }
 
     function playFee() external view returns (uint128) {
@@ -201,8 +203,24 @@ contract SlyceArcade is SlyceBase {
     }
 
     /// @notice Records a finished free-to-play round and pays any milestone G$ the player earned today.
-    /// Scores are reported by the client: rewards are limited to verified humans, once per milestone per day.
+    /// Only accepted while no score signer is set; afterwards use `submitSignedGame` (ADR-0015).
     function submitGame(uint32 score, uint32 bestCombo, uint32 fruits) external whenNotPaused nonReentrant returns (uint64 gameId) {
+        _requireUnsignedScoresAllowed();
+        return _recordGame(score, bestCombo, fruits);
+    }
+
+    /// @notice Records a round whose result the backend signed for this player and one-time ticket (ADR-0015).
+    function submitSignedGame(uint32 score, uint32 bestCombo, uint32 fruits, uint256 ticket, uint64 deadline, bytes calldata signature)
+        external
+        whenNotPaused
+        nonReentrant
+        returns (uint64 gameId)
+    {
+        _useScoreSignature(keccak256(abi.encode(GAME_TYPEHASH, msg.sender, ticket, score, bestCombo, fruits, deadline)), ticket, deadline, signature);
+        return _recordGame(score, bestCombo, fruits);
+    }
+
+    function _recordGame(uint32 score, uint32 bestCombo, uint32 fruits) private returns (uint64 gameId) {
         ArcadeStorage storage $ = _arcade();
         if ($.maxScore == 0) revert GamesClosed();
         if (score > $.maxScore) revert InvalidScore();

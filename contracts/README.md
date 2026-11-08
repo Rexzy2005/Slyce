@@ -18,7 +18,7 @@ Safety properties:
 
 ## Current deployment (Celo mainnet, 42220)
 
-Deployed 2026-10-29 with **real G$** (`0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`), contracts v1.2.0; upgraded the same day by `SeasonUpgrade.s.sol` to Tournament v1.3.0 (24h auto-roll) and Arcade v2.0.0 (free play, game records, milestone rewards; reward pot starts empty). Owner: `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`. Treasury (all three contracts, since 2026-11-05): `0x569e7605b7171e9638d04D2F1a6CA5a212424ee0`. Play fee 0 (ADR-0007, ADR-0010). Blades 101/102/103 cost 100/100/150 G$. Tournament entry requires a GoodDollar-verified human (Identity `0xC361A6E67822a0EDc17D899227dd9FC50BD62F42`, ADR-0008).
+Deployed 2026-10-29 with **real G$** (`0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A`), contracts v1.2.0; upgraded the same day by `SeasonUpgrade.s.sol` to Tournament v1.3.0 (24h auto-roll) and Arcade v2.0.0 (free play, game records, milestone rewards; reward pot starts empty). Owner: `0x3d642691BB7Dd4Fa1B37079010E8d96573fc69A3`. Source now at Arcade v2.1.0 / Tournament v1.4.0 with signed scores (ADR-0015); not yet deployed, see `docs/exec-plans/active/current.md` for the rollout. Turn signing on with `setScoreSigner(<backend signer>)` on both proxies, or off with `setScoreSigner(0x0000000000000000000000000000000000000000)`. Treasury (all three contracts, since 2026-11-05): `0x569e7605b7171e9638d04D2F1a6CA5a212424ee0`. Play fee 0 (ADR-0007, ADR-0010). Blades 101/102/103 cost 100/100/150 G$. Tournament entry requires a GoodDollar-verified human (Identity `0xC361A6E67822a0EDc17D899227dd9FC50BD62F42`, ADR-0008).
 
 | Contract | Proxy (use in the app) |
 | --- | --- |

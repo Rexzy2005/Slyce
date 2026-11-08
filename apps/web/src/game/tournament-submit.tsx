@@ -9,13 +9,14 @@ import { refetchUntil } from '../web3/receipt';
 import { useContractWrite } from '../web3/use-contract-write';
 import { TransactionStatus } from '../components/transaction-status';
 import type { GameResult } from './game-host';
+import { signRound, useScoreSigning, type RoundTicket } from './score-tickets';
 
 type Details = { startTime: bigint; endTime: bigint; cancelled: boolean };
 /**
  * Game-over shortcut into the open prize tournament: submit this round's score in one tap instead of going back
  * to the Compete page (which only knows this device's stored best). Tournament scores count on Normal only.
  */
-export function TournamentSubmit({ result }: { result: GameResult }) {
+export function TournamentSubmit({ result, ticket }: { result: GameResult; ticket?: Promise<RoundTicket | null> | null }) {
   const account = useAccount();
   const { tournament } = contractsFor(publicConfig);
   const chain = publicConfig.network ? chainFor(publicConfig.network) : undefined;
@@ -30,8 +31,10 @@ export function TournamentSubmit({ result }: { result: GameResult }) {
     query: { enabled: !!tournament && !!chain && !!id && !!account.address },
   });
   const submit = useContractWrite();
+  const signing = useScoreSigning(tournament);
   const [sent, setSent] = useState(false);
-  if (!tournament || !id || !reads.data) return null;
+  const [check, setCheck] = useState<{ status: 'checking' } | { status: 'failed'; message: string } | null>(null);
+  if (!tournament || !id || !reads.data || signing === undefined) return null;
   const [detailsRaw, enteredRaw, bestRaw] = reads.data.map(entry => entry.result);
   const details = detailsRaw as Details | undefined;
   const now = BigInt(Math.floor(Date.now() / 1000));
@@ -42,8 +45,29 @@ export function TournamentSubmit({ result }: { result: GameResult }) {
   if (sent) return <p className="muted fine-print"><strong className="leaf">Sent to tournament #{id.toString()}.</strong></p>;
   if (result.difficulty !== 'normal') return <p className="muted fine-print">Tournament scores count on Normal difficulty only. Switch to Normal in settings to compete.</p>;
   if (result.score <= best) return <p className="muted fine-print">Your tournament #{id.toString()} score is {best.toLocaleString()}. Beat it to improve your place.</p>;
+  const onConfirmed = async () => { setSent(true); await refetchUntil(reads.refetch, data => Number(data?.[2]?.result ?? 0) >= result.score); };
+  async function send(tournamentId: bigint) {
+    if (!signing) {
+      void submit.execute({ address: tournament!, abi: tournamentAbi, functionName: 'submitScore', args: [tournamentId, result.score] }, { onConfirmed });
+      return;
+    }
+    // Signed scores (ADR-0015): the backend checks this round's ticket and signs the score for this tournament.
+    setCheck({ status: 'checking' });
+    try {
+      const roundTicket = await ticket;
+      if (!roundTicket || !account.address) throw new Error('This round couldn\'t be checked. Check your connection, then play another round.');
+      const signed = await signRound(account.address, roundTicket, { score: result.score, bestCombo: result.bestCombo, fruits: result.fruits }, tournamentId);
+      if (!signed.tournamentSignature) throw new Error('Tournament scores can\'t be checked right now.');
+      setCheck(null);
+      void submit.execute({ address: tournament!, abi: tournamentAbi, functionName: 'submitSignedScore', args: [tournamentId, result.score, signed.ticket, signed.deadline, signed.tournamentSignature] }, { onConfirmed });
+    } catch (error) {
+      setCheck({ status: 'failed', message: error instanceof Error ? error.message : 'This score couldn\'t be checked.' });
+    }
+  }
   return <div className="tournament-submit">
-    <button className="button secondary" disabled={!submit.ready || !['idle', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => void submit.execute({ address: tournament, abi: tournamentAbi, functionName: 'submitScore', args: [id, result.score] }, { onConfirmed: async () => { setSent(true); await refetchUntil(reads.refetch, data => Number(data?.[2]?.result ?? 0) >= result.score); } })}>Submit {result.score.toLocaleString()} to tournament #{id.toString()}</button>
+    <button className="button secondary" disabled={!submit.ready || check?.status === 'checking' || !['idle', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => void send(id)}>Submit {result.score.toLocaleString()} to tournament #{id.toString()}</button>
+    {check?.status === 'checking' && <p className="muted" role="status">Checking your score…</p>}
+    {check?.status === 'failed' && <p className="error-text" role="alert">{check.message}</p>}
     {submit.state.status !== 'idle' && submit.state.status !== 'success' && <TransactionStatus state={submit.state} />}
   </div>;
 }

@@ -59,6 +59,8 @@ contract SlyceTournament is SlyceBase {
     uint256 public constant MAX_ENTRY_FEE = 10_000 ether;
     uint256 public constant MAX_SPONSORSHIP = 1_000_000 ether;
     uint32 public constant MAX_SCORE = 10_000_000;
+    bytes32 public constant SCORE_TYPEHASH =
+        keccak256("TournamentScore(address player,uint256 id,uint256 ticket,uint32 score,uint64 deadline)");
 
     event TournamentCreated(uint256 indexed id, uint64 startTime, uint64 endTime, uint128 entryFee, uint32 maxEntrants);
     event Entered(uint256 indexed id, address indexed player, uint128 fee);
@@ -107,7 +109,7 @@ contract SlyceTournament is SlyceBase {
     }
 
     function version() external pure virtual returns (string memory) {
-        return "1.3.0";
+        return "1.4.0";
     }
 
     // ----- Views -----
@@ -343,7 +345,19 @@ contract SlyceTournament is SlyceBase {
     }
 
     /// @notice Self-reported score while the tournament is open. Only improvements are kept.
+    /// @notice Only accepted while no score signer is set; afterwards use `submitSignedScore` (ADR-0015).
     function submitScore(uint256 id, uint32 score) external whenNotPaused {
+        _requireUnsignedScoresAllowed();
+        _submitScore(id, score);
+    }
+
+    /// @notice Submits a round score the backend signed for this player, tournament and one-time ticket (ADR-0015).
+    function submitSignedScore(uint256 id, uint32 score, uint256 ticket, uint64 deadline, bytes calldata signature) external whenNotPaused {
+        _useScoreSignature(keccak256(abi.encode(SCORE_TYPEHASH, msg.sender, id, ticket, score, deadline)), ticket, deadline, signature);
+        _submitScore(id, score);
+    }
+
+    function _submitScore(uint256 id, uint32 score) private {
         TournamentStorage storage $ = _store();
         _open(id);
         if (!$.entered[id][msg.sender]) revert NotEntered(id);

@@ -13,7 +13,7 @@ import { readBestScore, recordBestScore } from './best-score';
 import type { GameOverCause } from './practice-rules';
 /** `blade` must already be verified as owned on-chain; the default trail needs no ownership. */
 export interface GameResult { score: number; bestCombo: number; fruits: number; cause: GameOverCause; difficulty: Difficulty }
-export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number; core: number }; /** When set, every round must be paid before it starts. */ payGate?: (start: () => void) => ReactNode; /** Rendered on the game-over screen, e.g. saving the result on-chain. */ afterGame?: (result: GameResult) => ReactNode } = {}) {
+export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: { glow: number; core: number }; /** When set, every round must be paid before it starts. */ payGate?: (start: () => void) => ReactNode; /** Rendered on the game-over screen, e.g. saving the result on-chain. */ afterGame?: (result: GameResult) => ReactNode; /** Called as each round begins, e.g. to claim a score ticket (ADR-0015). */ onRoundStart?: () => void } = {}) {
   const [pendingStart, setPendingStart] = useState<(() => void) | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(defaultPreviewSettings);
@@ -130,6 +130,7 @@ export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number
     audioRef.current?.stop();
     bridgeRef.current?.send({ type: 'resume' }); setPaused(false);
     bridgeRef.current?.send({ type: 'preview', enabled: !effectsPreview });
+    if (!effectsPreview) onRoundStart?.();
     setSettingsOpen(false); setCombo(null); setGameOver(null);
     if (effectsPreview) { setScore(null); setLives(null); }
     setEffectsPreview(value => !value);
@@ -141,6 +142,7 @@ export function GameHost({ blade, payGate, afterGame }: { blade?: { glow: number
   function restartRound() {
     setPendingStart(null);
     bridgeRef.current?.send({ type: 'preview', enabled: true });
+    onRoundStart?.();
     setCombo(null); setGameOver(null);
   }
   return <section onClickCapture={event => { if (event.target instanceof Element && event.target.closest('button:not([data-sound-preview])')) audioRef.current?.play('click'); }} ref={session} className="game-session" aria-label="Slyyce game session">

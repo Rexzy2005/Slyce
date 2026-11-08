@@ -18,6 +18,7 @@
 | [ADR-0012 — Admin users and transactions from on-chain activity](ADR-0012-admin-onchain-activity.md) | Accepted | Backend indexes contract logs in memory; admin-only users/transactions endpoints and views. |
 | [ADR-0013 — Sign-up tracking by wallet signature](ADR-0013-sign-up-tracking.md) | Accepted | One-tap signed sign-up records every player; admin sign-ups list and daily growth. |
 | [ADR-0014 — Magic email sign-in, verified-only play](ADR-0014-magic-email-sign-in.md) | Accepted | Replaces Reown with Magic email OTP; only GoodDollar-verified people play; plain-language player UI. |
+| [ADR-0015 — Backend-signed scores](ADR-0015-signed-scores.md) | Accepted | One-time round tickets; the backend signs believable results; Arcade v2.1.0 and Tournament v1.4.0 accept only signed scores once a signer is set. Phase 2: deterministic replay. |
 
 The statuses above match their ADRs exactly. The [active execution plan](../exec-plans/active/current.md) records the user-authorized implementation scope; agent installation/server startup remain prohibited. Supporting research is [dependency-baseline.md](../research/dependency-baseline.md), not the nonexistent `frontend-dependency-baseline.md` named in the ADR source field.
 
