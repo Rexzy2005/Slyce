@@ -517,4 +517,8 @@ export const extraLifeUseRequestSchema = z.object({ address, token: z.string().m
 export const extraLifeBalanceSchema = z.object({ owned: z.number().int(), used: z.number().int(), available: z.number().int() });
 
 export const chainLeaderboardQuerySchema = z.object({ period: z.enum(['today', 'week', 'all']).default('all') });
-export const chainLeaderboardResponseSchema = z.object({ data: z.array(z.object({ rank: z.number().int(), address: z.string(), score: z.number().int(), games: z.number().int(), verified: z.boolean().nullable() })) });
+export const chainLeaderboardResponseSchema = z.object({ data: z.array(z.object({ rank: z.number().int(), address: z.string(), nickname: z.string().nullable(), score: z.number().int(), games: z.number().int(), verified: z.boolean().nullable() })) });
+
+export const nicknameQuerySchema = z.object({ address });
+export const nicknameSetRequestSchema = z.object({ address, nickname: z.string().min(1).max(32), issuedAt: z.string().max(40), signature: z.string().regex(/^0x[0-9a-fA-F]+$/).max(4_000) });
+export const nicknameResponseSchema = z.object({ address: z.string(), nickname: z.string().nullable() });

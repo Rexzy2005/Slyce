@@ -76,7 +76,8 @@ export const ModelName = {
   AuditLog: 'AuditLog',
   ChallengeEvent: 'ChallengeEvent',
   IdempotencyKey: 'IdempotencyKey',
-  ExtraLifeUse: 'ExtraLifeUse'
+  ExtraLifeUse: 'ExtraLifeUse',
+  PlayerNickname: 'PlayerNickname'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -485,6 +486,16 @@ export const ExtraLifeUseScalarFieldEnum = {
 } as const
 
 export type ExtraLifeUseScalarFieldEnum = (typeof ExtraLifeUseScalarFieldEnum)[keyof typeof ExtraLifeUseScalarFieldEnum]
+
+
+export const PlayerNicknameScalarFieldEnum = {
+  address: 'address',
+  nickname: 'nickname',
+  nicknameKey: 'nicknameKey',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlayerNicknameScalarFieldEnum = (typeof PlayerNicknameScalarFieldEnum)[keyof typeof PlayerNicknameScalarFieldEnum]
 
 
 export const SortOrder = {

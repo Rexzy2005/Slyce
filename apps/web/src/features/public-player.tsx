@@ -4,14 +4,16 @@ import { useSearchParams } from 'next/navigation';
 import { isAddress, type Address } from 'viem';
 import { useWallet } from '../web3/context';
 import { PlayerCard } from '../game/player-card';
+import { useNickname } from './nickname';
 /** Shareable, sign-in-free player profile read straight from SlyceArcade. */
 export function PublicPlayer() {
   const wallet = useWallet();
   const param = useSearchParams().get('address') ?? '';
   const valid = isAddress(param);
+  const nickname = useNickname(valid ? param : undefined);
   return <div className="stats">
     <Link href="/play" className="brand">slyyce<span className="brand-dot">/</span></Link>
-    <h1>Player record</h1>
+    <h1>{nickname.data ?? 'Player record'}</h1>
     {!valid ? <p className="error-text" role="alert">This profile link isn't valid.</p> : <>
       <p className="muted"><code>{param.slice(0, 8)}…{param.slice(-6)}</code></p>
       {wallet.status === 'unavailable' ? <p className="muted">Stats are not configured for this environment.</p> : wallet.live ? <PlayerCard player={param as Address} /> : <p className="loading-state" role="status">Loading stats…</p>}

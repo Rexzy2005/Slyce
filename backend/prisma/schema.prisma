@@ -610,3 +610,11 @@ model ExtraLifeUse {
   @@unique([address, useNumber])
   @@index([ticket])
 }
+
+/// A player's public nickname (ADR-0017). `nicknameKey` is the lowercase form that makes names unique.
+model PlayerNickname {
+  address     String   @id @db.VarChar(42)
+  nickname    String   @db.VarChar(16)
+  nicknameKey String   @unique @db.VarChar(16)
+  updatedAt   DateTime @default(now()) @updatedAt
+}

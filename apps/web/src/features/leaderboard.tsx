@@ -8,7 +8,7 @@ import { EmptyState } from '../components/ui';
 import { useWallet } from '../web3/context';
 /** Best score per player from games saved on Celo, served by the backend's chain index (ADR-0012). */
 type Period = 'today' | 'week' | 'all';
-interface Entry { rank: number; address: string; score: number; games: number; verified: boolean | null }
+interface Entry { rank: number; address: string; nickname?: string | null; score: number; games: number; verified: boolean | null }
 const periods: { value: Period; label: string }[] = [{ value: 'today', label: 'Today' }, { value: 'week', label: 'This week' }, { value: 'all', label: 'All time' }];
 const fruits = ['🍉', '🍊', '🍑', '🥝', '🍋', '🍎', '🍇', '🍍'];
 async function loadBoard(period: Period, signal: AbortSignal): Promise<Entry[]> {
@@ -28,7 +28,7 @@ function Avatar({ address, size }: { address: string; size?: 'large' }) {
   return <span className={size ? 'lb-avatar lb-avatar-large' : 'lb-avatar'} style={avatar.style} aria-hidden="true">{avatar.fruit}</span>;
 }
 function Name({ entry, me }: { entry: Entry; me: string | undefined }) {
-  return <Link href={`/player?address=${entry.address}`} className="lb-name">{entry.address === me ? 'You' : short(entry.address)}{entry.verified && <span className="lb-verified" title="GoodDollar-verified">✓</span>}</Link>;
+  return <Link href={`/player?address=${entry.address}`} className="lb-name">{entry.nickname ?? (entry.address === me ? 'You' : short(entry.address))}{entry.verified && <span className="lb-verified" title="GoodDollar-verified">✓</span>}</Link>;
 }
 function Podium({ top, me }: { top: Entry[]; me: string | undefined }) {
   // Displayed 2nd, 1st, 3rd so the winner stands in the middle.
@@ -57,7 +57,7 @@ export function Leaderboard() {
       : query.data.length === 0 ? <EmptyState icon="trophy" title="No scores yet"><Link className="button" href="/play/arena">Play</Link></EmptyState>
       : <>
         {me && <div className="lb-you">{mine
-          ? <><Avatar address={mine.address} /><span>Your rank</span><strong>#{mine.rank}</strong><span className="lb-you-score">{mine.score.toLocaleString()}</span></>
+          ? <><Avatar address={mine.address} /><span>Your rank</span><strong>#{mine.rank}</strong>{!mine.nickname && <Link href="/profile" className="lb-you-link">Set a nickname</Link>}<span className="lb-you-score">{mine.score.toLocaleString()}</span></>
           : <><span>You're not on the board yet</span><Link className="button" href="/play/arena">Play</Link></>}</div>}
         <Podium top={query.data.slice(0, 3)} me={me} />
         {query.data.length > 3 && <ol className="lb-list" start={4}>{query.data.slice(3).map(entry => <li key={entry.address} className={entry.address === me ? 'is-me' : undefined}>

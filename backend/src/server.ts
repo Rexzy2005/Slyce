@@ -5,6 +5,7 @@ import { loadConfig, type BackendConfig } from './config.js';
 import { logger } from './logger.js';
 import { ScoreRejected, ScoreSigningService } from './score-signing-service.js';
 import { createPacksOwnedReader, ExtraLifeService, NoExtraLives, PrismaExtraLifeStore } from './extra-life-service.js';
+import { NicknameRejected, NicknameService, PrismaNicknameStore } from './nickname-service.js';
 import { applyCors, authenticate, FixedWindowRateLimiter, requestContentLength, type TokenVerifier } from './security.js';
 import {
   apiPrefix,
@@ -15,6 +16,9 @@ import {
   chainLeaderboardQuerySchema,
   chainLeaderboardResponseSchema,
   extraLifeBalanceSchema,
+  nicknameQuerySchema,
+  nicknameResponseSchema,
+  nicknameSetRequestSchema,
   extraLifeQuerySchema,
   extraLifeUseRequestSchema,
   scoreFinishRequestSchema,
@@ -135,6 +139,7 @@ interface AppDependencies {
   chainActivityService?: ChainActivityService;
   scoreSigningService?: ScoreSigningService;
   extraLifeService?: ExtraLifeService;
+  nicknameService?: NicknameService;
 }
 
 async function readJsonBody(request: IncomingMessage, maxBytes: number): Promise<unknown> {
@@ -694,10 +699,31 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     }
   }
 
+  if (pathname === `${apiPrefix}/nicknames`) {
+    if (!dependencies.nicknameService) return sendJson(response, 503, { error: { code: 'nicknames_not_configured', message: 'Nicknames are not available right now.' } } satisfies ErrorResponse);
+    if (request.method === 'GET') {
+      const query = nicknameQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+      const address = query.address.toLowerCase();
+      return sendJson(response, 200, { data: nicknameResponseSchema.parse({ address, nickname: (await dependencies.nicknameService.lookup([address])).get(address) ?? null }) });
+    }
+    if (request.method !== 'POST') return methodNotAllowed(response);
+    const input = nicknameSetRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
+    try {
+      const nickname = await dependencies.nicknameService.set({ address: input.address as `0x${string}`, nickname: input.nickname, issuedAt: input.issuedAt, signature: input.signature as `0x${string}` });
+      return sendJson(response, 200, { data: nicknameResponseSchema.parse({ address: input.address.toLowerCase(), nickname }) });
+    } catch (error) {
+      if (!(error instanceof NicknameRejected)) throw error;
+      return sendJson(response, error.code === 'nickname_taken' ? 409 : 422, { error: { code: error.code, message: error.message } } satisfies ErrorResponse);
+    }
+  }
+
   if (pathname === `${apiPrefix}/chain/leaderboard` && request.method === 'GET') {
     if (!dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
     const query = chainLeaderboardQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
-    return sendJson(response, 200, chainLeaderboardResponseSchema.parse({ data: await dependencies.chainActivityService.leaderboard(query.period) }));
+    const entries = await dependencies.chainActivityService.leaderboard(query.period);
+    // Nicknames are optional decoration: the board still loads if they can't be read.
+    const names = await dependencies.nicknameService?.lookup(entries.map(entry => entry.address)).catch(() => undefined);
+    return sendJson(response, 200, chainLeaderboardResponseSchema.parse({ data: entries.map(entry => ({ ...entry, nickname: names?.get(entry.address) ?? null })) }));
   }
 
   if (pathname === `${apiPrefix}/chain/transactions` && request.method === 'GET') {
@@ -803,6 +829,8 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     walletChallenges: new PrismaWalletChallengeStore(prisma),
     walletPlayers: new PrismaWalletPlayerStore(prisma),
     ...(signatureRpcUrl ? { walletSignatureVerifier: createPublicClient({ chain: celo, transport: http(signatureRpcUrl) }).verifyMessage } : {}),
+    // Public-client verification also accepts smart-contract wallets (ERC-1271), not only plain keys.
+    ...(signatureRpcUrl ? { nicknameService: new NicknameService(new PrismaNicknameStore(prisma), createPublicClient({ chain: celo, transport: http(signatureRpcUrl) }).verifyMessage) } : {}),
     ...(config.authSessionSecret ? {
       walletVerifierSecret: config.authSessionSecret,
       walletVerifier: walletVerifier as WalletSessionTokenVerifier,
