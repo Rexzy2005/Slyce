@@ -189,3 +189,13 @@ await it('ranks best scores per player for today, this week and all time', async
     assert.equal((await fetch(`${base}?period=month`)).status, 400);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });
+
+await it('never answers the leaderboard or totals from a half-read history after a restart', async () => {
+  // One chunk per sync: a single sync would only see the first game, as happened after Render restarts.
+  const index = new ChainActivityIndex(new FakeSource(logs), 900n, { maxChunksPerSync: 1, minSyncIntervalMs: 60_000 });
+  const service = new ChainActivityService(index);
+  const board = await service.leaderboard('all');
+  assert.deepEqual(board.map(entry => [entry.score, entry.games]), [[600, 2]]);
+  assert.equal(index.summary().catchingUp, false);
+  assert.equal((await service.publicTransactions({ limit: 50 })).summary.games, 2);
+});

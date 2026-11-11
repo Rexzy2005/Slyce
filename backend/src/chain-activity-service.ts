@@ -325,11 +325,21 @@ function page<T>(items: readonly T[], cursor: string | undefined, limit: number)
 
 export class ChainActivityService {
   constructor(private readonly index: ChainActivityIndex) {}
-  private async ready(principal: AuthenticatedPrincipal) { requireAdministrator(principal); await this.index.sync(); }
+  /**
+   * Syncs until the index has caught up with the chain (bounded), so the leaderboard, admin and stats never answer
+   * from a half-read history. After a restart one sync covers at most `maxChunksPerSync` chunks.
+   */
+  async syncFully(maxRounds = 10): Promise<void> {
+    for (let round = 0; round < maxRounds; round++) {
+      await this.index.sync();
+      if (!this.index.summary().catchingUp) return;
+    }
+  }
+  private async ready(principal: AuthenticatedPrincipal) { requireAdministrator(principal); await this.syncFully(); }
   async summary(principal: AuthenticatedPrincipal) { await this.ready(principal); return this.index.summary(); }
   async transactions(principal: AuthenticatedPrincipal, input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.ready(principal); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
   /** Public activity feed for the /stats page: the same on-chain rows anyone can read on the explorer. */
-  async leaderboard(period: LeaderboardPeriod, now = Date.now()) { await this.index.sync(); return this.index.leaderboard(periodStart(period, now), 50); }
-  async publicTransactions(input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.index.sync(); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
+  async leaderboard(period: LeaderboardPeriod, now = Date.now()) { await this.syncFully(); return this.index.leaderboard(periodStart(period, now), 50); }
+  async publicTransactions(input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.syncFully(); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
   async users(principal: AuthenticatedPrincipal, input: Parameters<ChainActivityIndex['listUsers']>[0]) { await this.ready(principal); return { ...this.index.listUsers(input), summary: this.index.summary() }; }
 }

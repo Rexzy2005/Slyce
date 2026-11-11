@@ -812,6 +812,9 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     });
     return wallet ? { playerId: wallet.playerId, status: wallet.player.status } : null;
   }) : undefined;
+  const chainActivityService = config.chainActivity ? new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock, { ...(goodDollarIdentityAddress(config) ? { identityRoots: createIdentityRootResolver(config.chainActivity.rpcUrl, goodDollarIdentityAddress(config) as `0x${string}`) } : {}) })) : undefined;
+  // Read the whole on-chain history before the first visitor asks, so the leaderboard, admin and stats are complete.
+  void chainActivityService?.syncFully().catch(error => logger.error('Chain activity warm-up failed', { error: error instanceof Error ? error.message : String(error) }));
   const server = createApp(config, {
     verifier: new CompositeTokenVerifier([adminAuth, ...(walletVerifier ? [walletVerifier] : [])]),
     adminAuth,
@@ -840,7 +843,7 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     rewardService: new RewardService(new PrismaRewardRepository(prisma)),
     operationsService: new OperationsService(new PrismaOperationsRepository(prisma), config.goodDollarEnvironment),
     ...scoreServices(config, prisma),
-    ...(config.chainActivity ? { chainActivityService: new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock, { ...(goodDollarIdentityAddress(config) ? { identityRoots: createIdentityRootResolver(config.chainActivity.rpcUrl, goodDollarIdentityAddress(config) as `0x${string}`) } : {}) })) } : {}),
+    ...(chainActivityService ? { chainActivityService } : {}),
   });
   server.listen(config.port, config.host, () => {
     const address = server.address();
