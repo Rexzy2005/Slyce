@@ -513,3 +513,7 @@ body { font-weight:500; } button,input,select,textarea { font-family:inherit; }
 .nickname-form label { display:block; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--color-mist); margin-bottom:8px; }
 .nickname-row { display:flex; gap:8px; }.nickname-row input { flex:1; min-width:0; min-height:44px; padding:10px 12px; border-radius:10px; border:1px solid var(--color-vine); background:var(--color-night); color:var(--color-cream); font-size:15px; }
 .nickname-form p { margin:8px 0 0; font-size:12px; }.lb-you .lb-you-link { font-size:12px; color:var(--color-mango); }
+/* Phones: give the board the room, and let the play hint fade once the round is under way. */
+@media(max-width:720px) { .reference-playground .hud-title { display:none; }.reference-playground .chopping-board { height:clamp(340px,calc(100svh - 190px),740px); } }
+.reference-playground .preview-caption { animation:caption-out .5s ease 2.5s forwards; }
+@keyframes caption-out { to { opacity:0; visibility:hidden; } }

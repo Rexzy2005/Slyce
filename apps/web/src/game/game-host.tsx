@@ -178,7 +178,7 @@ export function GameHost({ blade, fruitSkin, board: boardLook, payGate, afterGam
     setCombo(null); setGameOver(null);
   }
   return <section onClickCapture={event => { if (event.target instanceof Element && event.target.closest('button:not([data-sound-preview])')) audioRef.current?.play('click'); }} ref={session} className="game-session" aria-label="Slyyce game session">
-    <div className="session-hud" aria-label="Round readings"><div className="hud-brand"><Link href="/play" aria-label="Slyyce lobby"><Icon name="back" /><span>SLYYCE</span></Link><div className="hud-title"><strong>The cutting floor</strong><span>Practice round</span></div></div>
+    <div className="session-hud" aria-label="Round readings"><div className="hud-brand"><Link href="/play" aria-label="Slyyce lobby"><Icon name="back" /><span>SLYYCE</span></Link><div className="hud-title"><strong>The cutting floor</strong>{!afterGame && <span>Practice round</span>}</div></div>
       <div className="hud-reading score-reading"><Icon name="chart" /><span>SCORE<strong>{score === null ? '—' : score.toLocaleString()}</strong></span></div>
       <div className="hud-reading"><Icon name="heart" /><span>LIVES<strong>{lives === null ? '—' : lives}</strong></span></div>
       <div className="hud-reading combo-reading"><span>COMBO<strong>{combo ? 'x' + combo.count + ' +' + combo.bonus : '—'}</strong></span><span className="combo-track" aria-hidden="true" /></div>

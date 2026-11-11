@@ -126,7 +126,8 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       const pace = pacingAt(this.settings.difficulty, this.practice.score);
       if (this.fruits.length >= pace.maxFruit) return;
       const width = this.scale.width, height = this.scale.height;
-      const radius = Math.max(25, Math.min(53, width * .065)) * (.85 + Math.random() * .25);
+      // Sized to the board's short side so fruit stays easy to hit on phones (≈75px across on a 360px screen).
+      const radius = Math.max(32, Math.min(60, Math.min(width, height) * .11)) * (.85 + Math.random() * .25);
       const body = launchFruit(width, height, radius);
       const speed = pace.speed;
       body.vx *= speed; body.vy *= speed; body.gravity *= speed * speed;
