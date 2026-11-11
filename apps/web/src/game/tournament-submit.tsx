@@ -41,7 +41,8 @@ export function TournamentSubmit({ result, ticket }: { result: GameResult; ticke
   const best = typeof bestRaw === 'number' ? bestRaw : 0;
   // Only offer a submit when it would count; otherwise stay quiet so the game-over screen stays clean.
   if (sent) return <p className="muted fine-print"><strong className="leaf">Sent to tournament #{id.toString()}.</strong></p>;
-  if (!entered || result.difficulty !== 'normal' || result.score <= best) return null;
+  // Rounds continued with a purchased extra life can't compete (ADR-0016); the backend refuses them too.
+  if (!entered || result.difficulty !== 'normal' || result.extraLivesUsed > 0 || result.score <= best) return null;
   const onConfirmed = async () => { setSent(true); await refetchUntil(reads.refetch, data => Number(data?.[2]?.result ?? 0) >= result.score); };
   async function send(tournamentId: bigint) {
     if (!signing) {

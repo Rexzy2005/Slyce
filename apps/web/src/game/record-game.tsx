@@ -8,7 +8,7 @@ import { useWallet } from '../web3/context';
 import { formatTokenAmount } from '../web3/units';
 import { useContractWrite } from '../web3/use-contract-write';
 import type { GameResult } from './game-host';
-import { liveStreak, newMilestones, useGameRecords } from './game-records';
+import { liveStreak, milestoneName, newMilestones, topMilestone, useGameRecords } from './game-records';
 import { signRound, useScoreSigning, type RoundTicket } from './score-tickets';
 const g = (value: bigint) => formatTokenAmount(value, gdDecimals);
 /**
@@ -67,8 +67,9 @@ export function RecordGame({ result, ticket }: { result: GameResult; ticket?: Pr
       setProblem(error instanceof Error ? error.message : 'This score couldn\'t be checked.');
     } finally { setBusy(false); }
   }
+  const reached = topMilestone(records.milestones, score);
   if (saved) return <p className="record-game saved" role="status">
-    <strong className="leaf">Score saved</strong> · +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong></> : null} · 🔥 {saved.streak}-day streak
+    <strong className="leaf">Score saved</strong> · +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong></> : null} · 🔥 {saved.streak}-day streak{reached ? <> · 🏅 {milestoneName(records.milestones, reached)}</> : null}
   </p>;
   if (noGas) return <p className="record-game" role="status">
     <span className="muted">Score not saved: your account needs a little CELO for network fees.</span>{' '}

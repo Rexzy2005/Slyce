@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWallet } from '../web3/context';
-import { createTicketQueue, type RoundTicket } from './score-tickets';
+import { createTicketQueue, spendExtraLife, useExtraLives, type RoundTicket } from './score-tickets';
 import { useShopItems } from '../features/shop';
 import { readEquipped, type CatalogItem, type ItemCategory } from '../features/catalog';
 import { GameHost, type GameResult } from './game-host';
@@ -30,6 +30,13 @@ function LiveHost() {
   const tickets = useMemo(() => wallet.address ? createTicketQueue(wallet.address) : null, [wallet.address]);
   useEffect(() => { tickets?.prefetch(); }, [tickets]);
   const roundTicket = useRef<Promise<RoundTicket | null> | null>(null);
+  const lives = useExtraLives(wallet.address);
+  // Spends a purchased life on the current round; the backend records it against the round's ticket (ADR-0016).
+  const extraLives = { available: lives.available, use: async () => {
+    const ticket = await roundTicket.current;
+    if (!ticket || !wallet.address) return false;
+    try { lives.set(await spendExtraLife(wallet.address, ticket)); return true; } catch { void lives.refresh(); return false; }
+  } };
   const afterGame = (result: GameResult) => <><RecordGame result={result} ticket={roundTicket.current} /><TournamentSubmit result={result} ticket={roundTicket.current} /></>;
-  return <GameHost afterGame={afterGame} onRoundStart={() => { roundTicket.current = tickets?.take() ?? null; }} {...(blade ? { blade } : {})} {...(fruitSkin ? { fruitSkin } : {})} {...(board ? { board } : {})} />;
+  return <GameHost afterGame={afterGame} extraLives={extraLives} onRoundStart={() => { roundTicket.current = tickets?.take() ?? null; }} {...(blade ? { blade } : {})} {...(fruitSkin ? { fruitSkin } : {})} {...(board ? { board } : {})} />;
 }

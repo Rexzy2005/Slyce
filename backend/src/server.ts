@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 import { loadConfig, type BackendConfig } from './config.js';
 import { logger } from './logger.js';
 import { ScoreRejected, ScoreSigningService } from './score-signing-service.js';
+import { createPacksOwnedReader, ExtraLifeService, NoExtraLives, PrismaExtraLifeStore } from './extra-life-service.js';
 import { applyCors, authenticate, FixedWindowRateLimiter, requestContentLength, type TokenVerifier } from './security.js';
 import {
   apiPrefix,
@@ -11,6 +12,9 @@ import {
   adminLoginRequestSchema,
   auditLogQuerySchema,
   chainTransactionListResponseSchema,
+  extraLifeBalanceSchema,
+  extraLifeQuerySchema,
+  extraLifeUseRequestSchema,
   scoreFinishRequestSchema,
   scoreFinishResponseSchema,
   scoreTicketRequestSchema,
@@ -128,6 +132,7 @@ interface AppDependencies {
   operationsService?: OperationsService;
   chainActivityService?: ChainActivityService;
   scoreSigningService?: ScoreSigningService;
+  extraLifeService?: ExtraLifeService;
 }
 
 async function readJsonBody(request: IncomingMessage, maxBytes: number): Promise<unknown> {
@@ -669,6 +674,24 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     }
   }
 
+  if (pathname === `${apiPrefix}/extra-lives` || pathname === `${apiPrefix}/extra-lives/use`) {
+    if (!dependencies.extraLifeService) return sendJson(response, 503, { error: { code: 'extra_lives_not_configured', message: 'Extra lives are not available right now.' } } satisfies ErrorResponse);
+    if (pathname.endsWith('/extra-lives')) {
+      if (request.method !== 'GET') return methodNotAllowed(response);
+      const query = extraLifeQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+      return sendJson(response, 200, { data: extraLifeBalanceSchema.parse(await dependencies.extraLifeService.balance(query.address as `0x${string}`)) });
+    }
+    if (request.method !== 'POST') return methodNotAllowed(response);
+    const input = extraLifeUseRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
+    try {
+      return sendJson(response, 200, { data: extraLifeBalanceSchema.parse(await dependencies.extraLifeService.use(input.address as `0x${string}`, input.token)) });
+    } catch (error) {
+      if (error instanceof NoExtraLives) return sendJson(response, 409, { error: { code: 'no_extra_lives', message: error.message } } satisfies ErrorResponse);
+      if (error instanceof ScoreRejected) return sendJson(response, 422, { error: { code: error.code, message: error.message } } satisfies ErrorResponse);
+      throw error;
+    }
+  }
+
   if (pathname === `${apiPrefix}/chain/transactions` && request.method === 'GET') {
     if (!dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
     const query = publicChainTransactionQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
@@ -780,7 +803,7 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     bountyService: new BountyService(new PrismaBountyRepository(prisma)),
     rewardService: new RewardService(new PrismaRewardRepository(prisma)),
     operationsService: new OperationsService(new PrismaOperationsRepository(prisma), config.goodDollarEnvironment),
-    ...(config.scoreSigning ? { scoreSigningService: new ScoreSigningService(config.scoreSigning) } : {}),
+    ...scoreServices(config, prisma),
     ...(config.chainActivity ? { chainActivityService: new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock, { ...(goodDollarIdentityAddress(config) ? { identityRoots: createIdentityRootResolver(config.chainActivity.rpcUrl, goodDollarIdentityAddress(config) as `0x${string}`) } : {}) })) } : {}),
   });
   server.listen(config.port, config.host, () => {
@@ -788,6 +811,17 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     logger.info('Backend listening', { host: config.host, port: typeof address === 'object' && address ? address.port : config.port, environment: config.environment });
   });
   return server;
+}
+
+/** Signed scores (ADR-0015) and, with a shop address and RPC, extra lives (ADR-0016). */
+function scoreServices(config: BackendConfig, prisma: ConstructorParameters<typeof PrismaExtraLifeStore>[0]): Pick<AppDependencies, 'scoreSigningService' | 'extraLifeService'> {
+  if (!config.scoreSigning) return {};
+  const rpcUrl = config.chainActivity?.rpcUrl ?? config.goodDollarRpcUrl;
+  const { shop } = config.scoreSigning;
+  if (!shop || !rpcUrl) return { scoreSigningService: new ScoreSigningService(config.scoreSigning) };
+  const store = new PrismaExtraLifeStore(prisma);
+  const scoreSigningService = new ScoreSigningService(config.scoreSigning, Date.now, ticket => store.ticketUsed(ticket));
+  return { scoreSigningService, extraLifeService: new ExtraLifeService(store, createPacksOwnedReader(rpcUrl, shop), scoreSigningService) };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

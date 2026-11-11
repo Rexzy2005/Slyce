@@ -16,7 +16,7 @@ export interface BackendConfig {
   /** Slyyce contracts indexed for the admin users/transactions view (ADR-0012). */
   chainActivity?: { rpcUrl: string; contracts: readonly `0x${string}`[]; startBlock: bigint };
   /** Backend-signed scores (ADR-0015). Celo mainnet only, like wallet sign-in. */
-  scoreSigning?: { privateKey: `0x${string}`; chainId: number; arcade: `0x${string}`; tournament?: `0x${string}` };
+  scoreSigning?: { privateKey: `0x${string}`; chainId: number; arcade: `0x${string}`; tournament?: `0x${string}`; shop?: `0x${string}` };
 }
 
 function parsePort(value: string | undefined): number {
@@ -100,8 +100,9 @@ function parseScoreSigning(env: NodeJS.ProcessEnv): BackendConfig['scoreSigning'
   const arcade = env.SLYYCE_ARCADE_ADDRESS?.trim();
   if (!arcade) throw new Error('SLYYCE_ARCADE_ADDRESS is required when SCORE_SIGNER_PRIVATE_KEY is set');
   const tournament = env.SLYYCE_TOURNAMENT_ADDRESS?.trim();
-  // Addresses are validated by parseChainActivity.
-  return { privateKey: privateKey as `0x${string}`, chainId: 42220, arcade: arcade as `0x${string}`, ...(tournament ? { tournament: tournament as `0x${string}` } : {}) };
+  const shop = env.SLYYCE_SHOP_ADDRESS?.trim();
+  // Addresses are validated by parseChainActivity. The shop enables extra lives (ADR-0016).
+  return { privateKey: privateKey as `0x${string}`, chainId: 42220, arcade: arcade as `0x${string}`, ...(tournament ? { tournament: tournament as `0x${string}` } : {}), ...(shop ? { shop: shop as `0x${string}` } : {}) };
 }
 
 function parseSecret(value: string | undefined, name: string): string | undefined {

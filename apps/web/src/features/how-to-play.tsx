@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
 import { formatTokenAmount } from '../web3/units';
-import { useGameRecords, type Milestone } from '../game/game-records';
+import { milestoneName, useGameRecords, type Milestone } from '../game/game-records';
 /** Rules page, sign-in free. Milestone rewards are read live from the contract. */
 export function HowToPlay() {
   const wallet = useWallet();
@@ -32,5 +32,5 @@ function MilestoneList() {
   const records = useGameRecords(undefined);
   if (records.loading) return <p className="loading-state" role="status">Reading rewards…</p>;
   if (!records.milestones.length) return <p className="muted">Milestone rewards are not set yet.</p>;
-  return <>{records.budget === 0n && <p className="muted">G$ rewards haven't started yet. These are the planned amounts.</p>}<ul className="milestones">{records.milestones.map((m: Milestone) => <li key={m.score}><span>Score {m.score.toLocaleString()}</span><strong className="leaf">{formatTokenAmount(m.reward, gdDecimals)} G$</strong></li>)}</ul></>;
+  return <>{records.budget === 0n && <p className="muted">G$ rewards haven't started yet. These are the planned amounts.</p>}<ul className="milestones">{records.milestones.map((m: Milestone) => <li key={m.score}><span><strong>{milestoneName(records.milestones, m)}</strong> · score {m.score.toLocaleString()}</span><strong className="leaf">{formatTokenAmount(m.reward, gdDecimals)} G$</strong></li>)}</ul></>;
 }

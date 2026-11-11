@@ -28,7 +28,7 @@ export interface IssuedTicket { token: string; ticket: string; issuedAt: string 
 export interface RoundResult { score: number; bestCombo: number; fruits: number }
 export interface SignedRound { ticket: string; deadline: number; gameSignature: `0x${string}`; tournamentSignature?: `0x${string}` }
 export class ScoreRejected extends Error {
-  constructor(public readonly code: 'invalid_ticket' | 'expired_ticket' | 'implausible_score', message: string) { super(message); }
+  constructor(public readonly code: 'invalid_ticket' | 'expired_ticket' | 'implausible_score' | 'extra_life_round', message: string) { super(message); }
 }
 
 /**
@@ -57,7 +57,8 @@ const tournamentTypes = { TournamentScore: [
 export class ScoreSigningService {
   private readonly account;
   private readonly ticketKey: Buffer;
-  constructor(private readonly config: ScoreSigningConfig, private readonly now: () => number = Date.now) {
+  /** `extraLifeUsed` reports rounds continued with a purchased extra life; those can't enter tournaments (ADR-0016). */
+  constructor(private readonly config: ScoreSigningConfig, private readonly now: () => number = Date.now, private readonly extraLifeUsed?: (ticket: string) => Promise<boolean>) {
     this.account = privateKeyToAccount(config.privateKey);
     // Derived, so one secret configures both the signer and ticket integrity.
     this.ticketKey = createHash('sha256').update('slyyce-score-ticket:').update(config.privateKey.toLowerCase()).digest();
@@ -73,15 +74,25 @@ export class ScoreSigningService {
     return { token: `${payload}.${this.mac(payload)}`, ticket, issuedAt: new Date(issuedAt).toISOString() };
   }
 
-  async finish(address: `0x${string}`, token: string, result: RoundResult, tournamentId?: bigint): Promise<SignedRound> {
-    // Addresses arrive in any letter case; viem signs only checksummed ones.
-    const player = checksum(address);
+  /** Checks a ticket's integrity, owner and age; returns its id and age in milliseconds. */
+  verifyTicket(address: `0x${string}`, token: string): { ticket: string; ageMs: number } {
     const [payload, mac] = token.split('.');
     if (!payload || !mac || !this.validMac(payload, mac)) throw new ScoreRejected('invalid_ticket', 'This round ticket is not valid.');
     const ticket = parseTicket(payload);
-    if (!ticket || ticket.p !== player.toLowerCase()) throw new ScoreRejected('invalid_ticket', 'This round ticket belongs to another player.');
+    if (!ticket || ticket.p !== address.toLowerCase()) throw new ScoreRejected('invalid_ticket', 'This round ticket belongs to another player.');
     const age = this.now() - ticket.i;
     if (age < 0 || age > ticketMaxAgeMs) throw new ScoreRejected('expired_ticket', 'This round ticket has expired.');
+    return { ticket: ticket.t, ageMs: age };
+  }
+
+  async finish(address: `0x${string}`, token: string, result: RoundResult, tournamentId?: bigint): Promise<SignedRound> {
+    // Addresses arrive in any letter case; viem signs only checksummed ones.
+    const player = checksum(address);
+    const { ticket: ticketText, ageMs: age } = this.verifyTicket(player, token);
+    const ticket = { t: ticketText };
+    if (tournamentId !== undefined && await this.extraLifeUsed?.(ticketText)) {
+      throw new ScoreRejected('extra_life_round', 'Rounds continued with an extra life can\'t be submitted to tournaments.');
+    }
     const problem = plausibilityProblem(result, age / 1000);
     if (problem) throw new ScoreRejected('implausible_score', `This score could not be verified: ${problem}.`);
     const deadline = Math.floor(this.now() / 1000) + signatureLifetimeSeconds;

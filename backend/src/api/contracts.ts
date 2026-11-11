@@ -511,3 +511,7 @@ export const scoreFinishResponseSchema = z.object({
   gameSignature: z.string(),
   tournamentSignature: z.string().optional(),
 });
+
+export const extraLifeQuerySchema = z.object({ address });
+export const extraLifeUseRequestSchema = z.object({ address, token: z.string().min(10).max(1_000) });
+export const extraLifeBalanceSchema = z.object({ owned: z.number().int(), used: z.number().int(), available: z.number().int() });

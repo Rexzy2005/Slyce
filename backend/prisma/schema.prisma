@@ -598,3 +598,15 @@ model IdempotencyKey {
   @@index([playerId, operation])
   @@index([adminId, operation])
 }
+
+/// One extra life used by a player (shop item 401, ADR-0016). Owned lives are read on-chain from SlyceShop.
+model ExtraLifeUse {
+  id        String   @id @default(uuid()) @db.Uuid
+  address   String   @db.VarChar(42)
+  useNumber Int
+  ticket    String   @db.VarChar(80)
+  usedAt    DateTime @default(now())
+
+  @@unique([address, useNumber])
+  @@index([ticket])
+}

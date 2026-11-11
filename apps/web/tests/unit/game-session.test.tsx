@@ -172,6 +172,31 @@ it('hands the finished round to the after-game slot (e.g. saving on Celo)', () =
   fireEvent.click(screen.getByRole('button', { name: 'Start practice round' }));
   act(() => observed.bridge?.emit({ type: 'game-over', score: 640, cause: 'lives', bestCombo: 4, fruits: 52 }));
   expect(screen.getByText('Save 640 on Celo')).toBeTruthy();
-  expect(seen.at(-1)).toEqual({ score: 640, bestCombo: 4, fruits: 52, cause: 'lives', difficulty: 'normal' });
+  expect(seen.at(-1)).toEqual({ score: 640, bestCombo: 4, fruits: 52, cause: 'lives', difficulty: 'normal', extraLivesUsed: 0 });
   window.localStorage.clear();
+});
+
+it('offers a purchased extra life when lives run out and counts it on the result', async () => {
+  window.localStorage.clear();
+  const seen: { extraLivesUsed: number }[] = [];
+  const use = vi.fn(async () => true);
+  render(<GameHost extraLives={{ available: 2, use }} afterGame={result => { seen.push(result); return null; }} />);
+  expect(observed.commands).toContainEqual({ type: 'set-continue', available: true });
+  fireEvent.click(screen.getByRole('button', { name: 'Start practice round' }));
+  act(() => observed.bridge?.emit({ type: 'out-of-lives' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Use an extra life (2 left)' }));
+  await waitFor(() => expect(observed.commands).toContainEqual({ type: 'continue' }));
+  expect(use).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('dialog', { name: 'Out of lives' })).toBeNull();
+  act(() => observed.bridge?.emit({ type: 'game-over', score: 300, cause: 'bomb', bestCombo: 0, fruits: 30 }));
+  expect(seen.at(-1)?.extraLivesUsed).toBe(1);
+  window.localStorage.clear();
+});
+
+it('ends the round when the player declines the extra life', () => {
+  render(<GameHost extraLives={{ available: 1, use: async () => true }} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start practice round' }));
+  act(() => observed.bridge?.emit({ type: 'out-of-lives' }));
+  fireEvent.click(screen.getByRole('button', { name: 'End round' }));
+  expect(observed.commands).toContainEqual({ type: 'end-round' });
 });

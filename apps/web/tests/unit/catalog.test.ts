@@ -5,7 +5,7 @@ afterEach(() => window.localStorage.clear());
 it('lists each shop id once, matching the on-chain listing script', () => {
   const ids = catalogItems.map(item => item.id);
   expect(new Set(ids).size).toBe(ids.length);
-  expect(ids).toEqual([101n, 102n, 103n, 104n, 105n, 106n, 107n, 201n, 202n, 203n, 301n, 302n, 303n]);
+  expect(ids).toEqual([101n, 102n, 103n, 104n, 105n, 106n, 107n, 201n, 202n, 203n, 301n, 302n, 303n, 401n]);
   for (const item of catalogItems) expect(itemPreview(item)).toMatch(/gradient\(/);
 });
 it('remembers one equipped item per category, keeping the existing blade key', () => {

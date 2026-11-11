@@ -9,7 +9,8 @@ import { chainFor, contractsFor, gdDecimals } from '../web3/config';
 import { refetchUntil } from '../web3/receipt';
 import { TokenSpend } from '../web3/token-spend';
 import { formatTokenAmount } from '../web3/units';
-import { catalogItems, categoryLabels, itemPreview, readEquipped, writeEquipped, type ItemCategory } from './catalog';
+import { catalogItems, categoryLabels, itemPreview, readEquipped, writeEquipped, type ItemCategory, type PowerUpCategory } from './catalog';
+import { useExtraLives } from '../game/score-tickets';
 /** On-chain price, availability and ownership for every catalog item. */
 export function useShopItems() {
   const account = useAccount();
@@ -35,9 +36,11 @@ export function Shop() {
   if (!wallet.live) return <section className="panel"><EmptyState title="The market is getting ready"><p>{wallet.message ?? 'Sign-in is not available right now.'}</p></EmptyState></section>;
   return <Market />;
 }
-const categories: readonly ItemCategory[] = ['blade', 'fruit', 'board'];
+const categories: readonly (ItemCategory | PowerUpCategory)[] = ['lives', 'blade', 'fruit', 'board'];
 function Market() {
   const { shop, items, reads } = useShopItems();
+  const account = useAccount();
+  const lives = useExtraLives(account.address);
   const [equipped, setEquipped] = useState<Record<ItemCategory, bigint | null>>({ blade: null, fruit: null, board: null });
   useEffect(() => setEquipped({ blade: readEquipped('blade'), fruit: readEquipped('fruit'), board: readEquipped('board') }), []);
   function equip(category: ItemCategory, id: bigint | null) { writeEquipped(category, id); setEquipped(current => ({ ...current, [category]: id })); }
@@ -49,18 +52,29 @@ function Market() {
       // Items the owner hasn't listed on-chain yet stay hidden unless the player already owns one.
       const listed = items.map((item, index) => ({ item, index })).filter(({ item }) => item.category === category && (item.price !== undefined || item.owned));
       if (!listed.length) return null;
-      return <div key={category} className="shop-section"><p className="eyebrow">{categoryLabels[category].toUpperCase()} · COSMETIC</p>
+      return <div key={category} className="shop-section"><p className="eyebrow">{categoryLabels[category].toUpperCase()}{category === 'lives' ? ' · USED UP IN PLAY' : ' · COSMETIC'}</p>
         <ul className="shop-grid">{listed.map(({ item, index }) => <li key={item.id.toString()} className={item.premium ? 'shop-item premium' : 'shop-item'}>
-          <span className={item.category === 'fruit' ? 'blade-swatch fruit-swatch' : 'blade-swatch'} style={{ background: itemPreview(item) }} aria-hidden="true" />
+          <span className={item.category === 'fruit' || item.category === 'lives' ? 'blade-swatch fruit-swatch' : 'blade-swatch'} style={{ background: itemPreview(item) }} aria-hidden="true" />
           <div><h2>{item.name}{item.premium && <span className="premium-tag">Premium</span>}</h2><p className="muted">{item.description}</p>
-            <p className="price">{item.price !== undefined ? formatTokenAmount(item.price, gdDecimals) + ' G$' : 'Price unavailable'}</p></div>
-          {item.owned
-            ? <button className="button secondary" aria-pressed={equipped[category] === item.id} onClick={() => equip(category, equipped[category] === item.id ? null : item.id)}>{equipped[category] === item.id ? 'Equipped · Unequip' : 'Equip'}</button>
+            <p className="price">{item.price !== undefined ? formatTokenAmount(item.price, gdDecimals) + ' G$' : 'Price unavailable'}</p>
+            {item.category === 'lives' && lives.available !== undefined && <p className="muted">You have <strong>{lives.available}</strong> extra {lives.available === 1 ? 'life' : 'lives'}.</p>}</div>
+          {item.category === 'lives'
+            ? item.active && item.price !== undefined
+              ? <TokenSpend spender={shop} amount={item.price} label={'Buy for ' + formatTokenAmount(item.price, gdDecimals) + ' G$'}
+                  call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }}
+                  onConfirmed={async () => {
+                    const before = lives.available ?? 0;
+                    // The backend reads packs on-chain; wait until it sees this purchase.
+                    await refetchUntil(async () => ({ data: await lives.refresh() }), next => (next?.available ?? 0) > before);
+                  }} />
+              : <button className="button" disabled>Not for sale</button>
+          : item.owned
+            ? <button className="button secondary" aria-pressed={equipped[item.category] === item.id} onClick={() => equip(item.category, equipped[item.category] === item.id ? null : item.id)}>{equipped[item.category] === item.id ? 'Equipped · Unequip' : 'Equip'}</button>
             : item.active && item.price !== undefined
               ? <TokenSpend spender={shop} amount={item.price} label={'Buy for ' + formatTokenAmount(item.price, gdDecimals) + ' G$'}
                   call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }}
                   // A new item is equipped straight away, so the next round shows it without a separate tap.
-                  onConfirmed={async () => { equip(category, item.id); await refetchUntil(reads.refetch, data => ((data?.[index * 2 + 1]?.result as bigint | undefined) ?? 0n) > 0n); }} />
+                  onConfirmed={async () => { equip(item.category, item.id); await refetchUntil(reads.refetch, data => ((data?.[index * 2 + 1]?.result as bigint | undefined) ?? 0n) > 0n); }} />
               : <button className="button" disabled>Not for sale</button>}
         </li>)}</ul></div>;
     })}
