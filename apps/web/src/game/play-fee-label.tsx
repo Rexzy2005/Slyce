@@ -19,6 +19,6 @@ function Fee() {
   if (!arcade || fee.data === undefined) return null;
   return <>
     {prize.id !== undefined && prize.pool !== undefined && <Link href="/tournament" className="home-prize"><span>BOUNTY PRIZE POOL</span><strong>{Number(formatTokenAmount(prize.pool, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} G$</strong><small>Verified players compete for it →</small></Link>}
-    <small className="home-fee">{fee.data === 0n ? 'Free to play · save your scores for XP, streaks and milestones' : formatTokenAmount(fee.data, gdDecimals) + ' G$ per round'} · <Link href="/how-to-play">How to play</Link></small>
+    <small className="home-fee">{fee.data === 0n ? 'Free to play' : formatTokenAmount(fee.data, gdDecimals) + ' G$ per round'} · <Link href="/how-to-play">How to play</Link></small>
   </>;
 }
