@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon, type IconName } from './icon';
-export function PageHeading({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
-  return <header className="page-heading"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="page-description">{children}</p></header>;
+export function PageHeading({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
+  return <header className="page-heading"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1>{children && <p className="page-description">{children}</p>}</header>;
 }
 export function EmptyState({ title, children, action, icon = 'sparkles' }: { title: string; children: ReactNode; action?: ReactNode; icon?: IconName }) {
   return <div className="empty-state"><span className="empty-symbol"><Icon name={icon} /></span><h2>{title}</h2><div className="muted">{children}</div>{action}</div>;

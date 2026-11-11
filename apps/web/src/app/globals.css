@@ -408,6 +408,7 @@ body { font-weight:500; } button,input,select,textarea { font-family:inherit; }
 .fine-print { font-size:11px!important; line-height:1.6; }
 .claim-panel { padding-bottom:16px; }.claim-panel>.status-card { margin:12px 24px 0; font-size:13px; }
 .data-list li { align-items:center; flex-wrap:wrap; }
+.leaderboard li.is-me { background:color-mix(in srgb,var(--color-mango) 12%,transparent); border-radius:10px; padding-left:10px; padding-right:10px; }.leaderboard a { color:inherit; }
 /* App shell: app-style layout, sign-in, bottom tabs, pay gate (2026-10-15). */
 .app-shell { min-height:100dvh; max-width:640px; margin:0 auto; display:flex; flex-direction:column; background:var(--color-night); }
 .app-bar { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; background:color-mix(in srgb,var(--color-night) 92%,transparent); backdrop-filter:blur(10px); }
@@ -415,7 +416,7 @@ body { font-weight:500; } button,input,select,textarea { font-family:inherit; }
 .app-main { flex:1; padding:16px 16px calc(96px + env(safe-area-inset-bottom)); min-width:0; }
 .balance-chip,.account-chip { display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:6px 12px; border-radius:999px; background:var(--color-canopy); color:var(--color-cream); font:600 13px var(--font-site); border:0; cursor:pointer; white-space:nowrap; }
 .balance-chip b { color:var(--color-sky); }.account-chip svg { width:15px; height:15px; color:var(--color-mango); }.account-chip:disabled { opacity:.6; cursor:default; }
-.tab-bar { position:fixed; z-index:30; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:640px; display:grid; grid-template-columns:repeat(5,1fr); padding:6px 6px calc(6px + env(safe-area-inset-bottom)); background:color-mix(in srgb,var(--color-canopy) 96%,transparent); backdrop-filter:blur(12px); box-shadow:0 -8px 24px color-mix(in srgb,black 35%,transparent); }
+.tab-bar { position:fixed; z-index:30; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:640px; display:grid; grid-template-columns:repeat(6,1fr); padding:6px 6px calc(6px + env(safe-area-inset-bottom)); background:color-mix(in srgb,var(--color-canopy) 96%,transparent); backdrop-filter:blur(12px); box-shadow:0 -8px 24px color-mix(in srgb,black 35%,transparent); }
 .tab-bar a { display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 0; border-radius:12px; color:var(--color-mist); font-size:11px; font-weight:600; min-height:52px; }
 .tab-bar a svg { width:21px; height:21px; }.tab-bar a[aria-current=page] { color:var(--color-mango); background:color-mix(in srgb,var(--color-mango) 12%,transparent); }
 .sign-in-screen { min-height:100dvh; max-width:480px; margin:0 auto; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:16px; padding:32px 20px calc(32px + env(safe-area-inset-bottom)); text-align:center; }

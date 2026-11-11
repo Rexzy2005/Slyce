@@ -515,3 +515,6 @@ export const scoreFinishResponseSchema = z.object({
 export const extraLifeQuerySchema = z.object({ address });
 export const extraLifeUseRequestSchema = z.object({ address, token: z.string().min(10).max(1_000) });
 export const extraLifeBalanceSchema = z.object({ owned: z.number().int(), used: z.number().int(), available: z.number().int() });
+
+export const chainLeaderboardQuerySchema = z.object({ period: z.enum(['today', 'week', 'all']).default('all') });
+export const chainLeaderboardResponseSchema = z.object({ data: z.array(z.object({ rank: z.number().int(), address: z.string(), score: z.number().int(), games: z.number().int(), verified: z.boolean().nullable() })) });

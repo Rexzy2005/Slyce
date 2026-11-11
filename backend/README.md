@@ -29,7 +29,7 @@ Security configuration is provided through `CORS_ORIGINS`, `MAX_REQUEST_BYTES`, 
 
 API contracts and the route inventory are documented in docs/API_CONTRACTS.md.
 
-On-chain activity for `/admin` (ADR-0012): set `SLYYCE_ARCADE_ADDRESS`, `SLYYCE_TOURNAMENT_ADDRESS`, `SLYYCE_SHOP_ADDRESS` and `SLYYCE_CONTRACTS_START_BLOCK` (mainnet: block `81391119`), plus `CHAIN_RPC_URL` or `GOODDOLLAR_RPC_URL`. Without them, `/api/v1/admin/chain/*` returns 503.
+On-chain activity for `/admin` (ADR-0012): set `SLYYCE_ARCADE_ADDRESS`, `SLYYCE_TOURNAMENT_ADDRESS`, `SLYYCE_SHOP_ADDRESS` and `SLYYCE_CONTRACTS_START_BLOCK` (mainnet: block `81391119`), plus `CHAIN_RPC_URL` or `GOODDOLLAR_RPC_URL`. Without them, `/api/v1/admin/chain/*` returns 503. Public: `GET /api/v1/chain/transactions` and `GET /api/v1/chain/leaderboard?period=today|week|all` (top 50 best scores).
 
 Signed scores (ADR-0015): set `SCORE_SIGNER_PRIVATE_KEY` (server-only) with `SLYYCE_ARCADE_ADDRESS` and `SLYYCE_TOURNAMENT_ADDRESS`. `POST /api/v1/score-tickets` `{address}` issues a round ticket; `POST /api/v1/score-tickets/finish` `{address, token, score, bestCombo, fruits, tournamentId?}` returns EIP-712 signatures or 422 (`invalid_ticket`, `expired_ticket`, `implausible_score`). Without the key both return 503.
 

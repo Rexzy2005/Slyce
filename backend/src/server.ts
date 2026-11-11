@@ -12,6 +12,8 @@ import {
   adminLoginRequestSchema,
   auditLogQuerySchema,
   chainTransactionListResponseSchema,
+  chainLeaderboardQuerySchema,
+  chainLeaderboardResponseSchema,
   extraLifeBalanceSchema,
   extraLifeQuerySchema,
   extraLifeUseRequestSchema,
@@ -690,6 +692,12 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
       if (error instanceof ScoreRejected) return sendJson(response, 422, { error: { code: error.code, message: error.message } } satisfies ErrorResponse);
       throw error;
     }
+  }
+
+  if (pathname === `${apiPrefix}/chain/leaderboard` && request.method === 'GET') {
+    if (!dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
+    const query = chainLeaderboardQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    return sendJson(response, 200, chainLeaderboardResponseSchema.parse({ data: await dependencies.chainActivityService.leaderboard(query.period) }));
   }
 
   if (pathname === `${apiPrefix}/chain/transactions` && request.method === 'GET') {
