@@ -8,8 +8,8 @@ import { chainFor, contractsFor } from './config';
 import { WalletContext, type WalletState } from './context';
 import { formatTokenAmount } from './units';
 import { useOnlineStatus } from './online-status';
-/** Below this, a new wallet likely can't pay Celo network fees for a few transactions. */
-const lowGas = parseEther('0.005');
+/** Below this a wallet can't pay for one game save: ~136k gas at Celo's ~200 gwei base fee (measured 2026-11-11) is ~0.028 CELO. */
+const lowGas = parseEther('0.03');
 /** Upper bound for wagmi to restore a saved session on page load before we show "signed out". */
 const restoreTimeoutMs = 4000;
 /**

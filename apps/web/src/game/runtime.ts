@@ -26,7 +26,18 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     private active = false;
     private settings = defaultPreviewSettings();
     private practice = newPractice();
-    bladeColors: { glow: number; core: number } = defaultBlade;
+    bladeColors: { glow: number; core: number; effect?: 'rainbow' | 'flicker' } = defaultBlade;
+    /** A shop fruit skin waiting to be applied; textures are only swapped between rounds, when no fruit is on the board. */
+    private pendingSkin: readonly [string, string, string] | null | undefined;
+    setFruitSkin(skin: readonly [string, string, string] | null) { this.pendingSkin = skin; if (!this.active) this.applyFruitSkin(); }
+    private applyFruitSkin() {
+      if (this.pendingSkin === undefined || !this.textures.exists('melon-whole')) return;
+      const skin = this.pendingSkin ?? undefined; this.pendingSkin = undefined;
+      for (const kind of fruitKinds) for (const part of ['whole', 'upper', 'lower'] as const) {
+        this.textures.remove(kind + '-' + part);
+        this.textures.addCanvas(kind + '-' + part, fruitTexture(part, kind, skin));
+      }
+    }
     configure(settings: PreviewSettings) {
       if (!settings.fruits.length) return;
       this.settings = { difficulty: settings.difficulty, fruits: [...settings.fruits] };
@@ -77,6 +88,7 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     /** Enabling starts a fresh practice round; disabling leaves the board idle. */
     preview(enabled: boolean) {
       this.active = enabled; this.clock = 0; this.clearBoard(); this.stains = []; this.boardInk?.clear();
+      this.applyFruitSkin();
       this.practice = newPractice();
       if (enabled) { bridge.emit({ type: 'score-changed', score: 0 }); bridge.emit({ type: 'lives-changed', lives: this.practice.lives }); }
     }
@@ -119,7 +131,10 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       const { x, y } = fruit.body;
       if (fruit.bomb) {
         this.burst(x, y, 0xe5383b, angle); this.burst(x, y, 0xffb627, angle + Math.PI);
-        this.practice = cutBomb(this.practice); this.gameOver(); return;
+        this.practice = cutBomb(this.practice);
+        bridge.emit({ type: 'lives-changed', lives: this.practice.lives });
+        if (this.practice.over) this.gameOver(); else bridge.emit({ type: 'effect', cue: 'boom' });
+        return;
       }
       this.practice = cutFruit(this.practice);
       bridge.emit({ type: 'score-changed', score: this.practice.score });
@@ -162,6 +177,13 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
         }
       }
     }
+    /** Premium blade effects: rainbow cycles hue along the trail and over time; flicker crackles like lightning. */
+    private bladeGlow(segment: number): number {
+      const { glow, effect } = this.bladeColors;
+      if (effect === 'rainbow') return Phaser.Display.Color.HSVToRGB(((this.clock * .6 + segment * .04) % 1 + 1) % 1, .85, 1).color;
+      if (effect === 'flicker') return Math.random() < .25 ? 0xffffff : glow;
+      return glow;
+    }
     override update(_time: number, delta: number) {
       if (!this.active || !this.ink || !this.blade) return;
       const dt = Math.min(delta, 40) / 1000; this.clock += dt;
@@ -202,8 +224,9 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
         const alpha = Math.max(0, Math.min(a.life, b.life));
         const taper = Math.sin(Math.PI * i / this.trail.length);
         const width = Math.max(.4, b.width * taper * alpha);
-        this.blade.lineStyle(width * 4, this.bladeColors.glow, alpha * .07).lineBetween(a.x, a.y, b.x, b.y);
-        this.blade.lineStyle(width * 1.5, this.bladeColors.glow, alpha * .35).lineBetween(a.x, a.y, b.x, b.y);
+        const glow = this.bladeGlow(i);
+        this.blade.lineStyle(width * 4, glow, alpha * .07).lineBetween(a.x, a.y, b.x, b.y);
+        this.blade.lineStyle(width * 1.5, glow, alpha * .35).lineBetween(a.x, a.y, b.x, b.y);
         this.blade.lineStyle(width * .65, this.bladeColors.core, alpha * .95).lineBetween(a.x, a.y, b.x, b.y);
         this.blade.fillStyle(this.bladeColors.core, alpha * .8).fillCircle(b.x, b.y, width * .3);
       }
@@ -216,6 +239,7 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     switch (command.type) {
       case 'configure-preview': scene.configure(command.settings); break;
       case 'set-blade': scene.bladeColors = command.colors; break;
+      case 'set-fruit-skin': scene.setFruitSkin(command.skin); break;
       case 'pause': manuallyPaused = true; applyPause(); break;
       case 'resume': manuallyPaused = false; applyPause(); break;
       case 'preview': scene.preview(command.enabled); break;

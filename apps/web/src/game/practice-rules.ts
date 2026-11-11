@@ -35,4 +35,9 @@ export function missFruit(state: PracticeState): PracticeState {
   const lives = Math.max(0, state.lives - 1);
   return { ...state, lives, over: lives === 0 ? 'lives' : null };
 }
-export function cutBomb(state: PracticeState): PracticeState { return state.over ? state : { ...state, over: 'bomb' }; }
+/** A bomb costs a life (and breaks the current swipe's combo); the round only ends when it takes the last life. */
+export function cutBomb(state: PracticeState): PracticeState {
+  if (state.over) return state;
+  const lives = Math.max(0, state.lives - 1);
+  return { ...state, lives, swipeCuts: 0, over: lives === 0 ? 'bomb' : null };
+}

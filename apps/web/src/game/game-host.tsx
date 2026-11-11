@@ -1,7 +1,8 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { defaultBlade, type BladeLook, type BoardLook, type FruitSkin } from '../features/catalog';
 import { createGameAudio, type GameAudio } from './audio';
 import { defaultPreviewSettings, type Difficulty, type PreviewSettings } from './preview-settings';
 import { PauseSettings } from './pause-settings';
@@ -13,7 +14,7 @@ import { readBestScore, recordBestScore } from './best-score';
 import type { GameOverCause } from './practice-rules';
 /** `blade` must already be verified as owned on-chain; the default trail needs no ownership. */
 export interface GameResult { score: number; bestCombo: number; fruits: number; cause: GameOverCause; difficulty: Difficulty }
-export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: { glow: number; core: number }; /** When set, every round must be paid before it starts. */ payGate?: (start: () => void) => ReactNode; /** Rendered on the game-over screen, e.g. saving the result on-chain. */ afterGame?: (result: GameResult) => ReactNode; /** Called as each round begins, e.g. to claim a score ticket (ADR-0015). */ onRoundStart?: () => void } = {}) {
+export function GameHost({ blade, fruitSkin, board: boardLook, payGate, afterGame, onRoundStart }: { blade?: BladeLook; /** Owned shop fruit skin, already verified on-chain. */ fruitSkin?: FruitSkin; /** Owned shop board, already verified on-chain. */ board?: BoardLook; /** When set, every round must be paid before it starts. */ payGate?: (start: () => void) => ReactNode; /** Rendered on the game-over screen, e.g. saving the result on-chain. */ afterGame?: (result: GameResult) => ReactNode; /** Called as each round begins, e.g. to claim a score ticket (ADR-0015). */ onRoundStart?: () => void } = {}) {
   const [pendingStart, setPendingStart] = useState<(() => void) | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(defaultPreviewSettings);
@@ -41,7 +42,16 @@ export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: 
   const [best, setBest] = useState<number | null>(null);
   const [gameOver, setGameOver] = useState<{ score: number; cause: GameOverCause; bestCombo: number; fruits: number; difficulty: Difficulty; best: number; improved: boolean; round: number } | null>(null);
   useEffect(() => { setBest(readBestScore(previewSettings.difficulty)); }, [previewSettings.difficulty]);
-  useEffect(() => { if (ready && blade) bridgeRef.current?.send({ type: 'set-blade', colors: blade }); }, [ready, blade?.glow, blade?.core]);
+  // Cosmetics are sent only when equipped, or once more to restore the default after they are removed.
+  const bladeSent = useRef(false), skinSent = useRef(false);
+  useEffect(() => {
+    if (!ready || (!blade && !bladeSent.current)) return;
+    bridgeRef.current?.send({ type: 'set-blade', colors: blade ?? defaultBlade }); bladeSent.current = !!blade;
+  }, [ready, blade?.glow, blade?.core, blade?.effect]);
+  useEffect(() => {
+    if (!ready || (!fruitSkin && !skinSent.current)) return;
+    bridgeRef.current?.send({ type: 'set-fruit-skin', skin: fruitSkin?.skin ?? null }); skinSent.current = !!fruitSkin;
+  }, [ready, fruitSkin?.skin.join()]);
   useEffect(() => {
     const parent = container.current;
     if (!parent) return;
@@ -152,7 +162,8 @@ export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: 
       <div className="hud-reading combo-reading"><span>COMBO<strong>{combo ? 'x' + combo.count + ' +' + combo.bonus : '—'}</strong></span><span className="combo-track" aria-hidden="true" /></div>
       <div className="hud-reading"><Icon name="timer" /><span>BEST<strong>{best === null ? '—' : best.toLocaleString()}</strong></span></div>
     </div>
-    <div ref={board} className={effectsPreview ? 'chopping-board effects-active' : 'chopping-board'} aria-label="Game canvas">
+    <div ref={board} className={effectsPreview ? 'chopping-board effects-active' : 'chopping-board'} aria-label="Game canvas"
+      style={boardLook ? { '--wood-base': boardLook.base, '--wood-light': boardLook.light, '--wood-dark': boardLook.dark, '--wood-grain': boardLook.grain } as CSSProperties : undefined}>
       <div ref={container} className="game-canvas" aria-hidden="true" />
 
       {!ready && !failed && <div className="board-loading"><LoadingScreen message="Preparing your board" detail="Getting everything ready for your first cut." compact /></div>}

@@ -10,13 +10,14 @@ export const fruitAppearance: Record<FruitKind, { skin: [string, string, string]
   apple: { skin: ['#ffb093', '#e93f37', '#811c2c'], flesh: ['#fff9d4', '#e8ca8e'], juice: 0xe9c47d },
   peach: { skin: ['#ffe0a2', '#f99a62', '#bd4b4e'], flesh: ['#ffe3a0', '#f4ac42'], juice: 0xf5a24d },
 };
-export function fruitTexture(part: 'whole' | 'upper' | 'lower', kind: FruitKind = 'melon'): HTMLCanvasElement {
+/** `skinColors` (a shop fruit skin) replaces the outer colours of every fruit; flesh stays true to the fruit. */
+export function fruitTexture(part: 'whole' | 'upper' | 'lower', kind: FruitKind = 'melon', skinColors?: readonly [string, string, string]): HTMLCanvasElement {
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 192;
   const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Fruit artwork could not initialize');
   if (part !== 'whole') { ctx.beginPath(); ctx.rect(0, part === 'upper' ? 0 : 96, 192, 96); ctx.clip(); }
   if (part === 'whole') {
     const skin = ctx.createRadialGradient(61, 46, 4, 105, 110, 103);
-    const palette = fruitAppearance[kind].skin;
+    const palette = skinColors ?? fruitAppearance[kind].skin;
     skin.addColorStop(0, palette[0]); skin.addColorStop(.5, palette[1]); skin.addColorStop(1, palette[2]);
     ctx.fillStyle = skin; ctx.beginPath(); ctx.arc(96, 96, 86, 0, Math.PI * 2); ctx.fill();
     ctx.save(); ctx.clip();
@@ -34,7 +35,7 @@ export function fruitTexture(part: 'whole' | 'upper' | 'lower', kind: FruitKind 
     return canvas;
   }
   if (kind !== 'melon') {
-    ctx.fillStyle = fruitAppearance[kind].skin[1]; ctx.beginPath(); ctx.arc(96, 96, 87, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = (skinColors ?? fruitAppearance[kind].skin)[1]; ctx.beginPath(); ctx.arc(96, 96, 87, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#ffdda0'; ctx.beginPath(); ctx.arc(96, 96, 80, 0, Math.PI * 2); ctx.fill();
     const flesh = ctx.createRadialGradient(60, 55, 5, 96, 96, 78); flesh.addColorStop(0, fruitAppearance[kind].flesh[0]); flesh.addColorStop(1, fruitAppearance[kind].flesh[1]);
     ctx.fillStyle = flesh; ctx.beginPath(); ctx.arc(96, 96, 76, 0, Math.PI * 2); ctx.fill();

@@ -9,20 +9,20 @@ import { chainFor, contractsFor, gdDecimals } from '../web3/config';
 import { refetchUntil } from '../web3/receipt';
 import { TokenSpend } from '../web3/token-spend';
 import { formatTokenAmount } from '../web3/units';
-import { bladeItems, readEquippedBlade, writeEquippedBlade } from './catalog';
+import { catalogItems, categoryLabels, itemPreview, readEquipped, writeEquipped, type ItemCategory } from './catalog';
 /** On-chain price, availability and ownership for every catalog item. */
 export function useShopItems() {
   const account = useAccount();
   const shop = contractsFor(publicConfig).shop;
   const chain = publicConfig.network ? chainFor(publicConfig.network) : undefined;
   const reads = useReadContracts({
-    contracts: shop && chain ? bladeItems.flatMap(item => [
+    contracts: shop && chain ? catalogItems.flatMap(item => [
       { address: shop, abi: shopAbi, functionName: 'items', args: [item.id], chainId: chain.id } as const,
       { address: shop, abi: shopAbi, functionName: 'purchased', args: [account.address ?? '0x0000000000000000000000000000000000000000', item.id], chainId: chain.id } as const,
     ]) : [],
     query: { enabled: !!shop && !!chain },
   });
-  const items = bladeItems.map((item, index) => {
+  const items = catalogItems.map((item, index) => {
     const listing = reads.data?.[index * 2]?.result as { price: bigint; maxPerWallet: number; active: boolean; exists: boolean } | undefined;
     const owned = account.address ? reads.data?.[index * 2 + 1]?.result as bigint | undefined : 0n;
     return { ...item, price: listing?.exists ? listing.price : undefined, active: !!listing?.exists && listing.active, owned: (owned ?? 0n) > 0n };
@@ -35,27 +35,34 @@ export function Shop() {
   if (!wallet.live) return <section className="panel"><EmptyState title="The market is getting ready"><p>{wallet.message ?? 'Sign-in is not available right now.'}</p></EmptyState></section>;
   return <Market />;
 }
+const categories: readonly ItemCategory[] = ['blade', 'fruit', 'board'];
 function Market() {
   const { shop, items, reads } = useShopItems();
-  const [equipped, setEquipped] = useState<bigint | null>(null);
-  useEffect(() => setEquipped(readEquippedBlade()), []);
-  function equip(id: bigint | null) { writeEquippedBlade(id); setEquipped(id); }
+  const [equipped, setEquipped] = useState<Record<ItemCategory, bigint | null>>({ blade: null, fruit: null, board: null });
+  useEffect(() => setEquipped({ blade: readEquipped('blade'), fruit: readEquipped('fruit'), board: readEquipped('board') }), []);
+  function equip(category: ItemCategory, id: bigint | null) { writeEquipped(category, id); setEquipped(current => ({ ...current, [category]: id })); }
   if (!shop) return <section className="panel"><EmptyState title="The market is getting ready"><p>The market isn't open right now. Check back soon.</p></EmptyState></section>;
   if (reads.isPending) return <section className="panel"><p className="loading-state" role="status">Loading the market…</p></section>;
   if (reads.isError) return <section className="panel"><EmptyState title="The market could not load"><p>Prices couldn't be loaded.</p><button className="text-button" onClick={() => void reads.refetch()}>Try again</button></EmptyState></section>;
-  return <section className="panel"><p className="eyebrow">BLADE TRAILS · COSMETIC</p>
-    <ul className="shop-grid">{items.map((item, index) => <li key={item.id.toString()} className="shop-item">
-      <span className="blade-swatch" style={{ background: 'linear-gradient(120deg, #' + item.colors.glow.toString(16).padStart(6, '0') + ', #' + item.colors.core.toString(16).padStart(6, '0') + ')' }} aria-hidden="true" />
-      <div><h2>{item.name}</h2><p className="muted">{item.description}</p>
-        <p className="price">{item.price !== undefined ? formatTokenAmount(item.price, gdDecimals) + ' G$' : 'Price unavailable'}</p></div>
-      {item.owned
-        ? <button className="button secondary" aria-pressed={equipped === item.id} onClick={() => equip(equipped === item.id ? null : item.id)}>{equipped === item.id ? 'Equipped · Unequip' : 'Equip'}</button>
-        : item.active && item.price !== undefined
-          ? <TokenSpend spender={shop} amount={item.price} label={'Buy for ' + formatTokenAmount(item.price, gdDecimals) + ' G$'}
-              call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }}
-              // A new blade is equipped straight away, so the next round shows it without a separate tap.
-              onConfirmed={async () => { equip(item.id); await refetchUntil(reads.refetch, data => ((data?.[index * 2 + 1]?.result as bigint | undefined) ?? 0n) > 0n); }} />
-          : <button className="button" disabled>Not for sale</button>}
-    </li>)}</ul>
-    <p className="muted">Paid in G$ and saved to your account. A new blade is equipped right away and shows as your slice trail in the next round.</p></section>;
+  return <section className="panel">
+    {categories.map(category => {
+      // Items the owner hasn't listed on-chain yet stay hidden unless the player already owns one.
+      const listed = items.map((item, index) => ({ item, index })).filter(({ item }) => item.category === category && (item.price !== undefined || item.owned));
+      if (!listed.length) return null;
+      return <div key={category} className="shop-section"><p className="eyebrow">{categoryLabels[category].toUpperCase()} · COSMETIC</p>
+        <ul className="shop-grid">{listed.map(({ item, index }) => <li key={item.id.toString()} className={item.premium ? 'shop-item premium' : 'shop-item'}>
+          <span className={item.category === 'fruit' ? 'blade-swatch fruit-swatch' : 'blade-swatch'} style={{ background: itemPreview(item) }} aria-hidden="true" />
+          <div><h2>{item.name}{item.premium && <span className="premium-tag">Premium</span>}</h2><p className="muted">{item.description}</p>
+            <p className="price">{item.price !== undefined ? formatTokenAmount(item.price, gdDecimals) + ' G$' : 'Price unavailable'}</p></div>
+          {item.owned
+            ? <button className="button secondary" aria-pressed={equipped[category] === item.id} onClick={() => equip(category, equipped[category] === item.id ? null : item.id)}>{equipped[category] === item.id ? 'Equipped · Unequip' : 'Equip'}</button>
+            : item.active && item.price !== undefined
+              ? <TokenSpend spender={shop} amount={item.price} label={'Buy for ' + formatTokenAmount(item.price, gdDecimals) + ' G$'}
+                  call={{ address: shop, abi: shopAbi, functionName: 'buy', args: [item.id, 1n, item.price] }}
+                  // A new item is equipped straight away, so the next round shows it without a separate tap.
+                  onConfirmed={async () => { equip(category, item.id); await refetchUntil(reads.refetch, data => ((data?.[index * 2 + 1]?.result as bigint | undefined) ?? 0n) > 0n); }} />
+              : <button className="button" disabled>Not for sale</button>}
+        </li>)}</ul></div>;
+    })}
+    <p className="muted">Paid in G$ and saved to your account. A new item is equipped right away and shows in your next round.</p></section>;
 }

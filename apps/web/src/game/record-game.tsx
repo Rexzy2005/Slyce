@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
+import { links } from '../config/links';
 import { arcadeAbi } from '../web3/abis';
 import { gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
@@ -26,7 +27,9 @@ export function RecordGame({ result, ticket }: { result: GameResult; ticket?: Pr
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const autoSaved = useRef<GameResult | null>(null);
-  const canSave = !!records.arcade && !records.loading && records.open && signing !== undefined && write.ready && write.state.status === 'idle' && !busy && !problem && !saved;
+  // Saving costs a little CELO in network fees, which players get themselves; without it, say so instead of failing.
+  const noGas = wallet.gas === 'low' || (write.state.status === 'failed' && write.state.kind === 'insufficient-balance');
+  const canSave = !!records.arcade && !records.loading && records.open && signing !== undefined && write.ready && write.state.status === 'idle' && !busy && !problem && !saved && !noGas;
   useEffect(() => {
     if (!canSave || autoSaved.current === result) return;
     autoSaved.current = result;
@@ -66,6 +69,10 @@ export function RecordGame({ result, ticket }: { result: GameResult; ticket?: Pr
   }
   if (saved) return <p className="record-game saved" role="status">
     <strong className="leaf">Score saved</strong> · +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong></> : null} · 🔥 {saved.streak}-day streak
+  </p>;
+  if (noGas) return <p className="record-game" role="status">
+    <span className="muted">Score not saved: your account needs a little CELO for network fees.</span>{' '}
+    <a className="text-button" href={links.gasHelpTelegram} target="_blank" rel="noreferrer">Get a free top-up →</a>
   </p>;
   const failed = problem !== null || ['failed', 'rejected'].includes(write.state.status);
   if (failed) return <p className="record-game" role="status">

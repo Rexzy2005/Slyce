@@ -11,7 +11,7 @@ export function HowToPlay() {
     <Link href="/play" className="brand">slyyce<span className="brand-dot">/</span></Link>
     <h1>How to play</h1>
     <h2>Slice</h2>
-    <p>Swipe across fruit to slice it. Each fruit is 10 points, and slicing 3 or more in one swipe adds a combo bonus. Avoid bombs: one hit ends the round. Miss three fruit and it's game over. Playing is free.</p>
+    <p>Swipe across fruit to slice it. Each fruit is 10 points, and slicing 3 or more in one swipe adds a combo bonus. You have 3 lives: slicing a bomb or missing a fruit costs one, and the round ends when they're gone. Playing is free.</p>
     <h2>Save your score</h2>
     <p>When a round ends, tap <strong>Save score</strong>. Your score is kept as a permanent record, and you earn <strong>1 XP for every 10 points</strong>.</p>
     <h2>Milestone rewards in G$</h2>
