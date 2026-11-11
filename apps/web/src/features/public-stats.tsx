@@ -26,11 +26,10 @@ function Stats() {
       { address: tournament, abi: tournamentAbi, functionName: 'liabilities', chainId: chain.id },
       { address: tournament, abi: tournamentAbi, functionName: 'openPrizeTournament', chainId: chain.id },
       { address: arcade, abi: arcadeAbi, functionName: 'totalRewardsPaid', chainId: chain.id },
-      { address: arcade, abi: arcadeAbi, functionName: 'rewardBudget', chainId: chain.id },
     ] as const : [],
     query: { enabled: !!arcade && !!tournament && !!chain, refetchInterval: 30_000 },
   });
-  const [games, fee, tournaments, held, openId, paid, pot] = reads.data?.map(entry => entry.result) ?? [];
+  const [games, fee, tournaments, held, openId, paid] = reads.data?.map(entry => entry.result) ?? [];
   const network = publicConfig.network;
   const link = (address: `0x${string}` | undefined, label: string) => address && network
     ? <li key={label}><a href={explorerUrl(network, 'address', address)} target="_blank" rel="noreferrer">{label} <code>{address.slice(0, 8)}…{address.slice(-6)}</code> ↗</a></li> : null;
@@ -43,7 +42,6 @@ function Stats() {
     <dl className="stat-grid">
       <div><dt>Games recorded</dt><dd>{typeof games === 'bigint' ? games.toLocaleString() : '—'}</dd></div>
       <div><dt>G$ paid to players</dt><dd className="leaf">{g(paid)}</dd></div>
-      <div><dt>Milestone reward pot</dt><dd>{g(pot)}</dd></div>
       <div><dt>Round fee</dt><dd>{fee === 0n ? 'Free' : g(fee)}</dd></div>
       <div><dt>G$ in bounty pools</dt><dd className="leaf">{g(held)}</dd></div>
       <div><dt>Tournaments run</dt><dd>{typeof tournaments === 'bigint' ? tournaments.toLocaleString() : '—'}</dd></div>
