@@ -11,7 +11,8 @@ import { privateKeyToAccount } from 'viem/accounts';
  * This blocks direct contract calls, replayed results and impossible scores. A modified game client can
  * still report believable scores; full server replay is the planned follow-up.
  */
-export const ticketMaxAgeMs = 30 * 60_000;
+/** Long enough for a marathon round that started on a ticket fetched a little earlier. */
+export const ticketMaxAgeMs = 2 * 60 * 60_000;
 export const signatureLifetimeSeconds = 60 * 60;
 /** Generous upper bound on fruit launched per second in the arena (runtime.ts pacing: ≈4.8/s at its fastest). */
 export const maxFruitPerSecond = 6;

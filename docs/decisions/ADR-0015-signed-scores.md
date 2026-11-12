@@ -18,7 +18,7 @@ Phase 1, which this ADR covers:
   - Each contract accepts a ticket once.
   - `setScoreSigner(0)` turns signing off.
 - **Backend.** `POST /api/v1/score-tickets` issues a stateless ticket: a random 128-bit id plus player and issue time, bound with an HMAC derived from `SCORE_SIGNER_PRIVATE_KEY`. `POST /api/v1/score-tickets/finish` signs the result only if:
-  - the ticket is valid, is for this player and is at most 30 minutes old;
+  - the ticket is valid, is for this player and is at most 2 hours old (raised from 30 minutes on 2026-11-12, after long rounds on a prefetched ticket were refused; the app now refreshes a ticket older than 3 minutes when a round starts);
   - the score matches the arena's scoring rules (10 points per fruit, plus a 5-point combo bonus per fruit for swipes of 3 or more);
   - the fruit count is at most 6 per second since the ticket was issued, plus 5 seconds of slack.
 

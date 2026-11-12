@@ -89,3 +89,11 @@ await it('reads score signing configuration only with a valid key and arcade add
   assert.throws(() => loadConfig({ ...env, SCORE_SIGNER_PRIVATE_KEY: '0x1234' }), /SCORE_SIGNER_PRIVATE_KEY/);
   assert.throws(() => loadConfig({ SCORE_SIGNER_PRIVATE_KEY: key }), /SLYYCE_ARCADE_ADDRESS/);
 });
+
+await it('still signs a long round played on a ticket fetched well before it started', async () => {
+  let now = 1_800_000_000_000;
+  const service = new ScoreSigningService({ privateKey: key, chainId: 42220, arcade, tournament }, () => now);
+  const issued = service.issue(player);
+  now += 45 * 60_000; // ticket waited, then a long, high-scoring round
+  assert.ok((await service.finish(player, issued.token, { score: 10470, bestCombo: 49, fruits: 700 })).gameSignature);
+});

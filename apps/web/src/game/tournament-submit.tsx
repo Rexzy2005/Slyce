@@ -65,6 +65,6 @@ export function TournamentSubmit({ result, ticket }: { result: GameResult; ticke
   return <div className="tournament-submit">
     <button className="button secondary" disabled={!submit.ready || check?.status === 'checking' || !['idle', 'rejected', 'failed'].includes(submit.state.status)} onClick={() => void send(id)}>Submit {result.score.toLocaleString()} to tournament #{id.toString()}</button>
     {(check?.status === 'checking' || ['preparing', 'awaiting_wallet', 'submitted', 'confirming', 'confirmed', 'synchronizing'].includes(submit.state.status)) && <p className="muted fine-print" role="status">Sending…</p>}
-    {(check?.status === 'failed' || ['failed', 'rejected'].includes(submit.state.status)) && <p className="muted fine-print" role="status">Not sent. Tap to try again.</p>}
+    {(check?.status === 'failed' || ['failed', 'rejected'].includes(submit.state.status)) && <p className="muted fine-print" role="status">Not sent{check?.status === 'failed' ? `: ${check.message}` : submit.state.status === 'failed' ? `: ${submit.state.message}` : ''}. Tap to try again.</p>}
   </div>;
 }

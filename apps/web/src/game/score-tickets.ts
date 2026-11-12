@@ -15,8 +15,8 @@ export interface RoundTicket { token: string; ticket: string; issuedAt: number }
 export interface SignedRound { ticket: bigint; deadline: bigint; gameSignature: `0x${string}`; tournamentSignature?: `0x${string}` }
 export class ScoreNotVerified extends Error {}
 
-/** Tickets older than this are replaced before a round starts (the backend accepts them for 30 minutes). */
-const freshForMs = 20 * 60_000;
+/** Tickets older than this are replaced when a round starts, so the round's ticket is recent (the backend accepts 2 hours). */
+const freshForMs = 3 * 60_000;
 
 async function post<T>(path: string, body?: unknown): Promise<T> {
   if (!publicConfig.backendUrl) throw new ScoreNotVerified('Score checks are not available right now.');

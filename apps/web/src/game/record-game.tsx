@@ -77,7 +77,7 @@ export function RecordGame({ result, ticket }: { result: GameResult; ticket?: Pr
   </p>;
   const failed = problem !== null || ['failed', 'rejected'].includes(write.state.status);
   if (failed) return <p className="record-game" role="status">
-    <span className="muted">Score not saved.</span>{' '}
+    <span className="muted">Score not saved{problem ? `: ${problem}` : write.state.status === 'rejected' ? ': the wallet request was declined.' : write.state.status === 'failed' ? `: ${write.state.message}` : '.'}</span>{' '}
     <button className="text-button" disabled={!write.ready} onClick={() => void save()}>Save score</button>
   </p>;
   return <p className="record-game muted" role="status">{write.state.status === 'awaiting_wallet' ? 'Confirm in your wallet to save your score…' : 'Saving your score…'}</p>;
