@@ -127,13 +127,15 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       if (this.fruits.length >= pace.maxFruit) return;
       const width = this.scale.width, height = this.scale.height;
       // Sized to the board's short side so fruit stays easy to hit on phones (≈75px across on a 360px screen).
-      const radius = Math.max(32, Math.min(60, Math.min(width, height) * .11)) * (.85 + Math.random() * .25);
+      const fruitRadius = Math.max(32, Math.min(60, Math.min(width, height) * .11)) * (.85 + Math.random() * .25);
+      const bomb = Math.random() < bombChance[this.settings.difficulty];
+      // Bombs stay a bit smaller than fruit so they remain easy to dodge now that fruit is bigger.
+      const radius = bomb ? fruitRadius * .8 : fruitRadius;
       const body = launchFruit(width, height, radius);
       const speed = pace.speed;
       body.vx *= speed; body.vy *= speed; body.gravity *= speed * speed;
       if (reducedMotion) body.spin *= .3;
       const kind = this.settings.fruits[Math.floor(Math.random() * this.settings.fruits.length)] ?? 'melon';
-      const bomb = Math.random() < bombChance[this.settings.difficulty];
       const image = this.add.image(body.x, body.y, bomb ? 'bomb' : kind + '-whole').setDepth(1).setDisplaySize(radius * 2, radius * 2);
       this.fruits.push({ image, body, kind, radius, cut: false, bomb });
     }
