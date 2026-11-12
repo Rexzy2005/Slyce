@@ -254,6 +254,12 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     if (!profile) return sendJson(response, 404, { error: { code: 'not_found', message: 'The player record was not found.' } } satisfies ErrorResponse);
     return sendJson(response, 200, { data: playerProfileSchema.parse(profile) });
   }
+  // Public sign-up totals for the stats page: counts only, no player data (the admin view has the details).
+  if (pathname === `${apiPrefix}/stats/sign-ups` && request.method === 'GET') {
+    if (!dependencies.playerService) return sendJson(response, 503, { error: { code: 'player_service_not_configured', message: 'The player service is not configured.' } } satisfies ErrorResponse);
+    const growth = await dependencies.playerService.growth(30);
+    return sendJson(response, 200, { data: { total: growth.total, last24h: growth.last24h, last7d: growth.last7d, last30d: growth.last30d } });
+  }
   if (pathname === `${apiPrefix}/admin/players/growth`) {
     if (request.method !== 'GET') return methodNotAllowed(response);
     if (!dependencies.verifier || !dependencies.playerService) {
