@@ -18,10 +18,10 @@ async function loadBoard(period: Period, signal: AbortSignal): Promise<Entry[]> 
   return (await response.json() as { data: Entry[] }).data;
 }
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
-/** A colourful avatar derived from the address, so every player is recognisable without a profile picture. */
+/** A flat-coloured avatar derived from the address, so every player is recognisable without a profile picture. */
 export function avatarFor(address: string): { fruit: string; style: CSSProperties } {
-  const a = parseInt(address.slice(2, 8), 16), b = parseInt(address.slice(8, 14), 16);
-  return { fruit: fruits[a % fruits.length]!, style: { background: `linear-gradient(135deg, hsl(${a % 360} 75% 58%), hsl(${b % 360} 70% 42%))` } };
+  const a = parseInt(address.slice(2, 8), 16);
+  return { fruit: fruits[a % fruits.length]!, style: { background: `hsl(${a % 360} 55% 45%)` } };
 }
 function Avatar({ address, size }: { address: string; size?: 'large' }) {
   const avatar = avatarFor(address);
