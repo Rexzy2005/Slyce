@@ -5,7 +5,7 @@
 
 :global(.app-shell):has(.shopPage),
 :global(.app-shell):has(.shopPage) :global(.tab-bar) {
-  max-width: 1120px;
+  max-width: 980px;
 }
 
 .shopPage :global(.page-heading) {
@@ -22,16 +22,27 @@
   padding: 22px 24px 0;
 }
 
+.shopPage :global(.shop-section > .eyebrow) {
+  margin: 0;
+  padding: 22px 24px 0;
+}
+
+.shopPage :global(.shop-section + .shop-section) {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-vine);
+}
+
 .shopPage :global(.shop-grid) {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  padding: 20px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 14px;
+  padding: 16px 24px 22px;
   margin: 0;
 }
 
 .shopPage :global(.shop-item) {
   min-width: 0;
-  min-height: 100%;
+  min-height: 290px;
   gap: 16px;
   padding: 20px;
   border: 1px solid var(--color-vine);
@@ -49,8 +60,18 @@
 .shopPage :global(.blade-swatch) {
   position: relative;
   height: 12px;
+  width: 100%;
   margin: 4px 0 2px;
   box-shadow: 0 0 20px color-mix(in srgb, var(--color-mango) 15%, transparent);
+}
+
+.shopPage :global(.fruit-swatch) {
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  align-self: center;
+  margin: 2px 0 4px;
 }
 
 .shopPage :global(.shop-item > div) {
@@ -92,11 +113,11 @@
 @media (min-width: 900px) {
   .shopPage { padding: 8px 12px 32px; }
   .shopPage :global(.page-heading) { margin: 24px 0 30px; }
-  .shopPage :global(.shop-grid) { gap: 18px; padding: 22px 26px; }
+  .shopPage :global(.shop-grid) { gap: 16px; padding: 18px 24px 24px; }
   .shopPage :global(.shop-item) { padding: 22px; }
 }
 
-@media (max-width: 900px) {
+@media (min-width: 561px) and (max-width: 899px) {
   .shopPage :global(.shop-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -105,14 +126,15 @@
   .shopPage :global(.page-heading) { margin: 14px 0 20px; }
   .shopPage :global(.page-description) { max-width: 34ch; }
   .shopPage :global(.panel) { border-radius: 17px; }
-  .shopPage :global(.panel > .eyebrow) { padding: 18px 16px 0; }
+  .shopPage :global(.shop-section > .eyebrow) { padding: 18px 16px 0; }
   .shopPage :global(.shop-grid) { grid-template-columns: minmax(0, 1fr); gap: 11px; padding: 14px 12px; }
-  .shopPage :global(.shop-item) { display: grid; grid-template-columns: 1fr auto; gap: 11px 14px; padding: 16px; }
-  .shopPage :global(.blade-swatch) { grid-column: 1 / -1; margin: 0 0 2px; }
+  .shopPage :global(.shop-item) { display: flex; min-height: 0; gap: 12px; padding: 16px; }
+  .shopPage :global(.blade-swatch:not(.fruit-swatch)) { margin: 0 0 2px; }
+  .shopPage :global(.fruit-swatch) { flex: none; align-self: flex-start; }
   .shopPage :global(.shop-item > div) { min-width: 0; }
   .shopPage :global(.shop-item h2) { font-size: 18px; }
   .shopPage :global(.shop-item p) { font-size: 12px; }
   .shopPage :global(.shop-item .price) { margin-top: 10px !important; }
-  .shopPage :global(.shop-item .button) { grid-column: 1 / -1; }
+  .shopPage :global(.shop-item .button) { align-self: stretch; }
   .shopPage :global(.panel > .muted:last-child) { margin: 0 16px 17px; font-size: 11px; }
 }
