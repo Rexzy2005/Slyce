@@ -25,20 +25,20 @@ export const defaultBlade: BladeLook = { glow: 0xffcf72, core: 0xfffdf4 };
 export const categoryLabels: Record<ItemCategory | PowerUpCategory, string> = { lives: 'Power-ups', blade: 'Blade trails', fruit: 'Fruit skins', board: 'Boards' };
 
 export const catalogItems: readonly CatalogItem[] = [
-  { id: 101n, category: 'blade', name: 'Ember blade', description: 'A red-hot trail for every cut.', look: { glow: 0xe5383b, core: 0xffd2c4 } },
-  { id: 102n, category: 'blade', name: 'Sky blade', description: 'Cool blue streaks across the board.', look: { glow: 0x3ba8ff, core: 0xe3f2ff } },
-  { id: 103n, category: 'blade', name: 'Leaf blade', description: 'A fresh green slash, straight from the canopy.', look: { glow: 0x2fbf71, core: 0xdcffe9 } },
-  { id: 104n, category: 'blade', premium: true, name: 'Rainbow blade', description: 'Every swipe cycles through the whole spectrum.', look: { glow: 0xff4fd8, core: 0xffffff, effect: 'rainbow' } },
-  { id: 105n, category: 'blade', premium: true, name: 'Lightning blade', description: 'A crackling electric trail that flickers as you cut.', look: { glow: 0x7df9ff, core: 0xffffff, effect: 'flicker' } },
-  { id: 106n, category: 'blade', premium: true, name: 'Gold blade', description: 'Solid gold. For players who slice in style.', look: { glow: 0xffc21a, core: 0xfff6c8 } },
-  { id: 107n, category: 'blade', premium: true, name: 'Shadow blade', description: 'A deep violet trail with a bright edge.', look: { glow: 0x7b2cff, core: 0xe9d8ff } },
-  { id: 201n, category: 'fruit', premium: true, name: 'Golden fruit', description: 'Every fruit dipped in gold.', look: { skin: ['#fff2a8', '#f2b705', '#8a5a00'] } },
-  { id: 202n, category: 'fruit', premium: true, name: 'Neon fruit', description: 'Glowing pink fruit for night slicing.', look: { skin: ['#ffd1f7', '#ff2fb3', '#5a0047'] } },
-  { id: 203n, category: 'fruit', premium: true, name: 'Frost fruit', description: 'Ice-cold blue skins.', look: { skin: ['#e8fbff', '#6cc9f0', '#1b4f7a'] } },
-  { id: 301n, category: 'board', name: 'Marble board', description: 'Cool white stone with grey veins.', look: { base: '#d9d6cf', light: '#f3f1ec', dark: '#7d7a73', grain: '#a9a59c' } },
-  { id: 302n, category: 'board', name: 'Midnight board', description: 'A dark slate board that makes colours pop.', look: { base: '#2a2f3a', light: '#3d4454', dark: '#12151c', grain: '#555e72' } },
-  { id: 303n, category: 'board', premium: true, name: 'Bamboo board', description: 'Light, warm bamboo strips.', look: { base: '#d8b46a', light: '#ecd39a', dark: '#8a6a2c', grain: '#b8924a' } },
-  { id: extraLivesItemId, category: 'lives', name: '3 extra lives', description: 'Out of lives? Keep your round going. Normal play only, not tournaments.', look: { lives: 3 } },
+  { id: 101n, category: 'blade', name: 'Ember blade', description: 'A hot red trail.', look: { glow: 0xe5383b, core: 0xffd2c4 } },
+  { id: 102n, category: 'blade', name: 'Sky blade', description: 'A cool blue trail.', look: { glow: 0x3ba8ff, core: 0xe3f2ff } },
+  { id: 103n, category: 'blade', name: 'Leaf blade', description: 'A fresh green slash.', look: { glow: 0x2fbf71, core: 0xdcffe9 } },
+  { id: 104n, category: 'blade', premium: true, name: 'Rainbow blade', description: 'A full spectrum on every swipe.', look: { glow: 0xff4fd8, core: 0xffffff, effect: 'rainbow' } },
+  { id: 105n, category: 'blade', premium: true, name: 'Lightning blade', description: 'An electric, flickering trail.', look: { glow: 0x7df9ff, core: 0xffffff, effect: 'flicker' } },
+  { id: 106n, category: 'blade', premium: true, name: 'Gold blade', description: 'A golden trail for every cut.', look: { glow: 0xffc21a, core: 0xfff6c8 } },
+  { id: 107n, category: 'blade', premium: true, name: 'Shadow blade', description: 'Violet glow. Bright edge.', look: { glow: 0x7b2cff, core: 0xe9d8ff } },
+  { id: 201n, category: 'fruit', premium: true, name: 'Golden fruit', description: 'A golden finish for every fruit.', look: { skin: ['#fff2a8', '#f2b705', '#8a5a00'] } },
+  { id: 202n, category: 'fruit', premium: true, name: 'Neon fruit', description: 'Pink skins with a neon glow.', look: { skin: ['#ffd1f7', '#ff2fb3', '#5a0047'] } },
+  { id: 203n, category: 'fruit', premium: true, name: 'Frost fruit', description: 'Cool blue, icy skins.', look: { skin: ['#e8fbff', '#6cc9f0', '#1b4f7a'] } },
+  { id: 301n, category: 'board', name: 'Marble board', description: 'White marble with grey veining.', look: { base: '#d9d6cf', light: '#f3f1ec', dark: '#7d7a73', grain: '#a9a59c' } },
+  { id: 302n, category: 'board', name: 'Midnight board', description: 'Dark slate that makes fruit pop.', look: { base: '#2a2f3a', light: '#3d4454', dark: '#12151c', grain: '#555e72' } },
+  { id: 303n, category: 'board', premium: true, name: 'Bamboo board', description: 'Warm bamboo grain.', look: { base: '#d8b46a', light: '#ecd39a', dark: '#8a6a2c', grain: '#b8924a' } },
+  { id: extraLivesItemId, category: 'lives', name: '3 extra lives', description: 'Adds 3 lives in Normal play. Not for tournaments.', look: { lives: 3 } },
 ];
 
 const equippedKey = (category: ItemCategory) => category === 'blade' ? 'slyce.blade.equipped' : `slyyce.${category}.equipped`;

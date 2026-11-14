@@ -347,6 +347,7 @@ body { font-weight:500; } button,input,select,textarea { font-family:inherit; }
 @media(prefers-reduced-motion:reduce) { .mobile-menu[open] { animation:none; }.lounge-links>a { transition:none; }.lounge-links>a:hover { transform:none; } }
 
 /* Borderless surfaces: separation comes from color, spacing and elevation. */
+.shop-market,.shop-item,.shop-art,.shop-categories a,.shop-art-edition,.shop-owned { border:0; }
 .panel,.wallet-panel,.feature-card,.feature-icon,.feature-card::before,.hero,.status-card,.bottom-note,.empty-symbol,.challenge-card,.challenge-icon,.locker-card,.wallet-popover,.lobby-hero,.lobby-howto,.lobby-feature-card,.lobby-feature-icon,.lounge-play,.lounge-balance,.lounge-guide,.lounge-links>a,.market-board,.market-invite,.market-benefits article,.experience-cards article,.pause-settings,.reference-playground .hud-reading { border:0; }
 .lounge-specs,.lounge-balance>a,.lobby-features,.lobby-preview-note,.mobile-menu-home,.market-header,.market-footer,.market-strip,.arcade-header,.arcade-rail { border:0; }
 .lounge-guide,.status-card { background:var(--color-canopy); }

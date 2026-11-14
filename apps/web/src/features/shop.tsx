@@ -62,11 +62,13 @@ function Market() {
       // Items the owner hasn't listed on-chain yet stay hidden unless the player already owns one.
       const listed = items.map((item, index) => ({ item, index })).filter(({ item }) => item.category === category && (item.price !== undefined || item.owned));
       return <div key={category} id={'market-' + category} className={'shop-section shop-section-' + category}>
-        <p className="eyebrow">{categoryLabels[category].toUpperCase()} · {category === 'lives' ? 'USED UP IN PLAY' : 'COSMETIC'}</p>
+        <p className="eyebrow">{categoryLabels[category].toUpperCase()}</p>
         <ul className="shop-grid">{listed.map(({ item, index }) => <li key={item.id.toString()} className={item.premium ? 'shop-item premium' : 'shop-item'}>
           <div className={'shop-art shop-art-' + item.category} aria-hidden="true">
             <span className="shop-art-glow" />
-            <span className={'shop-preview shop-preview-' + item.category} style={{ background: itemPreview(item) }} />
+            {item.category === 'lives'
+              ? <Icon name="heart" size={70} className="shop-life-heart" />
+              : <span className={'shop-preview shop-preview-' + item.category} style={{ background: itemPreview(item) }} />}
             <span className="shop-art-edition">{item.premium ? 'PREMIUM' : categoryLabels[item.category].toUpperCase()}</span>
           </div>
           <div className="shop-item-copy">
@@ -99,6 +101,6 @@ function Market() {
         </li>)}</ul>
       </div>;
     })}
-    <p className="muted shop-market-note">Paid in G$ and saved to your account. A new item is equipped straight away and shows in your next round.</p>
+    <p className="muted shop-market-note">Paid in G$. New cosmetics equip for your next run.</p>
   </section>;
 }
