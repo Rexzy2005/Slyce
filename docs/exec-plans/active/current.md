@@ -48,13 +48,14 @@ None. Remaining: confirm a real round saves on a phone.
 
 ### Objective
 
-Make `/shop` a more memorable storefront, redesign the Profile arcade wallet card, and let players inspect and equip their owned cosmetics in a loadout modal. Use the pinned lucide-react icons consistently across the app UI.
+Make `/shop` a more memorable storefront, redesign the Profile arcade wallet card, and let players inspect and equip their owned cosmetics in a loadout modal. Apply the borderless surface rule across player and admin product UI, using color, spacing, depth and focus rings for definition. Use the pinned lucide-react icons consistently across the app UI.
 
 ### Scope and progress
 
 - [x] Add category navigation and visual previews tailored to blades, fruit, boards and extra lives without changing authoritative pricing, ownership or purchase behavior.
 - [x] Redesign the Profile wallet card and add a native, keyboard-dismissable loadout dialog with equip controls.
 - [x] Replace UI emoji/glyph pictograms with the shared Lucide icon component and retain the direct Lucide imports in the admin UI.
+- [x] Apply borderless card, button and navigation styling across shared, Profile, Shop and Admin UI surfaces.
 - [ ] Complete web type checking and visual acceptance.
 
 ### Acceptance criteria

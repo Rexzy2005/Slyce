@@ -254,6 +254,30 @@
   .loadoutModalFooter span { text-align: left; }
 }
 
+/* Product-wide borderless surfaces: keep Profile separation in color and elevation. */
+.profilePage :global(.page-heading), .walletCard, .featureHeading .featureMark, .panel,
+.practiceStats div, .collectionMessage, .loadoutCount, .loadoutPreview, .loadoutMore,
+.openLoadout, .loadoutModal, .loadoutModalHeading, .closeLoadout, .loadoutItem,
+.loadoutItemArt, .loadoutEquip, .recordCard :global(.player-card > div), .recordLink {
+  border: 0;
+}
+.walletCard, .panel, .loadoutModal {
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--color-night) 35%, transparent), inset 0 1px 0 color-mix(in srgb, white 4%, transparent);
+}
+.openLoadout, .loadoutEquip, .closeLoadout, .recordLink {
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--color-night) 45%, transparent), 0 9px 18px color-mix(in srgb, black 20%, transparent);
+}
+.openLoadout { background: linear-gradient(180deg, #ffd05f, var(--color-mango) 58%, #e99d12); color: var(--color-night); }
+.openLoadout:hover:not(:disabled) { background: linear-gradient(180deg, #ffda7e, var(--color-mango) 58%, #e99d12); }
+.loadoutEquip { background: linear-gradient(180deg, #354a39, #263a2c); }
+.loadoutEquip[aria-pressed="true"] { background: linear-gradient(180deg, #31593b, #203c29); }
+.loadoutModalHeading { border-bottom: 0; }
+.loadoutModalFooter { border-top: 0; }
+.walletCard :global(.wallet-panel) { border: 0; }
+@media (max-width: 720px) {
+  .walletCard :global(.wallet-panel) { border-top: 0; }
+}
+
 @media (max-width: 350px) {
   .recordCard :global(.player-card) { grid-template-columns: minmax(0, 1fr); }
   .practiceStats { grid-template-columns: minmax(0, 1fr); }

@@ -70,6 +70,30 @@
   :global(.admin-shell) :global(.admin-main) { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
 }
 
+/* Keep Admin aligned with the product-wide borderless surface rule. */
+:global(.admin-soon), :global(.admin-live), :global(.admin-icon-button),
+:global(.admin-hero), :global(.admin-metric), :global(.admin-metric-icon),
+:global(.admin-panel), :global(.admin-panel-status), :global(.admin-empty),
+:global(.admin-empty svg), :global(.admin-quick-action), :global(.admin-access-card),
+:global(.admin-auth-modal), :global(.admin-modal-close), :global(.admin-email-input),
+:global(.admin-secure-note), :global(.admin-nav-item) {
+  border: 0;
+}
+:global(.admin-topbar), :global(.admin-empty), :global(.admin-quick-action), :global(.admin-footer) {
+  border-color: transparent;
+}
+:global(.admin-live), :global(.admin-soon), :global(.admin-icon-button),
+:global(.admin-modal-close), :global(.admin-nav-item[aria-current="page"]) {
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--color-night) 28%, transparent);
+}
+:global(.admin-metric), :global(.admin-panel), :global(.admin-access-card), :global(.admin-auth-modal) {
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--color-night) 35%, transparent), inset 0 1px 0 color-mix(in srgb, white 4%, transparent);
+}
+
+@media (max-width: 640px) {
+  :global(.admin-nav) { border-top: 0; }
+}
+
 /* Slyyce control-room visual system. */
 :global(.admin-shell) {
   background:
