@@ -278,6 +278,68 @@
   .walletCard :global(.wallet-panel) { border-top: 0; }
 }
 
+.walletCard {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 87% 0%, color-mix(in srgb, var(--color-mango) 20%, transparent), transparent 34%),
+    radial-gradient(ellipse at 3% 100%, color-mix(in srgb, var(--color-leaf) 13%, transparent), transparent 45%),
+    linear-gradient(118deg, #15291e 0%, var(--color-canopy) 58%, #0b1711 100%);
+  box-shadow: 0 20px 44px color-mix(in srgb, var(--color-night) 48%, transparent), inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+}
+.walletCard::after {
+  position: absolute;
+  z-index: -1;
+  top: -84px;
+  right: -70px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-mango) 11%, transparent), transparent 69%);
+  content: '';
+  pointer-events: none;
+}
+.featureHeading, .walletCard :global(.wallet-panel) { position: relative; z-index: 1; }
+.featureHeading .featureMark {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-mango) 25%, var(--color-canopy)), color-mix(in srgb, var(--color-night) 72%, var(--color-canopy)));
+  box-shadow: 0 10px 25px color-mix(in srgb, var(--color-mango) 13%, transparent), inset 0 1px 0 color-mix(in srgb, white 15%, transparent);
+}
+.walletCard :global(.wallet-panel) { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 16px; }
+.walletCard :global(.wallet-panel-balance) { min-width: 0; }
+.walletCard :global(.wallet-panel .balance) {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: clamp(23px, 3vw, 34px);
+  line-height: 1.1;
+  text-shadow: 0 4px 20px color-mix(in srgb, var(--color-mango) 17%, transparent);
+}
+.walletCard :global(.wallet-panel-account) { min-width: 0; flex-wrap: nowrap; justify-content: flex-end; }
+.walletCard :global(.wallet-account-identity) { display: grid; min-width: 0; gap: 5px; }
+.walletCard :global(.wallet-account-label) { color: var(--color-mist); font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.walletCard :global(.wallet-account-email) {
+  display: block;
+  max-width: min(25ch, 100%);
+  overflow: hidden;
+  color: var(--color-cream);
+  font-size: 11px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.walletCard :global(.wallet-panel-account .button) { flex: none; border-radius: 11px; }
+
+@media (max-width: 720px) {
+  .walletCard { gap: 18px; padding: 19px; }
+  .walletCard :global(.wallet-panel) { grid-template-columns: minmax(0, 1fr); gap: 17px; }
+  .walletCard :global(.wallet-panel-account) { justify-content: space-between; }
+  .walletCard :global(.wallet-account-email) { max-width: min(34ch, 58vw); }
+}
+@media (max-width: 380px) {
+  .walletCard :global(.wallet-panel-account) { align-items: flex-start; flex-direction: column; }
+  .walletCard :global(.wallet-account-email) { max-width: calc(100vw - 76px); }
+}
+
 @media (max-width: 350px) {
   .recordCard :global(.player-card) { grid-template-columns: minmax(0, 1fr); }
   .practiceStats { grid-template-columns: minmax(0, 1fr); }
