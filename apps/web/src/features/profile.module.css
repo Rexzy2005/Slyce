@@ -1,12 +1,13 @@
 .profilePage {
   min-width: 0;
+  padding-bottom: 18px;
 }
 
 .profileCards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
-  gap: 16px;
+  gap: 18px;
   min-width: 0;
 }
 
@@ -23,7 +24,17 @@
 .panel {
   min-width: 0;
   height: 100%;
+  padding: 22px 24px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-canopy) 96%, var(--color-vine)), var(--color-canopy));
 }
+
+.panel :global(.eyebrow) { margin: 0 0 14px; }
+.panel :global(.stat-grid) { margin: 0; gap: 10px; }
+.panel :global(.data-list) { padding: 0; margin: 0; }
+.panel :global(.data-list li:last-child) { border-bottom: 0; }
+.profilePage :global(.install-control) { margin: 0; padding: 18px 20px; border: 1px solid var(--color-vine); border-radius: 16px; background: color-mix(in srgb, var(--color-mango) 7%, var(--color-canopy)); }
+.profilePage :global(.install-control p) { margin: 0; color: var(--color-mist); }
+.profilePage :global(.install-control .button) { width: 100%; justify-content: center; }
 
 .recordCard {
   grid-column: 1 / -1;
@@ -31,7 +42,7 @@
 
 .recordCard :global(.player-card) {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-inline: 24px;
+  margin: 12px 0;
 }
 
 .recordCard :global(.player-card > div) {
@@ -40,11 +51,18 @@
 }
 
 :global(.app-shell):has(.profilePage) {
-  max-width: 1040px;
+  max-width: 1120px;
 }
 
 :global(.app-shell):has(.profilePage) :global(.tab-bar) {
-  max-width: 1040px;
+  max-width: 1120px;
+}
+
+@media (min-width: 900px) {
+  .profilePage { padding: 8px 12px 28px; }
+  .profilePage :global(.page-heading) { margin: 24px 0 28px; }
+  .profileCards { gap: 20px; }
+  .walletCard :global(.wallet-panel) { padding: 26px 30px; }
 }
 
 @media (max-width: 720px) {
@@ -52,6 +70,8 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
+
+  .panel { padding: 20px 18px; }
 
   .walletCard,
   .recordCard {
@@ -65,12 +85,17 @@
   .recordCard :global(.player-card) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    margin-inline: 16px;
+    margin-inline: 0;
   }
 
   .recordCard :global(.player-card > div) {
     padding: 12px;
   }
+}
+
+@media (max-width: 420px) {
+  .panel { padding: 18px 16px; }
+  .profilePage :global(.install-control) { padding: 16px; }
 }
 
 @media (max-width: 360px) {

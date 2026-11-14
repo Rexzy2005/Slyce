@@ -1,0 +1,118 @@
+.shopPage {
+  min-width: 0;
+  padding-bottom: 24px;
+}
+
+:global(.app-shell):has(.shopPage),
+:global(.app-shell):has(.shopPage) :global(.tab-bar) {
+  max-width: 1120px;
+}
+
+.shopPage :global(.page-heading) {
+  margin: 20px 0 24px;
+}
+
+.shopPage :global(.panel) {
+  border-radius: 20px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-canopy) 96%, var(--color-vine)), var(--color-canopy));
+}
+
+.shopPage :global(.panel > .eyebrow) {
+  margin: 0;
+  padding: 22px 24px 0;
+}
+
+.shopPage :global(.shop-grid) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 20px 24px;
+  margin: 0;
+}
+
+.shopPage :global(.shop-item) {
+  min-width: 0;
+  min-height: 100%;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--color-vine);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-night) 76%, var(--color-canopy));
+  transition: border-color .2s ease, transform .2s ease, background .2s ease;
+}
+
+.shopPage :global(.shop-item:hover) {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-mango) 52%, var(--color-vine));
+  background: color-mix(in srgb, var(--color-night) 65%, var(--color-canopy));
+}
+
+.shopPage :global(.blade-swatch) {
+  position: relative;
+  height: 12px;
+  margin: 4px 0 2px;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-mango) 15%, transparent);
+}
+
+.shopPage :global(.shop-item > div) {
+  flex: 1;
+}
+
+.shopPage :global(.shop-item h2) {
+  margin-bottom: 7px;
+  font-size: 20px;
+}
+
+.shopPage :global(.shop-item p) {
+  line-height: 1.55;
+}
+
+.shopPage :global(.shop-item .price) {
+  display: inline-flex;
+  margin-top: 14px !important;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-sky) 24%, var(--color-vine));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-sky) 8%, transparent);
+  font-size: 13px;
+}
+
+.shopPage :global(.shop-item .button) {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+}
+
+.shopPage :global(.panel > .muted:last-child) {
+  margin: 0 24px 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-vine);
+  font-size: 12px;
+}
+
+@media (min-width: 900px) {
+  .shopPage { padding: 8px 12px 32px; }
+  .shopPage :global(.page-heading) { margin: 24px 0 30px; }
+  .shopPage :global(.shop-grid) { gap: 18px; padding: 22px 26px; }
+  .shopPage :global(.shop-item) { padding: 22px; }
+}
+
+@media (max-width: 900px) {
+  .shopPage :global(.shop-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .shopPage { padding-bottom: 10px; }
+  .shopPage :global(.page-heading) { margin: 14px 0 20px; }
+  .shopPage :global(.page-description) { max-width: 34ch; }
+  .shopPage :global(.panel) { border-radius: 17px; }
+  .shopPage :global(.panel > .eyebrow) { padding: 18px 16px 0; }
+  .shopPage :global(.shop-grid) { grid-template-columns: minmax(0, 1fr); gap: 11px; padding: 14px 12px; }
+  .shopPage :global(.shop-item) { display: grid; grid-template-columns: 1fr auto; gap: 11px 14px; padding: 16px; }
+  .shopPage :global(.blade-swatch) { grid-column: 1 / -1; margin: 0 0 2px; }
+  .shopPage :global(.shop-item > div) { min-width: 0; }
+  .shopPage :global(.shop-item h2) { font-size: 18px; }
+  .shopPage :global(.shop-item p) { font-size: 12px; }
+  .shopPage :global(.shop-item .price) { margin-top: 10px !important; }
+  .shopPage :global(.shop-item .button) { grid-column: 1 / -1; }
+  .shopPage :global(.panel > .muted:last-child) { margin: 0 16px 17px; font-size: 11px; }
+}
