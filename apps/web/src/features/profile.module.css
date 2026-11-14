@@ -1,105 +1,216 @@
 .profilePage {
+  --profile-line: color-mix(in srgb, var(--color-vine) 88%, transparent);
   min-width: 0;
-  padding-bottom: 18px;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-bottom: 28px;
+}
+
+.profilePage :global(.page-heading) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 14px 0 18px;
+  padding: 28px 30px;
+  border: 1px solid var(--profile-line);
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 91% 5%, color-mix(in srgb, var(--color-mango) 13%, transparent), transparent 42%), linear-gradient(120deg, var(--color-canopy), color-mix(in srgb, var(--color-canopy) 58%, var(--color-night)));
+}
+
+.profilePage :global(.page-heading)::after {
+  position: absolute;
+  z-index: -1;
+  top: -100px;
+  right: -24px;
+  width: 270px;
+  height: 270px;
+  border: 1px solid color-mix(in srgb, var(--color-mango) 16%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 24px color-mix(in srgb, var(--color-mango) 3%, transparent), 0 0 0 54px color-mix(in srgb, var(--color-mango) 2%, transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.profilePage :global(.page-heading .eyebrow) {
+  margin-bottom: 11px;
+  color: var(--color-mango);
+}
+
+.profilePage :global(.page-heading h1) {
+  max-width: 680px;
+  margin: 0 0 9px;
+  font-size: clamp(34px, 5vw, 54px);
+  line-height: 1.02;
+}
+
+.profilePage :global(.page-description) {
+  max-width: 48ch;
+  margin: 0;
+  font-size: 14px;
+}
+
+:global(.app-shell):has(.profilePage),
+:global(.app-shell):has(.profilePage) :global(.tab-bar) {
+  max-width: 1040px;
 }
 
 .profileCards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
 }
 
 .walletCard {
+  position: relative;
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 22px 26px;
+  border: 1px solid color-mix(in srgb, var(--color-mango) 32%, var(--color-vine));
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 0% 100%, color-mix(in srgb, var(--color-leaf) 10%, transparent), transparent 40%), linear-gradient(110deg, color-mix(in srgb, var(--color-canopy) 78%, var(--color-mango)), var(--color-canopy) 52%);
+}
+
+.featureHeading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
 }
+
+.featureHeading .featureMark {
+  display: grid;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-mango) 42%, var(--color-vine));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-night) 66%, transparent);
+  color: var(--color-cream);
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: -.1em;
+}
+
+.featureMark span { color: var(--color-mango); }
+.featureHeading :global(.eyebrow) { margin: 0 0 3px; color: var(--color-mango); }
+.featureHeading h2 { margin: 0; font-size: 20px; letter-spacing: -.03em; }
 
 .walletCard :global(.wallet-panel) {
-  height: 100%;
+  display: flex;
+  min-width: 0;
+  min-height: 98px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
   margin: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--profile-line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-night) 60%, transparent);
 }
+
+.walletCard :global(.wallet-panel > div:first-child) { min-width: 0; }
+.walletCard :global(.wallet-panel .eyebrow) { color: var(--color-mist); }
+.walletCard :global(.wallet-panel .balance) { margin: 5px 0 0; color: var(--color-mango); font-size: clamp(20px, 3vw, 28px); font-weight: 800; letter-spacing: -.04em; }
+.walletCard :global(.wallet-panel-account) { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.walletCard :global(.wallet-panel-account p) { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 11px; }
+.walletCard :global(.wallet-panel-account .button) { min-height: 38px; padding: 8px 13px; }
+.walletCard :global(.wallet-panel > p[role]) { flex-basis: 100%; margin: 0; font-size: 12px; }
 
 .panel {
+  position: relative;
   min-width: 0;
   height: 100%;
-  padding: 22px 24px;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--color-canopy) 96%, var(--color-vine)), var(--color-canopy));
+  padding: 22px 23px;
+  border: 1px solid var(--profile-line);
+  border-radius: 19px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-canopy) 95%, var(--color-vine)), var(--color-canopy));
 }
 
-.panel :global(.eyebrow) { margin: 0 0 14px; }
-.panel :global(.stat-grid) { margin: 0; gap: 10px; }
-.panel :global(.data-list) { padding: 0; margin: 0; }
-.panel :global(.data-list li:last-child) { border-bottom: 0; }
-.profilePage :global(.install-control) { margin: 0; padding: 18px 20px; border: 1px solid var(--color-vine); border-radius: 16px; background: color-mix(in srgb, var(--color-mango) 7%, var(--color-canopy)); }
-.profilePage :global(.install-control p) { margin: 0; color: var(--color-mist); }
-.profilePage :global(.install-control .button) { width: 100%; justify-content: center; }
+.sectionHeading { margin-bottom: 15px; }
+.sectionHeading :global(.eyebrow) { margin: 0 0 5px; color: var(--color-mist); }
+.sectionHeading h2 { margin: 0; font-size: 20px; line-height: 1.15; letter-spacing: -.035em; }
+.sectionCopy { margin: -5px 0 17px; color: var(--color-mist); font-size: 12px; line-height: 1.5; }
 
-.recordCard {
-  grid-column: 1 / -1;
-}
+.nicknamePanel { grid-column: span 1; }
+.nicknamePanel :global(.nickname-form label) { color: var(--color-mist); }
+.nicknamePanel :global(.nickname-row input) { background: color-mix(in srgb, var(--color-night) 80%, transparent); }
+.nicknamePanel :global(.nickname-row .button) { min-width: 78px; }
 
-.recordCard :global(.player-card) {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 12px 0;
-}
+.installPanel { grid-column: span 1; background: radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--color-sky) 9%, transparent), transparent 50%), var(--color-canopy); }
+.installPanel :global(.install-control) { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; }
+.installPanel :global(.install-control .button) { min-height: 42px; }
+.installPanel :global(.install-control > p) { flex-basis: 100%; margin: 0; color: var(--color-mist); font-size: 12px; line-height: 1.5; }
 
-.recordCard :global(.player-card > div) {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
+.practicePanel { grid-column: span 1; }
+.practiceStats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; }
+.practiceStats div { min-width: 0; padding: 13px 14px; border: 1px solid var(--profile-line); border-radius: 13px; background: color-mix(in srgb, var(--color-night) 60%, transparent); }
+.practiceStats dt { font-size: 9px; letter-spacing: .13em; }
+.practiceStats dd { margin-top: 7px; font-size: 22px; }
 
-:global(.app-shell):has(.profilePage) {
-  max-width: 1120px;
-}
+.collectionPanel { grid-column: span 1; }
+.collectionPanel :global(.data-list) { margin: 0; padding: 0; }
+.collectionPanel :global(.data-list li) { align-items: flex-start; padding: 15px 2px; }
+.collectionPanel :global(.data-list li:last-child) { border-bottom: 0; }
+.collectionPanel :global(.data-list small) { margin-top: 4px; font-size: 11px; line-height: 1.45; }
+.collectionMessage { margin: 0; padding: 16px; border: 1px dashed color-mix(in srgb, var(--color-vine) 90%, transparent); border-radius: 13px; color: var(--color-mist); font-size: 12px; line-height: 1.55; }
+.collectionPanel :global(.empty-state) { padding: 14px 0 0; }
+.collectionPanel :global(.empty-symbol) { width: 48px; height: 48px; margin-bottom: 14px; border-radius: 15px; }
+.collectionPanel :global(.empty-symbol svg) { width: 22px; height: 22px; }
+.collectionPanel :global(.empty-state h2) { margin-bottom: 7px; font-size: 17px; }
+.collectionPanel :global(.empty-state p) { margin-bottom: 0; font-size: 12px; }
 
-:global(.app-shell):has(.profilePage) :global(.tab-bar) {
-  max-width: 1120px;
-}
+.recordCard { grid-column: 1 / -1; }
+.recordHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+.recordHeading .sectionHeading { margin: 0; }
+.recordCard :global(.player-card) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.recordCard :global(.player-card > div) { min-width: 0; padding: 16px; border: 1px solid var(--profile-line); background: color-mix(in srgb, var(--color-night) 60%, transparent); }
+.recordCard :global(.player-card dd) { overflow-wrap: anywhere; font-size: clamp(17px, 2vw, 24px); }
+.recordCard :global(.player-card small) { display: block; margin-top: 6px; font-size: 10px; line-height: 1.4; }
+.recordLink { display: inline-flex; flex: none; align-items: center; gap: 7px; min-height: 38px; padding: 0 12px; border: 1px solid var(--profile-line); border-radius: 999px; color: var(--color-mango); font-size: 11px; font-weight: 700; }
+.recordLink:hover { border-color: var(--color-mango); background: color-mix(in srgb, var(--color-mango) 8%, transparent); }
 
 @media (min-width: 900px) {
-  .profilePage { padding: 8px 12px 28px; }
-  .profilePage :global(.page-heading) { margin: 24px 0 28px; }
-  .profileCards { gap: 20px; }
-  .walletCard :global(.wallet-panel) { padding: 26px 30px; }
+  .profilePage { padding: 8px 12px 32px; }
+  .profilePage :global(.page-heading) { margin: 14px 0 20px; padding: 34px 36px; }
+  .profileCards { gap: 18px; }
+  .walletCard { padding: 24px 30px; }
+  .panel { padding: 25px 27px; }
 }
 
 @media (max-width: 720px) {
-  .profileCards {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-  }
-
-  .panel { padding: 20px 18px; }
-
-  .walletCard,
-  .recordCard {
-    grid-column: auto;
-  }
-
-  .walletCard :global(.wallet-panel) {
-    align-items: flex-start;
-  }
-
-  .recordCard :global(.player-card) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-inline: 0;
-  }
-
-  .recordCard :global(.player-card > div) {
-    padding: 12px;
-  }
+  .profilePage :global(.page-heading) { padding: 23px 21px; border-radius: 19px; }
+  .profilePage :global(.page-heading)::after { top: -75px; right: -120px; width: 220px; height: 220px; }
+  .profilePage :global(.page-heading h1) { max-width: 14ch; font-size: clamp(32px, 8vw, 42px); }
+  .profileCards { grid-template-columns: minmax(0, 1fr); gap: 13px; }
+  .walletCard { grid-column: auto; grid-template-columns: minmax(0, 1fr); gap: 15px; padding: 18px; border-radius: 18px; }
+  .featureMark { width: 44px; height: 44px; border-radius: 13px; font-size: 23px; }
+  .walletCard :global(.wallet-panel) { min-height: 0; padding: 15px; }
+  .panel { padding: 19px 18px; border-radius: 17px; }
+  .nicknamePanel, .installPanel, .practicePanel, .collectionPanel, .recordCard { grid-column: auto; }
+  .recordHeading { align-items: flex-start; }
+  .recordCard :global(.player-card) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .recordCard :global(.player-card > div) { padding: 13px; }
 }
 
 @media (max-width: 420px) {
-  .panel { padding: 18px 16px; }
-  .profilePage :global(.install-control) { padding: 16px; }
+  .profilePage :global(.page-heading) { margin-top: 8px; padding: 21px 18px; }
+  .profilePage :global(.page-description) { font-size: 13px; }
+  .walletCard :global(.wallet-panel) { align-items: flex-start; flex-direction: column; }
+  .walletCard :global(.wallet-panel-account) { justify-content: flex-start; }
+  .recordHeading { flex-direction: column; align-items: stretch; }
+  .recordLink { align-self: flex-start; }
 }
 
-@media (max-width: 360px) {
-  .recordCard :global(.player-card) {
-    grid-template-columns: minmax(0, 1fr);
-  }
+@media (max-width: 350px) {
+  .recordCard :global(.player-card) { grid-template-columns: minmax(0, 1fr); }
+  .practiceStats { grid-template-columns: minmax(0, 1fr); }
 }
