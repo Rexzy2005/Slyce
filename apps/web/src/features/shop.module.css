@@ -1,140 +1,197 @@
 .shopPage {
   min-width: 0;
-  padding-bottom: 24px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding-bottom: 28px;
 }
 
 :global(.app-shell):has(.shopPage),
-:global(.app-shell):has(.shopPage) :global(.tab-bar) {
-  max-width: 980px;
-}
+:global(.app-shell):has(.shopPage) :global(.tab-bar) { max-width: 980px; }
 
 .shopPage :global(.page-heading) {
-  margin: 20px 0 24px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 14px 0 18px;
+  padding: 31px 32px;
+  border: 1px solid color-mix(in srgb, var(--color-mango) 30%, var(--color-vine));
+  border-radius: 23px;
+  background: radial-gradient(ellipse at 92% 3%, color-mix(in srgb, var(--color-mango) 15%, transparent), transparent 37%), radial-gradient(ellipse at 78% 120%, color-mix(in srgb, var(--color-leaf) 10%, transparent), transparent 43%), linear-gradient(120deg, var(--color-canopy), color-mix(in srgb, var(--color-canopy) 54%, var(--color-night)));
 }
 
-.shopPage :global(.panel) {
-  border-radius: 20px;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--color-canopy) 96%, var(--color-vine)), var(--color-canopy));
+.shopPage :global(.page-heading)::after {
+  position: absolute;
+  z-index: -1;
+  top: -118px;
+  right: 4%;
+  width: 290px;
+  height: 290px;
+  border: 1px solid color-mix(in srgb, var(--color-mango) 15%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 24px color-mix(in srgb, var(--color-mango) 3%, transparent), 0 0 0 56px color-mix(in srgb, var(--color-mango) 2%, transparent);
+  content: '';
+  pointer-events: none;
 }
 
-.shopPage :global(.panel > .eyebrow) {
-  margin: 0;
-  padding: 22px 24px 0;
+.shopPage :global(.page-heading .eyebrow) { margin-bottom: 11px; color: var(--color-mango); }
+.shopPage :global(.page-heading h1) { max-width: 720px; margin: 0 0 10px; font-size: clamp(34px, 5vw, 55px); line-height: 1.02; }
+.shopPage :global(.page-description) { max-width: 48ch; margin: 0; font-size: 14px; }
+
+.shopPage :global(.shop-market) {
+  overflow: visible;
+  border: 1px solid var(--color-vine);
+  border-radius: 22px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--color-canopy) 97%, var(--color-vine)), var(--color-canopy));
 }
 
-.shopPage :global(.shop-section > .eyebrow) {
-  margin: 0;
-  padding: 22px 24px 0;
+.shopPage :global(.shop-categories) {
+  position: sticky;
+  top: 55px;
+  z-index: 8;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--color-vine);
+  background: color-mix(in srgb, var(--color-canopy) 95%, transparent);
+  backdrop-filter: blur(14px);
+  scrollbar-width: none;
 }
 
-.shopPage :global(.shop-section + .shop-section) {
-  margin-top: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-vine);
+.shopPage :global(.shop-categories::-webkit-scrollbar) { display: none; }
+.shopPage :global(.shop-categories a) {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--color-vine);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-night) 55%, transparent);
+  color: var(--color-cream);
+  font-size: 11px;
+  font-weight: 700;
+  transition: border-color .18s ease, background .18s ease, color .18s ease;
 }
+
+.shopPage :global(.shop-categories a span) { color: var(--color-mango); font-size: 13px; }
+.shopPage :global(.shop-categories a:hover) { border-color: var(--color-mango); background: color-mix(in srgb, var(--color-mango) 9%, var(--color-night)); color: var(--color-mango); }
+
+.shopPage :global(.shop-section) { scroll-margin-top: 112px; padding-top: 4px; }
+.shopPage :global(.shop-section + .shop-section) { margin-top: 7px; border-top: 1px solid var(--color-vine); }
+.shopPage :global(.shop-section > .eyebrow) { margin: 0; padding: 23px 24px 0; color: var(--color-mist); }
+.shopPage :global(.shop-section-lives > .eyebrow) { color: var(--color-melon); }
+.shopPage :global(.shop-section-blade > .eyebrow) { color: var(--color-sky); }
+.shopPage :global(.shop-section-fruit > .eyebrow) { color: var(--color-mango); }
+.shopPage :global(.shop-section-board > .eyebrow) { color: var(--color-leaf); }
 
 .shopPage :global(.shop-grid) {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  gap: 14px;
-  padding: 16px 24px 22px;
+  gap: 15px;
   margin: 0;
+  padding: 16px 24px 24px;
+  list-style: none;
 }
 
 .shopPage :global(.shop-item) {
+  position: relative;
+  display: flex;
   min-width: 0;
-  min-height: 290px;
-  gap: 16px;
-  padding: 20px;
-  border: 1px solid var(--color-vine);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--color-night) 76%, var(--color-canopy));
-  transition: border-color .2s ease, transform .2s ease, background .2s ease;
+  min-height: 356px;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  padding: 11px;
+  border: 1px solid color-mix(in srgb, var(--color-vine) 94%, transparent);
+  border-radius: 19px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--color-canopy) 35%, var(--color-night)), var(--color-night) 55%);
+  box-shadow: 0 8px 24px color-mix(in srgb, black 12%, transparent);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 
 .shopPage :global(.shop-item:hover) {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--color-mango) 52%, var(--color-vine));
-  background: color-mix(in srgb, var(--color-night) 65%, var(--color-canopy));
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--color-mango) 58%, var(--color-vine));
+  box-shadow: 0 16px 34px color-mix(in srgb, black 28%, transparent), 0 0 28px color-mix(in srgb, var(--color-mango) 6%, transparent);
 }
 
-.shopPage :global(.blade-swatch) {
+.shopPage :global(.shop-item.premium) { border-color: color-mix(in srgb, var(--color-mango) 37%, var(--color-vine)); }
+.shopPage :global(.shop-art) {
   position: relative;
-  height: 12px;
-  width: 100%;
-  margin: 4px 0 2px;
-  box-shadow: 0 0 20px color-mix(in srgb, var(--color-mango) 15%, transparent);
+  display: grid;
+  flex: none;
+  height: 150px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-vine) 62%, transparent);
+  border-radius: 13px;
+  background: radial-gradient(ellipse at 50% 82%, color-mix(in srgb, var(--color-mango) 12%, transparent), transparent 58%), linear-gradient(145deg, color-mix(in srgb, var(--color-canopy) 88%, var(--color-vine)), color-mix(in srgb, var(--color-night) 75%, var(--color-canopy)));
 }
 
-.shopPage :global(.fruit-swatch) {
-  width: 48px;
-  height: 48px;
-  min-height: 48px;
-  border-radius: 50%;
-  align-self: center;
-  margin: 2px 0 4px;
-}
+.shopPage :global(.shop-art)::before,
+.shopPage :global(.shop-art)::after { position: absolute; content: ''; pointer-events: none; }
+.shopPage :global(.shop-art)::before { inset: 0; opacity: .34; background: repeating-linear-gradient(135deg, transparent 0 24px, color-mix(in srgb, white 3%, transparent) 25px 26px); }
+.shopPage :global(.shop-art)::after { right: -24px; bottom: -62px; width: 190px; height: 110px; border: 1px solid color-mix(in srgb, var(--color-cream) 9%, transparent); border-radius: 50%; transform: rotate(-18deg); }
+.shopPage :global(.shop-art-glow) { position: absolute; width: 120px; height: 65px; border-radius: 50%; background: color-mix(in srgb, var(--color-mango) 14%, transparent); filter: blur(24px); }
+.shopPage :global(.shop-preview) { position: relative; z-index: 1; display: block; }
+.shopPage :global(.shop-preview-blade) { width: 78%; height: 9px; border-radius: 999px; filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 18px color-mix(in srgb, var(--color-sky) 70%, transparent)); transform: rotate(-14deg); }
+.shopPage :global(.shop-preview-blade)::after { position: absolute; inset: -5px 0; border: 1px solid color-mix(in srgb, white 42%, transparent); border-radius: inherit; content: ''; }
+.shopPage :global(.shop-preview-fruit),
+.shopPage :global(.shop-preview-lives) { width: 76px; height: 76px; border: 1px solid color-mix(in srgb, white 45%, transparent); border-radius: 45% 55% 48% 52%; box-shadow: inset -9px -10px 16px color-mix(in srgb, black 30%, transparent), 0 0 25px color-mix(in srgb, var(--color-mango) 24%, transparent); transform: rotate(-17deg); }
+.shopPage :global(.shop-preview-lives) { width: 62px; height: 62px; border-radius: 50%; box-shadow: inset -9px -10px 16px color-mix(in srgb, black 30%, transparent), 0 0 28px color-mix(in srgb, var(--color-melon) 35%, transparent); }
+.shopPage :global(.shop-preview-board) { width: 138px; height: 88px; border: 5px solid color-mix(in srgb, white 28%, transparent); border-radius: 19px; box-shadow: 0 12px 24px color-mix(in srgb, black 35%, transparent), inset 0 0 0 1px color-mix(in srgb, black 30%, transparent); transform: rotate(-9deg); }
+.shopPage :global(.shop-art-edition) { position: absolute; z-index: 2; top: 10px; right: 10px; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--color-mango) 40%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--color-night) 74%, transparent); color: var(--color-mango); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
 
-.shopPage :global(.shop-item > div) {
-  flex: 1;
-}
-
-.shopPage :global(.shop-item h2) {
-  margin-bottom: 7px;
-  font-size: 20px;
-}
-
-.shopPage :global(.shop-item p) {
-  line-height: 1.55;
-}
-
-.shopPage :global(.shop-item .price) {
-  display: inline-flex;
-  margin-top: 14px !important;
-  padding: 7px 10px;
-  border: 1px solid color-mix(in srgb, var(--color-sky) 24%, var(--color-vine));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-sky) 8%, transparent);
-  font-size: 13px;
-}
-
-.shopPage :global(.shop-item .button) {
-  width: 100%;
-  min-height: 48px;
-  justify-content: center;
-}
-
-.shopPage :global(.panel > .muted:last-child) {
-  margin: 0 24px 22px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-vine);
-  font-size: 12px;
-}
+.shopPage :global(.shop-item-copy) { display: flex; flex: 1; min-width: 0; flex-direction: column; padding: 2px 7px 0; }
+.shopPage :global(.shop-item-title) { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.shopPage :global(.shop-item h2) { margin: 0; font-size: 18px; line-height: 1.15; letter-spacing: -.035em; }
+.shopPage :global(.shop-item-description) { min-height: 38px; margin: 8px 0 10px; font-size: 11px; line-height: 1.5; }
+.shopPage :global(.shop-item-meta) { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--color-vine) 72%, transparent); }
+.shopPage :global(.shop-item .price) { display: inline-flex; align-items: baseline; gap: 4px; margin: 0 !important; padding: 0; border: 0; background: transparent; color: var(--color-sky); font-size: 11px; }
+.shopPage :global(.shop-item .price strong) { color: var(--color-cream); font-size: 19px; letter-spacing: -.04em; }
+.shopPage :global(.shop-owned) { padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--color-leaf) 35%, var(--color-vine)); border-radius: 999px; background: color-mix(in srgb, var(--color-leaf) 9%, transparent); color: var(--color-leaf); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.shopPage :global(.shop-stock) { margin: 0 0 5px; color: var(--color-mist); font-size: 10px; }
+.shopPage :global(.shop-stock strong) { color: var(--color-cream); }
+.shopPage :global(.shop-item > .button),
+.shopPage :global(.shop-item > .token-spend .button) { width: 100%; min-height: 44px; justify-content: center; border-radius: 11px; font-size: 12px; }
+.shopPage :global(.shop-item > .token-spend) { margin-top: auto; }
+.shopPage :global(.shop-item .button.secondary) { border-color: color-mix(in srgb, var(--color-mango) 30%, var(--color-vine)); }
+.shopPage :global(.shop-market-note) { margin: 0 24px 22px; padding: 15px 0 0; border-top: 1px solid var(--color-vine); font-size: 11px; line-height: 1.5; }
 
 @media (min-width: 900px) {
-  .shopPage { padding: 8px 12px 32px; }
-  .shopPage :global(.page-heading) { margin: 24px 0 30px; }
-  .shopPage :global(.shop-grid) { gap: 16px; padding: 18px 24px 24px; }
-  .shopPage :global(.shop-item) { padding: 22px; }
+  .shopPage { padding: 8px 12px 34px; }
+  .shopPage :global(.page-heading) { margin: 14px 0 20px; padding: 36px; }
+  .shopPage :global(.shop-grid) { gap: 17px; padding: 17px 24px 26px; }
 }
 
-@media (min-width: 561px) and (max-width: 899px) {
-  .shopPage :global(.shop-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 720px) {
+  .shopPage :global(.page-heading) { padding: 24px 21px; border-radius: 19px; }
+  .shopPage :global(.page-heading)::after { right: -115px; width: 230px; height: 230px; }
+  .shopPage :global(.page-heading h1) { max-width: 14ch; font-size: clamp(32px, 8vw, 42px); }
+  .shopPage :global(.shop-categories) { top: 52px; gap: 7px; padding: 11px 13px; }
+  .shopPage :global(.shop-categories a) { min-height: 36px; padding: 0 11px; font-size: 10px; }
+  .shopPage :global(.shop-section > .eyebrow) { padding: 19px 17px 0; }
+  .shopPage :global(.shop-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; padding: 13px 12px 19px; }
+  .shopPage :global(.shop-item) { min-height: 330px; gap: 11px; padding: 8px; border-radius: 16px; }
+  .shopPage :global(.shop-art) { height: 118px; border-radius: 11px; }
+  .shopPage :global(.shop-preview-board) { width: 108px; height: 70px; }
+  .shopPage :global(.shop-item-copy) { padding-inline: 5px; }
+  .shopPage :global(.shop-item h2) { font-size: 15px; }
+  .shopPage :global(.shop-item-description) { min-height: 48px; font-size: 10px; }
+  .shopPage :global(.shop-item .price strong) { font-size: 17px; }
+  .shopPage :global(.shop-item > .button), .shopPage :global(.shop-item > .token-spend .button) { min-height: 42px; padding-inline: 9px; font-size: 10px; }
+  .shopPage :global(.shop-market-note) { margin-inline: 17px; }
 }
 
-@media (max-width: 560px) {
-  .shopPage { padding-bottom: 10px; }
-  .shopPage :global(.page-heading) { margin: 14px 0 20px; }
-  .shopPage :global(.page-description) { max-width: 34ch; }
-  .shopPage :global(.panel) { border-radius: 17px; }
-  .shopPage :global(.shop-section > .eyebrow) { padding: 18px 16px 0; }
-  .shopPage :global(.shop-grid) { grid-template-columns: minmax(0, 1fr); gap: 11px; padding: 14px 12px; }
-  .shopPage :global(.shop-item) { display: flex; min-height: 0; gap: 12px; padding: 16px; }
-  .shopPage :global(.blade-swatch:not(.fruit-swatch)) { margin: 0 0 2px; }
-  .shopPage :global(.fruit-swatch) { flex: none; align-self: flex-start; }
-  .shopPage :global(.shop-item > div) { min-width: 0; }
-  .shopPage :global(.shop-item h2) { font-size: 18px; }
-  .shopPage :global(.shop-item p) { font-size: 12px; }
-  .shopPage :global(.shop-item .price) { margin-top: 10px !important; }
-  .shopPage :global(.shop-item .button) { align-self: stretch; }
-  .shopPage :global(.panel > .muted:last-child) { margin: 0 16px 17px; font-size: 11px; }
+@media (max-width: 370px) {
+  .shopPage :global(.shop-grid) { grid-template-columns: minmax(0, 1fr); }
+  .shopPage :global(.shop-item) { min-height: 0; }
+  .shopPage :global(.shop-art) { height: 135px; }
+  .shopPage :global(.shop-item-description) { min-height: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shopPage :global(.shop-item), .shopPage :global(.shop-categories a) { transition: none; }
 }
