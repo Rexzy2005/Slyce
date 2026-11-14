@@ -75,7 +75,7 @@
   transition: border-color .18s ease, background .18s ease, color .18s ease;
 }
 
-.shopPage :global(.shop-categories a span) { color: var(--color-mango); font-size: 13px; }
+.shopPage :global(.shop-categories a svg) { flex: none; color: var(--color-mango); transform: rotate(90deg); }
 .shopPage :global(.shop-categories a:hover) { border-color: var(--color-mango); background: color-mix(in srgb, var(--color-mango) 9%, var(--color-night)); color: var(--color-mango); }
 
 .shopPage :global(.shop-section) { scroll-margin-top: 112px; padding-top: 4px; }

@@ -5,6 +5,7 @@ import { arcadeAbi } from '../web3/abis';
 import { chainFor, contractsFor, gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
 import Link from 'next/link';
+import { Icon } from '../components/icon';
 import { formatTokenAmount } from '../web3/units';
 import { usePrizePool } from './prize-pool';
 export function PlayFeeLabel() {
@@ -18,7 +19,7 @@ function Fee() {
   const prize = usePrizePool();
   if (!arcade || fee.data === undefined) return null;
   return <>
-    {prize.id !== undefined && prize.pool !== undefined && <Link href="/tournament" className="home-prize"><span>BOUNTY PRIZE POOL</span><strong>{Number(formatTokenAmount(prize.pool, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} G$</strong><small>Verified players compete for it →</small></Link>}
+    {prize.id !== undefined && prize.pool !== undefined && <Link href="/tournament" className="home-prize"><span>BOUNTY PRIZE POOL</span><strong>{Number(formatTokenAmount(prize.pool, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 })} G$</strong><small>Verified players compete for it <Icon name="arrow" size={13} /></small></Link>}
     {fee.data > 0n && <small className="home-fee">{formatTokenAmount(fee.data, gdDecimals) + ' G$ per round'}</small>}
   </>;
 }

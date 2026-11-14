@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Icon } from '../components/icon';
 import { useWallet } from '../web3/context';
 import { milestoneName, useGameRecords, type Milestone } from '../game/game-records';
 /** Rules page, sign-in free. Milestones are read live from the contract. Players get G$ from the daily GoodDollar claim and tournaments, not milestones. */
@@ -30,5 +31,5 @@ function MilestoneList() {
   const records = useGameRecords(undefined);
   if (records.loading) return <p className="loading-state" role="status">Reading milestones…</p>;
   if (!records.milestones.length) return <p className="muted">Milestones are not set yet.</p>;
-  return <ul className="milestones">{records.milestones.map((m: Milestone) => <li key={m.score}><span><strong>🏅 {milestoneName(records.milestones, m)}</strong></span><strong>{m.score.toLocaleString()} points</strong></li>)}</ul>;
+  return <ul className="milestones">{records.milestones.map((m: Milestone) => <li key={m.score}><span><strong><Icon name="trophy" size={16} /> {milestoneName(records.milestones, m)}</strong></span><strong>{m.score.toLocaleString()} points</strong></li>)}</ul>;
 }

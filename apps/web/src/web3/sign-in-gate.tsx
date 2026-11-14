@@ -109,7 +109,7 @@ function WalletSignIn() {
           <button type="button" className="wallet-option" disabled={busy !== null} onClick={() => void choose(option)}>
             {option.icon ? <img src={option.icon} alt="" width={32} height={32} /> : <span className="wallet-option-badge" aria-hidden="true">{option.label.charAt(0)}</span>}
             <span><strong>{option.label}</strong>{option.hint && <small>{option.hint}</small>}</span>
-            <span className="wallet-option-go" aria-hidden="true">{busy === option.connectorId ? '…' : '→'}</span>
+            <span className="wallet-option-go" aria-hidden="true">{busy === option.connectorId ? '…' : <Icon name="chevron" size={16} />}</span>
           </button>
         </li>)}</ul>}
     {failed && <p className="error-text" role="alert">Your wallet didn't connect. Try again, or pick another wallet.</p>}

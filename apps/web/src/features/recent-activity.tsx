@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Icon } from '../components/icon';
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../api/http';
 import { publicConfig } from '../config/public';
@@ -44,7 +45,7 @@ export function RecentActivity() {
             {row.amount && <span className={row.direction === 'in' ? 'leaf' : undefined}>{row.direction === 'in' ? '+' : '−'}{formatGd(row.amount)}</span>}
             <Link href={`/player?address=${row.account}`}>{shortAddress(row.account)}</Link>
             <time dateTime={row.timestamp ?? undefined}>{when(row.timestamp)}</time>
-            {network && <a href={explorerUrl(network, 'tx', row.transactionHash)} target="_blank" rel="noreferrer" aria-label="View public record">↗</a>}
+            {network && <a href={explorerUrl(network, 'tx', row.transactionHash)} target="_blank" rel="noreferrer" aria-label="View public record"><Icon name="arrow" size={14} /></a>}
           </div>
         </li>)}</ul>}
     {cursor && <button className="button secondary" disabled={state === 'loading'} onClick={() => void load(cursor)}>{state === 'loading' ? 'Loading…' : 'Load more'}</button>}

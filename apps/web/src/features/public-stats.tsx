@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Icon } from '../components/icon';
 import { useReadContracts } from 'wagmi';
 import { publicConfig } from '../config/public';
 import { arcadeAbi, tournamentAbi } from '../web3/abis';
@@ -41,7 +42,7 @@ function Stats() {
   const count = (value: number | null | undefined) => value == null ? '—' : value.toLocaleString();
   const network = publicConfig.network;
   const link = (address: `0x${string}` | undefined, label: string) => address && network
-    ? <li key={label}><a href={explorerUrl(network, 'address', address)} target="_blank" rel="noreferrer">{label} <code>{address.slice(0, 8)}…{address.slice(-6)}</code> ↗</a></li> : null;
+    ? <li key={label}><a href={explorerUrl(network, 'address', address)} target="_blank" rel="noreferrer">{label} <code>{address.slice(0, 8)}…{address.slice(-6)}</code> <Icon name="arrow" size={13} /></a></li> : null;
   const g = (value: unknown) => typeof value === 'bigint' ? Number(formatTokenAmount(value, gdDecimals)).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' G$' : '—';
   return <div className="stats">
     <Link href="/play" className="brand">slyyce<span className="brand-dot">/</span></Link>

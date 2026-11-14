@@ -2,6 +2,7 @@
 import type { Address } from 'viem';
 import { gdDecimals } from '../web3/config';
 import { formatTokenAmount } from '../web3/units';
+import { Icon } from '../components/icon';
 import { liveStreak, useGameRecords } from './game-records';
 /** On-chain stats for one player: XP, best score, games, streak and G$ earned from milestones. */
 export function PlayerCard({ player }: { player: Address }) {
@@ -14,7 +15,7 @@ export function PlayerCard({ player }: { player: Address }) {
     <div><dt>XP</dt><dd className="mango">{s ? s.xp.toLocaleString() : '0'}</dd></div>
     <div><dt>Best score</dt><dd>{s ? s.bestScore.toLocaleString() : '—'}</dd></div>
     <div><dt>Games</dt><dd>{s ? s.games.toLocaleString() : '0'}</dd></div>
-    <div><dt>Daily streak</dt><dd>{streak.current ? streak.current + (streak.current === 1 ? ' day' : ' days') : '0 days'}</dd>{s && s.games > 0 && <small className="muted">{streak.savedToday ? 'Saved today ✓' : 'Save a score today to keep it going'}</small>}</div>
+    <div><dt>Daily streak</dt><dd>{streak.current ? streak.current + (streak.current === 1 ? ' day' : ' days') : '0 days'}</dd>{s && s.games > 0 && <small className="muted">{streak.savedToday ? <><Icon name="check" size={12} /> Saved today</> : 'Save a score today to keep it going'}</small>}</div>
     <div><dt>G$ earned</dt><dd className="leaf">{s ? Number(formatTokenAmount(s.earned, gdDecimals)).toLocaleString() : '0'}</dd></div>
     <div><dt>GoodDollar</dt><dd>{records.verified ? 'Verified' : records.verified === false ? 'Not verified' : '—'}</dd></div>
   </dl>;

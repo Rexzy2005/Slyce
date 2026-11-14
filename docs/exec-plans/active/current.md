@@ -43,3 +43,29 @@ None. Remaining: confirm a real round saves on a phone.
 ## Rollback
 
 `setScoreSigner(0)` on both contracts restores unsigned saving immediately.
+
+## Additional active workstream — Shop and profile experience (2026-11-14)
+
+### Objective
+
+Make `/shop` a more memorable storefront, redesign the Profile arcade wallet card, and let players inspect and equip their owned cosmetics in a loadout modal. Use the pinned lucide-react icons consistently across the app UI.
+
+### Scope and progress
+
+- [x] Add category navigation and visual previews tailored to blades, fruit, boards and extra lives without changing authoritative pricing, ownership or purchase behavior.
+- [x] Redesign the Profile wallet card and add a native, keyboard-dismissable loadout dialog with equip controls.
+- [x] Replace UI emoji/glyph pictograms with the shared Lucide icon component and retain the direct Lucide imports in the admin UI.
+- [ ] Complete web type checking and visual acceptance.
+
+### Acceptance criteria
+
+- Shop remains usable at mobile and desktop widths and shows only contract-listed or already-owned items.
+- Wallet balances and purchase/equip state remain authoritative from their existing sources.
+- Loadout dialog opens from Profile, closes by Escape, backdrop or close button, and supports equipping owned cosmetics.
+- UI icons render from the pinned `lucide-react` 0.468.0 package.
+
+### Verification and blocker
+
+- `git diff --check` is required after implementation.
+- `apps/web` type checking is blocked locally: `pnpm` is unavailable, and `npm run typecheck` reports missing Next.js, React, lucide-react and other declared modules. No install or lockfile changes were made.
+- Browser visual acceptance remains pending; do not use the user's browser. Resume by restoring the project dependencies, running `pnpm --filter @slyyce/web typecheck`, then asking the user to review `/shop` and `/profile` in their browser.

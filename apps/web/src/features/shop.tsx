@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAccount, useReadContracts } from 'wagmi';
 import { publicConfig } from '../config/public';
 import { EmptyState } from '../components/ui';
+import { Icon } from '../components/icon';
 import { useWallet } from '../web3/context';
 import { shopAbi } from '../web3/abis';
 import { chainFor, contractsFor, gdDecimals } from '../web3/config';
@@ -55,7 +56,7 @@ function Market() {
   const visibleCategories = categories.filter(category => items.some(item => item.category === category && (item.price !== undefined || item.owned)));
   return <section className="panel shop-market">
     <nav className="shop-categories" aria-label="Shop categories">
-      {visibleCategories.map(category => <a key={category} href={'#market-' + category}>{categoryLabels[category]}<span aria-hidden="true">↘</span></a>)}
+      {visibleCategories.map(category => <a key={category} href={'#market-' + category}>{categoryLabels[category]}<Icon name="chevron" size={14} /></a>)}
     </nav>
     {visibleCategories.map(category => {
       // Items the owner hasn't listed on-chain yet stay hidden unless the player already owns one.

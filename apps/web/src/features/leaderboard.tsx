@@ -5,12 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../api/http';
 import { publicConfig } from '../config/public';
 import { EmptyState } from '../components/ui';
+import { Icon, type IconName } from '../components/icon';
 import { useWallet } from '../web3/context';
 /** Best score per player from games saved on Celo, served by the backend's chain index (ADR-0012). */
 type Period = 'today' | 'week' | 'all';
 interface Entry { rank: number; address: string; nickname?: string | null; score: number; games: number; verified: boolean | null }
 const periods: { value: Period; label: string }[] = [{ value: 'today', label: 'Today' }, { value: 'week', label: 'This week' }, { value: 'all', label: 'All time' }];
-const fruits = ['🍉', '🍊', '🍑', '🥝', '🍋', '🍎', '🍇', '🍍'];
+const avatarIcons: IconName[] = ['scissors', 'leaf', 'sparkles', 'heart'];
 async function loadBoard(period: Period, signal: AbortSignal): Promise<Entry[]> {
   if (!publicConfig.backendUrl) throw new Error('The leaderboard is not available right now.');
   const response = await apiFetch(`${publicConfig.backendUrl}/api/v1/chain/leaderboard?period=${period}`, { signal });
@@ -19,16 +20,16 @@ async function loadBoard(period: Period, signal: AbortSignal): Promise<Entry[]> 
 }
 const short = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 /** A flat-coloured avatar derived from the address, so every player is recognisable without a profile picture. */
-export function avatarFor(address: string): { fruit: string; style: CSSProperties } {
+export function avatarFor(address: string): { icon: IconName; style: CSSProperties } {
   const a = parseInt(address.slice(2, 8), 16);
-  return { fruit: fruits[a % fruits.length]!, style: { background: `hsl(${a % 360} 55% 45%)` } };
+  return { icon: avatarIcons[a % avatarIcons.length]!, style: { background: `hsl(${a % 360} 55% 45%)` } };
 }
 function Avatar({ address, size }: { address: string; size?: 'large' }) {
   const avatar = avatarFor(address);
-  return <span className={size ? 'lb-avatar lb-avatar-large' : 'lb-avatar'} style={avatar.style} aria-hidden="true">{avatar.fruit}</span>;
+  return <span className={size ? 'lb-avatar lb-avatar-large' : 'lb-avatar'} style={avatar.style} aria-hidden="true"><Icon name={avatar.icon} size={size ? 26 : 17} /></span>;
 }
 function Name({ entry, me }: { entry: Entry; me: string | undefined }) {
-  return <Link href={`/player?address=${entry.address}`} className="lb-name">{entry.nickname ?? (entry.address === me ? 'You' : short(entry.address))}{entry.verified && <span className="lb-verified" title="GoodDollar-verified">✓</span>}</Link>;
+  return <Link href={`/player?address=${entry.address}`} className="lb-name">{entry.nickname ?? (entry.address === me ? 'You' : short(entry.address))}{entry.verified && <span className="lb-verified" title="GoodDollar-verified"><Icon name="shield" size={13} /></span>}</Link>;
 }
 function Podium({ top, me }: { top: Entry[]; me: string | undefined }) {
   // Displayed 2nd, 1st, 3rd so the winner stands in the middle.
@@ -36,7 +37,7 @@ function Podium({ top, me }: { top: Entry[]; me: string | undefined }) {
   return <div className="lb-podium">{places.map((entry, index) => {
     if (!entry) return <div key={index} className="lb-place lb-empty" />;
     return <div key={entry.address} className={`lb-place lb-place-${entry.rank}${entry.address === me ? ' is-me' : ''}`}>
-      {entry.rank === 1 && <span className="lb-crown" aria-hidden="true">👑</span>}
+      {entry.rank === 1 && <span className="lb-crown" aria-hidden="true"><Icon name="trophy" size={25} /></span>}
       <Avatar address={entry.address} size="large" />
       <Name entry={entry} me={me} />
       <strong className="lb-score">{entry.score.toLocaleString()}</strong>

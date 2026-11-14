@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { ArrowLeftRight, ExternalLink, RefreshCw, Search, Users } from 'lucide-react';
+import { ArrowLeftRight, ExternalLink, RefreshCw, Search, Users, Check } from 'lucide-react';
 import { adminRequest } from './auth-client';
 import { publicConfig } from '../config/public';
 import { explorerUrl } from '../web3/config';
@@ -68,7 +68,7 @@ export function ChainPlayers({ onSelect }: { onSelect: (address: string) => void
       <div className="admin-chain-table" role="table" aria-label="Players">
         <div className="admin-chain-row admin-chain-head" role="row"><span role="columnheader">Wallet</span><span role="columnheader">Games</span><span role="columnheader">Best</span><span role="columnheader">XP</span><span role="columnheader">Earned</span><span role="columnheader">Spent</span><span role="columnheader">Last active</span><span role="columnheader" /></div>
         {rows.map(user => <div className="admin-chain-row" role="row" key={user.address}>
-          <span role="cell" data-label="Wallet"><Address value={user.address} />{user.verified && <span className="admin-chain-verified" title="GoodDollar-verified human"> ✓ verified</span>}</span>
+          <span role="cell" data-label="Wallet"><Address value={user.address} />{user.verified && <span className="admin-chain-verified" title="GoodDollar-verified human"><Check size={12} strokeWidth={3} /> verified</span>}</span>
           <span role="cell" data-label="Games">{user.games.toLocaleString()}</span>
           <span role="cell" data-label="Best">{user.bestScore.toLocaleString()}</span>
           <span role="cell" data-label="XP">{user.xp.toLocaleString()}</span>

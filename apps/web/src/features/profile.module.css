@@ -93,37 +93,36 @@
   border: 1px solid color-mix(in srgb, var(--color-mango) 42%, var(--color-vine));
   border-radius: 16px;
   background: color-mix(in srgb, var(--color-night) 66%, transparent);
-  color: var(--color-cream);
-  font-size: 27px;
-  font-weight: 900;
-  letter-spacing: -.1em;
+  color: var(--color-mango);
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--color-mango) 10%, transparent), 0 8px 22px color-mix(in srgb, black 18%, transparent);
 }
 
-.featureMark span { color: var(--color-mango); }
 .featureHeading :global(.eyebrow) { margin: 0 0 3px; color: var(--color-mango); }
-.featureHeading h2 { margin: 0; font-size: 20px; letter-spacing: -.03em; }
+.featureHeading h2 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
 
 .walletCard :global(.wallet-panel) {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   min-width: 0;
   min-height: 98px;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px 18px;
   margin: 0;
-  padding: 18px 20px;
-  border: 1px solid var(--profile-line);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--color-night) 60%, transparent);
+  padding: 4px 0 4px 20px;
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--color-mango) 28%, var(--color-vine));
+  border-radius: 0;
+  background: transparent;
 }
 
 .walletCard :global(.wallet-panel > div:first-child) { min-width: 0; }
 .walletCard :global(.wallet-panel .eyebrow) { color: var(--color-mist); }
-.walletCard :global(.wallet-panel .balance) { margin: 5px 0 0; color: var(--color-mango); font-size: clamp(20px, 3vw, 28px); font-weight: 800; letter-spacing: -.04em; }
+.walletCard :global(.wallet-panel .balance) { margin: 5px 0 0; color: var(--color-mango); font-size: clamp(26px, 3.8vw, 36px); font-weight: 800; letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
 .walletCard :global(.wallet-panel-account) { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .walletCard :global(.wallet-panel-account p) { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 11px; }
 .walletCard :global(.wallet-panel-account .button) { min-height: 38px; padding: 8px 13px; }
-.walletCard :global(.wallet-panel > p[role]) { flex-basis: 100%; margin: 0; font-size: 12px; }
+.walletCard :global(.wallet-panel > p[role]) { grid-column: 1 / -1; margin: 0; font-size: 12px; }
 
 .panel {
   position: relative;
@@ -168,6 +167,46 @@
 .collectionPanel :global(.empty-state h2) { margin-bottom: 7px; font-size: 17px; }
 .collectionPanel :global(.empty-state p) { margin-bottom: 0; font-size: 12px; }
 
+.loadoutHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.loadoutHeading .sectionHeading { min-width: 0; }
+.loadoutCount { flex: none; padding: 6px 9px; border: 1px solid color-mix(in srgb, var(--color-mango) 30%, var(--color-vine)); border-radius: 999px; background: color-mix(in srgb, var(--color-mango) 8%, transparent); color: var(--color-mango); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.loadoutShelf { display: flex; align-items: center; min-height: 58px; margin: 0 0 15px; padding-left: 5px; }
+.loadoutPreview { display: block; width: 48px; height: 48px; margin-left: -5px; border: 2px solid var(--color-canopy); border-radius: 14px; background-size: cover; box-shadow: 0 5px 14px color-mix(in srgb, black 22%, transparent); transform: rotate(-4deg); }
+.loadoutPreview:nth-child(2) { transform: rotate(3deg) translateY(2px); }
+.loadoutPreview:nth-child(3) { transform: rotate(-2deg) translateY(-1px); }
+.loadoutMore { display: grid; width: 42px; height: 42px; place-items: center; margin-left: 6px; border: 1px solid var(--profile-line); border-radius: 13px; background: var(--color-night); color: var(--color-mist); font-size: 11px; font-weight: 800; }
+.openLoadout { display: inline-flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 44px; border: 1px solid color-mix(in srgb, var(--color-mango) 32%, var(--color-vine)); border-radius: 12px; background: color-mix(in srgb, var(--color-mango) 9%, transparent); color: var(--color-mango); font-size: 12px; font-weight: 800; transition: background .18s ease, border-color .18s ease; }
+.openLoadout:hover:not(:disabled) { border-color: var(--color-mango); background: color-mix(in srgb, var(--color-mango) 15%, transparent); }
+.openLoadout:disabled { cursor: wait; opacity: .65; }
+
+.loadoutDialog { width: min(640px, calc(100% - 28px)); max-width: none; max-height: min(82dvh, 760px); margin: auto; padding: 0; overflow: visible; border: 0; border-radius: 23px; background: transparent; color: var(--color-cream); }
+.loadoutDialog::backdrop { background: color-mix(in srgb, var(--color-night) 78%, transparent); backdrop-filter: blur(7px); }
+.loadoutModal { display: flex; max-height: min(82dvh, 760px); flex-direction: column; overflow: hidden; border: 1px solid color-mix(in srgb, var(--color-mango) 25%, var(--color-vine)); border-radius: 23px; background: radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--color-mango) 9%, transparent), transparent 42%), var(--color-canopy); box-shadow: 0 28px 90px color-mix(in srgb, black 55%, transparent); }
+.loadoutModalHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 26px 20px; border-bottom: 1px solid var(--profile-line); }
+.loadoutModalHeading .eyebrow { margin: 0 0 5px; color: var(--color-mango); }
+.loadoutModalHeading h2 { margin: 0; font-size: 31px; letter-spacing: -.05em; }
+.loadoutModalHeading p:last-child { margin: 6px 0 0; color: var(--color-mist); font-size: 12px; }
+.closeLoadout { display: grid; flex: none; width: 40px; height: 40px; place-items: center; border: 1px solid var(--profile-line); border-radius: 13px; background: color-mix(in srgb, var(--color-night) 65%, transparent); color: var(--color-cream); }
+.closeLoadout:hover { border-color: var(--color-mango); color: var(--color-mango); }
+.loadoutItems { display: grid; gap: 9px; overflow: auto; margin: 0; padding: 18px 24px; list-style: none; }
+.loadoutItem { display: flex; align-items: center; gap: 13px; min-width: 0; padding: 11px; border: 1px solid var(--profile-line); border-radius: 15px; background: color-mix(in srgb, var(--color-night) 55%, transparent); }
+.loadoutItemArt { display: grid; flex: none; width: 48px; height: 48px; place-items: center; overflow: hidden; border: 1px solid color-mix(in srgb, white 24%, transparent); border-radius: 14px; color: var(--color-night); box-shadow: inset 0 0 15px color-mix(in srgb, black 22%, transparent); }
+.loadoutBlade { border-radius: 50%; color: white; }
+.loadoutFruit { border-radius: 50%; color: white; }
+.loadoutBoard { color: var(--color-night); }
+.loadoutLives { border-radius: 50%; color: white; }
+.loadoutItemCopy { display: grid; flex: 1; min-width: 0; gap: 4px; }
+.loadoutItemCopy strong { overflow: hidden; color: var(--color-cream); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.loadoutItemCopy small { color: var(--color-mist); font-size: 10px; }
+.loadoutEquip { flex: none; min-width: 82px; min-height: 36px; padding: 0 10px; border: 1px solid var(--color-vine); border-radius: 10px; background: var(--color-canopy); color: var(--color-cream); font-size: 10px; font-weight: 800; }
+.loadoutEquip[aria-pressed="true"] { border-color: color-mix(in srgb, var(--color-leaf) 40%, var(--color-vine)); background: color-mix(in srgb, var(--color-leaf) 9%, transparent); color: var(--color-leaf); }
+.loadoutEmpty { display: grid; justify-items: center; gap: 8px; padding: 38px 24px; text-align: center; color: var(--color-mango); }
+.loadoutEmpty h3 { margin: 0; color: var(--color-cream); font-size: 20px; }
+.loadoutEmpty p { max-width: 34ch; margin: 0; color: var(--color-mist); font-size: 12px; line-height: 1.5; }
+.loadoutModalFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 24px; border-top: 1px solid var(--profile-line); }
+.loadoutModalFooter a { display: inline-flex; align-items: center; gap: 8px; color: var(--color-mango); font-size: 12px; font-weight: 800; }
+.loadoutModalFooter span { color: var(--color-mist); font-size: 10px; text-align: right; }
+
 .recordCard { grid-column: 1 / -1; }
 .recordHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
 .recordHeading .sectionHeading { margin: 0; }
@@ -192,8 +231,9 @@
   .profilePage :global(.page-heading h1) { max-width: 14ch; font-size: clamp(32px, 8vw, 42px); }
   .profileCards { grid-template-columns: minmax(0, 1fr); gap: 13px; }
   .walletCard { grid-column: auto; grid-template-columns: minmax(0, 1fr); gap: 15px; padding: 18px; border-radius: 18px; }
-  .featureMark { width: 44px; height: 44px; border-radius: 13px; font-size: 23px; }
-  .walletCard :global(.wallet-panel) { min-height: 0; padding: 15px; }
+  .featureMark { width: 44px; height: 44px; border-radius: 13px; }
+  .featureHeading h2 { font-size: 19px; }
+  .walletCard :global(.wallet-panel) { min-height: 0; padding: 3px 0 0; border-top: 1px solid color-mix(in srgb, var(--color-mango) 22%, var(--color-vine)); border-left: 0; }
   .panel { padding: 19px 18px; border-radius: 17px; }
   .nicknamePanel, .installPanel, .practicePanel, .collectionPanel, .recordCard { grid-column: auto; }
   .recordHeading { align-items: flex-start; }
@@ -204,10 +244,14 @@
 @media (max-width: 420px) {
   .profilePage :global(.page-heading) { margin-top: 8px; padding: 21px 18px; }
   .profilePage :global(.page-description) { font-size: 13px; }
-  .walletCard :global(.wallet-panel) { align-items: flex-start; flex-direction: column; }
+  .walletCard :global(.wallet-panel) { grid-template-columns: minmax(0, 1fr); align-items: flex-start; }
   .walletCard :global(.wallet-panel-account) { justify-content: flex-start; }
   .recordHeading { flex-direction: column; align-items: stretch; }
   .recordLink { align-self: flex-start; }
+  .loadoutModalHeading { padding: 20px 18px 17px; }
+  .loadoutItems { padding: 14px; }
+  .loadoutModalFooter { align-items: flex-start; flex-direction: column; padding: 13px 18px; }
+  .loadoutModalFooter span { text-align: left; }
 }
 
 @media (max-width: 350px) {
