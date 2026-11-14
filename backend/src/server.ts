@@ -4,6 +4,8 @@ import { ZodError } from 'zod';
 import { loadConfig, type BackendConfig } from './config.js';
 import { logger } from './logger.js';
 import { ScoreRejected, ScoreSigningService } from './score-signing-service.js';
+import { createPacksOwnedReader, ExtraLifeService, NoExtraLives, PrismaExtraLifeStore } from './extra-life-service.js';
+import { NicknameRejected, NicknameService, PrismaNicknameStore } from './nickname-service.js';
 import { applyCors, authenticate, FixedWindowRateLimiter, requestContentLength, type TokenVerifier } from './security.js';
 import {
   apiPrefix,
@@ -11,6 +13,14 @@ import {
   adminLoginRequestSchema,
   auditLogQuerySchema,
   chainTransactionListResponseSchema,
+  chainLeaderboardQuerySchema,
+  chainLeaderboardResponseSchema,
+  extraLifeBalanceSchema,
+  nicknameQuerySchema,
+  nicknameResponseSchema,
+  nicknameSetRequestSchema,
+  extraLifeQuerySchema,
+  extraLifeUseRequestSchema,
   scoreFinishRequestSchema,
   scoreFinishResponseSchema,
   scoreTicketRequestSchema,
@@ -128,6 +138,8 @@ interface AppDependencies {
   operationsService?: OperationsService;
   chainActivityService?: ChainActivityService;
   scoreSigningService?: ScoreSigningService;
+  extraLifeService?: ExtraLifeService;
+  nicknameService?: NicknameService;
 }
 
 async function readJsonBody(request: IncomingMessage, maxBytes: number): Promise<unknown> {
@@ -241,6 +253,12 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     const profile = await dependencies.playerService.getProfile(principal.playerId);
     if (!profile) return sendJson(response, 404, { error: { code: 'not_found', message: 'The player record was not found.' } } satisfies ErrorResponse);
     return sendJson(response, 200, { data: playerProfileSchema.parse(profile) });
+  }
+  // Public sign-up totals for the stats page: counts only, no player data (the admin view has the details).
+  if (pathname === `${apiPrefix}/stats/sign-ups` && request.method === 'GET') {
+    if (!dependencies.playerService) return sendJson(response, 503, { error: { code: 'player_service_not_configured', message: 'The player service is not configured.' } } satisfies ErrorResponse);
+    const growth = await dependencies.playerService.growth(30);
+    return sendJson(response, 200, { data: { total: growth.total, last24h: growth.last24h, last7d: growth.last7d, last30d: growth.last30d } });
   }
   if (pathname === `${apiPrefix}/admin/players/growth`) {
     if (request.method !== 'GET') return methodNotAllowed(response);
@@ -669,6 +687,51 @@ async function route(request: IncomingMessage, response: ServerResponse, depende
     }
   }
 
+  if (pathname === `${apiPrefix}/extra-lives` || pathname === `${apiPrefix}/extra-lives/use`) {
+    if (!dependencies.extraLifeService) return sendJson(response, 503, { error: { code: 'extra_lives_not_configured', message: 'Extra lives are not available right now.' } } satisfies ErrorResponse);
+    if (pathname.endsWith('/extra-lives')) {
+      if (request.method !== 'GET') return methodNotAllowed(response);
+      const query = extraLifeQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+      return sendJson(response, 200, { data: extraLifeBalanceSchema.parse(await dependencies.extraLifeService.balance(query.address as `0x${string}`)) });
+    }
+    if (request.method !== 'POST') return methodNotAllowed(response);
+    const input = extraLifeUseRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
+    try {
+      return sendJson(response, 200, { data: extraLifeBalanceSchema.parse(await dependencies.extraLifeService.use(input.address as `0x${string}`, input.token)) });
+    } catch (error) {
+      if (error instanceof NoExtraLives) return sendJson(response, 409, { error: { code: 'no_extra_lives', message: error.message } } satisfies ErrorResponse);
+      if (error instanceof ScoreRejected) return sendJson(response, 422, { error: { code: error.code, message: error.message } } satisfies ErrorResponse);
+      throw error;
+    }
+  }
+
+  if (pathname === `${apiPrefix}/nicknames`) {
+    if (!dependencies.nicknameService) return sendJson(response, 503, { error: { code: 'nicknames_not_configured', message: 'Nicknames are not available right now.' } } satisfies ErrorResponse);
+    if (request.method === 'GET') {
+      const query = nicknameQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+      const address = query.address.toLowerCase();
+      return sendJson(response, 200, { data: nicknameResponseSchema.parse({ address, nickname: (await dependencies.nicknameService.lookup([address])).get(address) ?? null }) });
+    }
+    if (request.method !== 'POST') return methodNotAllowed(response);
+    const input = nicknameSetRequestSchema.parse(await readJsonBody(request, maxRequestBytes));
+    try {
+      const nickname = await dependencies.nicknameService.set({ address: input.address as `0x${string}`, nickname: input.nickname, issuedAt: input.issuedAt, signature: input.signature as `0x${string}` });
+      return sendJson(response, 200, { data: nicknameResponseSchema.parse({ address: input.address.toLowerCase(), nickname }) });
+    } catch (error) {
+      if (!(error instanceof NicknameRejected)) throw error;
+      return sendJson(response, error.code === 'nickname_taken' ? 409 : 422, { error: { code: error.code, message: error.message } } satisfies ErrorResponse);
+    }
+  }
+
+  if (pathname === `${apiPrefix}/chain/leaderboard` && request.method === 'GET') {
+    if (!dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
+    const query = chainLeaderboardQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
+    const entries = await dependencies.chainActivityService.leaderboard(query.period);
+    // Nicknames are optional decoration: the board still loads if they can't be read.
+    const names = await dependencies.nicknameService?.lookup(entries.map(entry => entry.address)).catch(() => undefined);
+    return sendJson(response, 200, chainLeaderboardResponseSchema.parse({ data: entries.map(entry => ({ ...entry, nickname: names?.get(entry.address) ?? null })) }));
+  }
+
   if (pathname === `${apiPrefix}/chain/transactions` && request.method === 'GET') {
     if (!dependencies.chainActivityService) return sendJson(response, 503, { error: { code: 'chain_activity_not_configured', message: 'On-chain activity is not configured.' } } satisfies ErrorResponse);
     const query = publicChainTransactionQuerySchema.parse(Object.fromEntries(new URL(request.url ?? '/', 'http://localhost').searchParams));
@@ -755,6 +818,9 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     });
     return wallet ? { playerId: wallet.playerId, status: wallet.player.status } : null;
   }) : undefined;
+  const chainActivityService = config.chainActivity ? new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock, { ...(goodDollarIdentityAddress(config) ? { identityRoots: createIdentityRootResolver(config.chainActivity.rpcUrl, goodDollarIdentityAddress(config) as `0x${string}`) } : {}) })) : undefined;
+  // Read the whole on-chain history before the first visitor asks, so the leaderboard, admin and stats are complete.
+  void chainActivityService?.syncFully().catch(error => logger.error('Chain activity warm-up failed', { error: error instanceof Error ? error.message : String(error) }));
   const server = createApp(config, {
     verifier: new CompositeTokenVerifier([adminAuth, ...(walletVerifier ? [walletVerifier] : [])]),
     adminAuth,
@@ -772,6 +838,8 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     walletChallenges: new PrismaWalletChallengeStore(prisma),
     walletPlayers: new PrismaWalletPlayerStore(prisma),
     ...(signatureRpcUrl ? { walletSignatureVerifier: createPublicClient({ chain: celo, transport: http(signatureRpcUrl) }).verifyMessage } : {}),
+    // Public-client verification also accepts smart-contract wallets (ERC-1271), not only plain keys.
+    ...(signatureRpcUrl ? { nicknameService: new NicknameService(new PrismaNicknameStore(prisma), createPublicClient({ chain: celo, transport: http(signatureRpcUrl) }).verifyMessage) } : {}),
     ...(config.authSessionSecret ? {
       walletVerifierSecret: config.authSessionSecret,
       walletVerifier: walletVerifier as WalletSessionTokenVerifier,
@@ -780,14 +848,25 @@ export function startServer(config: BackendConfig = loadConfig()): Server {
     bountyService: new BountyService(new PrismaBountyRepository(prisma)),
     rewardService: new RewardService(new PrismaRewardRepository(prisma)),
     operationsService: new OperationsService(new PrismaOperationsRepository(prisma), config.goodDollarEnvironment),
-    ...(config.scoreSigning ? { scoreSigningService: new ScoreSigningService(config.scoreSigning) } : {}),
-    ...(config.chainActivity ? { chainActivityService: new ChainActivityService(new ChainActivityIndex(createViemActivitySource(config.chainActivity), config.chainActivity.startBlock, { ...(goodDollarIdentityAddress(config) ? { identityRoots: createIdentityRootResolver(config.chainActivity.rpcUrl, goodDollarIdentityAddress(config) as `0x${string}`) } : {}) })) } : {}),
+    ...scoreServices(config, prisma),
+    ...(chainActivityService ? { chainActivityService } : {}),
   });
   server.listen(config.port, config.host, () => {
     const address = server.address();
     logger.info('Backend listening', { host: config.host, port: typeof address === 'object' && address ? address.port : config.port, environment: config.environment });
   });
   return server;
+}
+
+/** Signed scores (ADR-0015) and, with a shop address and RPC, extra lives (ADR-0016). */
+function scoreServices(config: BackendConfig, prisma: ConstructorParameters<typeof PrismaExtraLifeStore>[0]): Pick<AppDependencies, 'scoreSigningService' | 'extraLifeService'> {
+  if (!config.scoreSigning) return {};
+  const rpcUrl = config.chainActivity?.rpcUrl ?? config.goodDollarRpcUrl;
+  const { shop } = config.scoreSigning;
+  if (!shop || !rpcUrl) return { scoreSigningService: new ScoreSigningService(config.scoreSigning) };
+  const store = new PrismaExtraLifeStore(prisma);
+  const scoreSigningService = new ScoreSigningService(config.scoreSigning, Date.now, ticket => store.ticketUsed(ticket));
+  return { scoreSigningService, extraLifeService: new ExtraLifeService(store, createPacksOwnedReader(rpcUrl, shop), scoreSigningService) };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

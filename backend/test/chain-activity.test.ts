@@ -166,3 +166,36 @@ await it('reports verified players as unknown when every identity read fails', a
   await index.sync();
   assert.equal(index.summary().verifiedUsers, null);
 });
+
+await it('ranks best scores per player for today, this week and all time', async () => {
+  const service = new ChainActivityService(new ChainActivityIndex(new FakeSource(logs), 900n));
+  // Games: alice 600 at block 1000 and 300 at block 11500 (timestamps 1_800_000_000 + block seconds).
+  const all = await service.leaderboard('all');
+  assert.deepEqual(all, [{ rank: 1, address: alice.toLowerCase(), score: 600, games: 2, verified: null }]);
+  const afterFirstGame = (1_800_000_000 + 5_000) * 1000;
+  const index = new ChainActivityIndex(new FakeSource(logs), 900n);
+  await index.sync();
+  assert.deepEqual(index.leaderboard(afterFirstGame, 10).map(entry => entry.score), [300]);
+  assert.deepEqual(index.leaderboard(Date.parse('2099-01-01'), 10), []);
+  const { periodStart } = await import('../src/chain-activity-service.js');
+  const wednesdayNoon = Date.parse('2026-11-11T12:00:00Z');
+  assert.equal(new Date(periodStart('today', wednesdayNoon)).toISOString(), '2026-11-11T00:00:00.000Z');
+  assert.equal(new Date(periodStart('week', wednesdayNoon)).toISOString(), '2026-11-09T00:00:00.000Z');
+  const server = createApp({ port: 0, host: '127.0.0.1', environment: 'test', corsOrigins: [], rateLimitWindowMs: 60_000, rateLimitMaxRequests: 100, maxRequestBytes: 1_048_576, adminEmails: [], goodDollarEnvironment: 'development' }, { chainActivityService: service });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v1/chain/leaderboard`;
+  try {
+    assert.equal(((await (await fetch(`${base}?period=all`)).json()) as { data: unknown[] }).data.length, 1);
+    assert.equal((await fetch(`${base}?period=month`)).status, 400);
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+await it('never answers the leaderboard or totals from a half-read history after a restart', async () => {
+  // One chunk per sync: a single sync would only see the first game, as happened after Render restarts.
+  const index = new ChainActivityIndex(new FakeSource(logs), 900n, { maxChunksPerSync: 1, minSyncIntervalMs: 60_000 });
+  const service = new ChainActivityService(index);
+  const board = await service.leaderboard('all');
+  assert.deepEqual(board.map(entry => [entry.score, entry.games]), [[600, 2]]);
+  assert.equal(index.summary().catchingUp, false);
+  assert.equal((await service.publicTransactions({ limit: 50 })).summary.games, 2);
+});

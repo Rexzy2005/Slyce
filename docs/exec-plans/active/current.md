@@ -17,7 +17,7 @@ Out of scope: phase 2 deterministic replay.
 - [x] Contracts, tests (8 signed-score tests, including a backend-made signature vector), upgrade-safety validation
 - [x] Backend service, routes, config (`SCORE_SIGNER_PRIVATE_KEY`), tests
 - [x] App: ticket prefetch and claim, signed `submitSignedGame` and `submitSignedScore`, Compete page guidance, tests
-- [ ] Production rollout (owner), in this order:
+- [x] Production rollout (2026-11-09): signer `0x3Ae85054B61fb3Af7F319e8b610516d7b6317756` set on both proxies; mainnet simulation accepts a signed save and refuses unsigned and tampered ones. Steps used:
   1. `cast wallet new` → set `SCORE_SIGNER_PRIVATE_KEY` on Render, then redeploy.
   2. Check: `POST https://slyce-setp.onrender.com/api/v1/score-tickets` with `{"address":"0x…"}` returns 201.
   3. Deploy the web app (works in both modes).
@@ -28,7 +28,7 @@ Out of scope: phase 2 deterministic replay.
 
 ## Blockers
 
-The rollout needs the owner keystore (`slyce-owner`) and Render access.
+None. Remaining: confirm a real round saves on a phone.
 
 ## Acceptance criteria
 

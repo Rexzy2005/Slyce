@@ -21,9 +21,11 @@ describe('practice rules', () => {
     expect(state).toMatchObject({ lives: 0, over: 'lives' });
     expect(missFruit(state)).toBe(state);
   });
-  it('ends the round on a bomb and ignores later input', () => {
-    const state = cutBomb(cutFruit(newPractice()));
-    expect(state.over).toBe('bomb');
+  it('takes a life on a bomb and only ends the round on the last life', () => {
+    let state = cutBomb(cutFruit(newPractice()));
+    expect(state).toMatchObject({ lives: startingLives - 1, over: null, score: 10 });
+    for (let i = 1; i < startingLives; i++) state = cutBomb(state);
+    expect(state).toMatchObject({ lives: 0, over: 'bomb' });
     expect(cutFruit(state)).toBe(state);
     expect(endSwipe(state).bonus).toBe(0);
   });

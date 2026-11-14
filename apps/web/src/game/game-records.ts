@@ -64,6 +64,15 @@ export function liveStreak(stats: PlayerStats | undefined, today = utcDay()): { 
   const alive = stats.lastDay >= today - 1;
   return { current: alive ? stats.streak : 0, savedToday, next: savedToday ? stats.streak : alive ? stats.streak + 1 : 1 };
 }
+/** Names for the contract's milestones, lowest first (they are named by position, so new scores keep the names). */
+const milestoneNames = ['Sharp Starter', 'Juice Master', 'Orchard Hero', 'Slyyce Legend', 'Grand Slicer', 'Fruit Storm', 'Blade Royalty', 'Slyyce Immortal'] as const;
+export function milestoneName(milestones: Milestone[], milestone: Milestone): string {
+  return milestoneNames[milestones.indexOf(milestone)] ?? `Score ${milestone.score.toLocaleString()}`;
+}
+/** The highest milestone a score reaches, if any. */
+export function topMilestone(milestones: Milestone[], score: number): Milestone | undefined {
+  return milestones.filter(m => score >= m.score).at(-1);
+}
 /** Milestones this score reaches that have not been rewarded today. */
 export function newMilestones(milestones: Milestone[], score: number, rewardedMask: bigint) {
   return milestones.filter((m, i) => score >= m.score && (rewardedMask & (1n << BigInt(i))) === 0n);

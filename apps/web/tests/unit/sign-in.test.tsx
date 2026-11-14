@@ -89,7 +89,8 @@ it('tab bar marks the current destination', () => {
   render(<TabBar />);
   expect(screen.getByRole('link', { name: 'Shop' }).getAttribute('aria-current')).toBe('page');
   expect(screen.getByRole('link', { name: 'Play' }).getAttribute('aria-current')).toBeNull();
-  expect(screen.getAllByRole('link')).toHaveLength(5);
+  expect(screen.getByRole('link', { name: 'Ranks' }).getAttribute('href')).toBe('/leaderboard');
+  expect(screen.getAllByRole('link')).toHaveLength(6);
 });
 it('keeps a signed-in player on a loading screen while their session is restored', () => {
   expect(sessionStatus({ status: 'disconnected' }, true)).toBe('connecting');

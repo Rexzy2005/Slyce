@@ -289,6 +289,32 @@ export class ChainActivityIndex {
       .map(user => ({ address: user.address, firstSeen: user.first.timestamp, lastSeen: user.last.timestamp, transactions: user.transactions, games: user.games, bestScore: user.bestScore, xp: user.xp, earned: user.earned.toString(), spent: user.spent.toString(), verified: this.verifiedOf(user.address) }));
     return page(users, input.cursor, input.limit);
   }
+
+  /** Best single-game score per player since `since` (UTC ms), highest first; ties go to whoever got there first. */
+  leaderboard(since: number, limit: number): LeaderboardEntry[] {
+    const best = new Map<string, { score: number; at: number; games: number }>();
+    for (const row of this.sorted) {
+      if (row.kind !== 'game' || !row.timestamp) continue;
+      const at = Date.parse(row.timestamp); if (at < since) continue;
+      const score = Number(row.details.score ?? 0);
+      const entry = best.get(row.account) ?? { score: -1, at, games: 0 };
+      entry.games += 1;
+      if (score > entry.score || (score === entry.score && at < entry.at)) { entry.score = score; entry.at = at; }
+      best.set(row.account, entry);
+    }
+    return [...best].sort(([, a], [, b]) => b.score - a.score || a.at - b.at).slice(0, limit)
+      .map(([address, entry], index) => ({ rank: index + 1, address, score: entry.score, games: entry.games, verified: this.verifiedOf(address) }));
+  }
+}
+
+export interface LeaderboardEntry { rank: number; address: string; score: number; games: number; verified: boolean | null }
+export type LeaderboardPeriod = 'today' | 'week' | 'all';
+/** Start of a leaderboard period in UTC: today from midnight, the week from Monday. */
+export function periodStart(period: LeaderboardPeriod, now: number): number {
+  if (period === 'all') return 0;
+  const day = new Date(now); day.setUTCHours(0, 0, 0, 0);
+  if (period === 'today') return day.getTime();
+  return day.getTime() - ((day.getUTCDay() + 6) % 7) * 86_400_000;
 }
 
 function page<T>(items: readonly T[], cursor: string | undefined, limit: number): { items: T[]; nextCursor: string | null } {
@@ -299,10 +325,21 @@ function page<T>(items: readonly T[], cursor: string | undefined, limit: number)
 
 export class ChainActivityService {
   constructor(private readonly index: ChainActivityIndex) {}
-  private async ready(principal: AuthenticatedPrincipal) { requireAdministrator(principal); await this.index.sync(); }
+  /**
+   * Syncs until the index has caught up with the chain (bounded), so the leaderboard, admin and stats never answer
+   * from a half-read history. After a restart one sync covers at most `maxChunksPerSync` chunks.
+   */
+  async syncFully(maxRounds = 10): Promise<void> {
+    for (let round = 0; round < maxRounds; round++) {
+      await this.index.sync();
+      if (!this.index.summary().catchingUp) return;
+    }
+  }
+  private async ready(principal: AuthenticatedPrincipal) { requireAdministrator(principal); await this.syncFully(); }
   async summary(principal: AuthenticatedPrincipal) { await this.ready(principal); return this.index.summary(); }
   async transactions(principal: AuthenticatedPrincipal, input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.ready(principal); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
   /** Public activity feed for the /stats page: the same on-chain rows anyone can read on the explorer. */
-  async publicTransactions(input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.index.sync(); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
+  async leaderboard(period: LeaderboardPeriod, now = Date.now()) { await this.syncFully(); return this.index.leaderboard(periodStart(period, now), 50); }
+  async publicTransactions(input: Parameters<ChainActivityIndex['listTransactions']>[0]) { await this.syncFully(); return { ...this.index.listTransactions(input), summary: this.index.summary() }; }
   async users(principal: AuthenticatedPrincipal, input: Parameters<ChainActivityIndex['listUsers']>[0]) { await this.ready(principal); return { ...this.index.listUsers(input), summary: this.index.summary() }; }
 }

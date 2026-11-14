@@ -166,3 +166,13 @@ export type ChallengeEvent = Prisma.ChallengeEventModel
  * 
  */
 export type IdempotencyKey = Prisma.IdempotencyKeyModel
+/**
+ * Model ExtraLifeUse
+ * One extra life used by a player (shop item 401, ADR-0016). Owned lives are read on-chain from SlyceShop.
+ */
+export type ExtraLifeUse = Prisma.ExtraLifeUseModel
+/**
+ * Model PlayerNickname
+ * A player's public nickname (ADR-0017). `nicknameKey` is the lowercase form that makes names unique.
+ */
+export type PlayerNickname = Prisma.PlayerNicknameModel

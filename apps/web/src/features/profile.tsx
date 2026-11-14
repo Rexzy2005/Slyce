@@ -10,6 +10,7 @@ import { readBestScore } from '../game/best-score';
 import { difficulties } from '../game/preview-settings';
 import { useEffect, useState } from 'react';
 import styles from './profile.module.css';
+import { NicknameEditor } from './nickname';
 export function Profile() {
   const wallet = useWallet();
   const [bests, setBests] = useState<(number | null)[]>([]);
@@ -17,6 +18,7 @@ export function Profile() {
   const connected = wallet.live && wallet.status === 'connected' && Boolean(wallet.address);
   return <div className={styles.profileCards}>
     <div className={styles.walletCard}><WalletPanel /></div>
+    {connected && wallet.address && <section className={`panel ${styles.panel}`}><NicknameEditor address={wallet.address} /></section>}
     <InstallButton />
     <section className={`panel ${styles.panel}`}><p className="eyebrow">PRACTICE BESTS · THIS DEVICE</p><dl className="stat-grid">{difficulties.map((difficulty, index) => <div key={difficulty}><dt>{difficulty}</dt><dd>{bests[index]?.toLocaleString() ?? '—'}</dd></div>)}</dl></section>
     {connected ? <Collection /> : <section className={`panel ${styles.panel}`}><EmptyState title="Your collection"><p>Sign in to see the blades you own.</p></EmptyState></section>}

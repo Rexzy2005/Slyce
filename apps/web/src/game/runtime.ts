@@ -26,7 +26,18 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     private active = false;
     private settings = defaultPreviewSettings();
     private practice = newPractice();
-    bladeColors: { glow: number; core: number } = defaultBlade;
+    bladeColors: { glow: number; core: number; effect?: 'rainbow' | 'flicker' } = defaultBlade;
+    /** A shop fruit skin waiting to be applied; textures are only swapped between rounds, when no fruit is on the board. */
+    private pendingSkin: readonly [string, string, string] | null | undefined;
+    setFruitSkin(skin: readonly [string, string, string] | null) { this.pendingSkin = skin; if (!this.active) this.applyFruitSkin(); }
+    private applyFruitSkin() {
+      if (this.pendingSkin === undefined || !this.textures.exists('melon-whole')) return;
+      const skin = this.pendingSkin ?? undefined; this.pendingSkin = undefined;
+      for (const kind of fruitKinds) for (const part of ['whole', 'upper', 'lower'] as const) {
+        this.textures.remove(kind + '-' + part);
+        this.textures.addCanvas(kind + '-' + part, fruitTexture(part, kind, skin));
+      }
+    }
     configure(settings: PreviewSettings) {
       if (!settings.fruits.length) return;
       this.settings = { difficulty: settings.difficulty, fruits: [...settings.fruits] };
@@ -77,6 +88,7 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     /** Enabling starts a fresh practice round; disabling leaves the board idle. */
     preview(enabled: boolean) {
       this.active = enabled; this.clock = 0; this.clearBoard(); this.stains = []; this.boardInk?.clear();
+      this.applyFruitSkin(); this.awaitingContinue = false;
       this.practice = newPractice();
       if (enabled) { bridge.emit({ type: 'score-changed', score: 0 }); bridge.emit({ type: 'lives-changed', lives: this.practice.lives }); }
     }
@@ -84,6 +96,26 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       // A resize invalidates the old flight bounds. Clear airborne objects without costing lives or score.
       if (this.active) this.clearBoard();
     }
+    /** Whether the host can offer a purchased extra life when the last life is lost (ADR-0016). */
+    canContinue = false;
+    private awaitingContinue = false;
+    private livesOut() {
+      if (!this.canContinue) { this.gameOver(); return; }
+      // Hold the round: nothing launches and input is ignored while `practice.over` is set.
+      this.awaitingContinue = true;
+      bridge.emit({ type: 'effect', cue: this.practice.over === 'bomb' ? 'boom' : 'fail' });
+      bridge.emit({ type: 'out-of-lives' });
+    }
+    continueRound() {
+      if (!this.awaitingContinue) return;
+      this.awaitingContinue = false;
+      // Called from a host command, never mid-update, so clearing the board here is safe.
+      this.clearBoard();
+      this.practice = { ...this.practice, lives: 1, over: null };
+      this.nextLaunch = this.clock + .8;
+      bridge.emit({ type: 'lives-changed', lives: 1 });
+    }
+    endRound() { if (this.awaitingContinue) { this.awaitingContinue = false; this.gameOver(); } }
     private gameOver() {
       const cause = this.practice.over; if (!cause) return;
       this.pointer = null;
@@ -94,13 +126,16 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       const pace = pacingAt(this.settings.difficulty, this.practice.score);
       if (this.fruits.length >= pace.maxFruit) return;
       const width = this.scale.width, height = this.scale.height;
-      const radius = Math.max(25, Math.min(53, width * .065)) * (.85 + Math.random() * .25);
+      // Sized to the board's short side so fruit stays easy to hit on phones (≈75px across on a 360px screen).
+      const fruitRadius = Math.max(32, Math.min(60, Math.min(width, height) * .11)) * (.85 + Math.random() * .25);
+      const bomb = Math.random() < bombChance[this.settings.difficulty];
+      // Bombs stay a bit smaller than fruit so they remain easy to dodge now that fruit is bigger.
+      const radius = bomb ? fruitRadius * .8 : fruitRadius;
       const body = launchFruit(width, height, radius);
       const speed = pace.speed;
       body.vx *= speed; body.vy *= speed; body.gravity *= speed * speed;
       if (reducedMotion) body.spin *= .3;
       const kind = this.settings.fruits[Math.floor(Math.random() * this.settings.fruits.length)] ?? 'melon';
-      const bomb = Math.random() < bombChance[this.settings.difficulty];
       const image = this.add.image(body.x, body.y, bomb ? 'bomb' : kind + '-whole').setDepth(1).setDisplaySize(radius * 2, radius * 2);
       this.fruits.push({ image, body, kind, radius, cut: false, bomb });
     }
@@ -119,7 +154,10 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
       const { x, y } = fruit.body;
       if (fruit.bomb) {
         this.burst(x, y, 0xe5383b, angle); this.burst(x, y, 0xffb627, angle + Math.PI);
-        this.practice = cutBomb(this.practice); this.gameOver(); return;
+        this.practice = cutBomb(this.practice);
+        bridge.emit({ type: 'lives-changed', lives: this.practice.lives });
+        if (this.practice.over) this.livesOut(); else bridge.emit({ type: 'effect', cue: 'boom' });
+        return;
       }
       this.practice = cutFruit(this.practice);
       bridge.emit({ type: 'score-changed', score: this.practice.score });
@@ -162,6 +200,13 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
         }
       }
     }
+    /** Premium blade effects: rainbow cycles hue along the trail and over time; flicker crackles like lightning. */
+    private bladeGlow(segment: number): number {
+      const { glow, effect } = this.bladeColors;
+      if (effect === 'rainbow') return Phaser.Display.Color.HSVToRGB(((this.clock * .6 + segment * .04) % 1 + 1) % 1, .85, 1).color;
+      if (effect === 'flicker') return Math.random() < .25 ? 0xffffff : glow;
+      return glow;
+    }
     override update(_time: number, delta: number) {
       if (!this.active || !this.ink || !this.blade) return;
       const dt = Math.min(delta, 40) / 1000; this.clock += dt;
@@ -178,7 +223,7 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
         if (fallen && !fruit.cut && !fruit.bomb && !this.practice.over) {
           this.practice = missFruit(this.practice);
           bridge.emit({ type: 'lives-changed', lives: this.practice.lives });
-          if (this.practice.over) this.gameOver(); else bridge.emit({ type: 'effect', cue: 'fail' });
+          if (this.practice.over) this.livesOut(); else bridge.emit({ type: 'effect', cue: 'fail' });
         }
         if (fruit.cut || fallen) { fruit.image.destroy(); return false; }
         return true;
@@ -202,8 +247,9 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
         const alpha = Math.max(0, Math.min(a.life, b.life));
         const taper = Math.sin(Math.PI * i / this.trail.length);
         const width = Math.max(.4, b.width * taper * alpha);
-        this.blade.lineStyle(width * 4, this.bladeColors.glow, alpha * .07).lineBetween(a.x, a.y, b.x, b.y);
-        this.blade.lineStyle(width * 1.5, this.bladeColors.glow, alpha * .35).lineBetween(a.x, a.y, b.x, b.y);
+        const glow = this.bladeGlow(i);
+        this.blade.lineStyle(width * 4, glow, alpha * .07).lineBetween(a.x, a.y, b.x, b.y);
+        this.blade.lineStyle(width * 1.5, glow, alpha * .35).lineBetween(a.x, a.y, b.x, b.y);
         this.blade.lineStyle(width * .65, this.bladeColors.core, alpha * .95).lineBetween(a.x, a.y, b.x, b.y);
         this.blade.fillStyle(this.bladeColors.core, alpha * .8).fillCircle(b.x, b.y, width * .3);
       }
@@ -216,6 +262,10 @@ export function createRuntime(parent: HTMLElement, bridge: GameBridge): GameRunt
     switch (command.type) {
       case 'configure-preview': scene.configure(command.settings); break;
       case 'set-blade': scene.bladeColors = command.colors; break;
+      case 'set-fruit-skin': scene.setFruitSkin(command.skin); break;
+      case 'set-continue': scene.canContinue = command.available; break;
+      case 'continue': scene.continueRound(); break;
+      case 'end-round': scene.endRound(); break;
       case 'pause': manuallyPaused = true; applyPause(); break;
       case 'resume': manuallyPaused = false; applyPause(); break;
       case 'preview': scene.preview(command.enabled); break;

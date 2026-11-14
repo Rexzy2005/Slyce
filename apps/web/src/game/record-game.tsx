@@ -1,13 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
+import { links } from '../config/links';
 import { arcadeAbi } from '../web3/abis';
 import { gdDecimals } from '../web3/config';
 import { useWallet } from '../web3/context';
 import { formatTokenAmount } from '../web3/units';
 import { useContractWrite } from '../web3/use-contract-write';
 import type { GameResult } from './game-host';
-import { liveStreak, newMilestones, useGameRecords } from './game-records';
+import { liveStreak, milestoneName, newMilestones, topMilestone, useGameRecords } from './game-records';
 import { signRound, useScoreSigning, type RoundTicket } from './score-tickets';
 const g = (value: bigint) => formatTokenAmount(value, gdDecimals);
 /**
@@ -26,7 +27,9 @@ export function RecordGame({ result, ticket }: { result: GameResult; ticket?: Pr
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const autoSaved = useRef<GameResult | null>(null);
-  const canSave = !!records.arcade && !records.loading && records.open && signing !== undefined && write.ready && write.state.status === 'idle' && !busy && !problem && !saved;
+  // Saving costs a little CELO in network fees, which players get themselves; without it, say so instead of failing.
+  const noGas = wallet.gas === 'low' || (write.state.status === 'failed' && write.state.kind === 'insufficient-balance');
+  const canSave = !!records.arcade && !records.loading && records.open && signing !== undefined && write.ready && write.state.status === 'idle' && !busy && !problem && !saved && !noGas;
   useEffect(() => {
     if (!canSave || autoSaved.current === result) return;
     autoSaved.current = result;
@@ -64,12 +67,17 @@ export function RecordGame({ result, ticket }: { result: GameResult; ticket?: Pr
       setProblem(error instanceof Error ? error.message : 'This score couldn\'t be checked.');
     } finally { setBusy(false); }
   }
+  const reached = topMilestone(records.milestones, score);
   if (saved) return <p className="record-game saved" role="status">
-    <strong className="leaf">Score saved</strong> · +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong></> : null} · 🔥 {saved.streak}-day streak
+    <strong className="leaf">Score saved</strong> · +{saved.xp.toString()} XP{saved.earned > 0n ? <> · <strong className="leaf">+{g(saved.earned)} G$</strong></> : null} · 🔥 {saved.streak}-day streak{reached ? <> · 🏅 {milestoneName(records.milestones, reached)}</> : null}
+  </p>;
+  if (noGas) return <p className="record-game" role="status">
+    <span className="muted">Score not saved: your account needs a little CELO for network fees.</span>{' '}
+    <a className="text-button" href={links.gasHelpTelegram} target="_blank" rel="noreferrer">Get a free top-up →</a>
   </p>;
   const failed = problem !== null || ['failed', 'rejected'].includes(write.state.status);
   if (failed) return <p className="record-game" role="status">
-    <span className="muted">Score not saved.</span>{' '}
+    <span className="muted">Score not saved{problem ? `: ${problem}` : write.state.status === 'rejected' ? ': the wallet request was declined.' : write.state.status === 'failed' ? `: ${write.state.message}` : '.'}</span>{' '}
     <button className="text-button" disabled={!write.ready} onClick={() => void save()}>Save score</button>
   </p>;
   return <p className="record-game muted" role="status">{write.state.status === 'awaiting_wallet' ? 'Confirm in your wallet to save your score…' : 'Saving your score…'}</p>;

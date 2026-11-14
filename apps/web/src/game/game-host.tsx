@@ -1,7 +1,8 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { defaultBlade, type BladeLook, type BoardLook, type FruitSkin } from '../features/catalog';
 import { createGameAudio, type GameAudio } from './audio';
 import { defaultPreviewSettings, type Difficulty, type PreviewSettings } from './preview-settings';
 import { PauseSettings } from './pause-settings';
@@ -12,8 +13,8 @@ import { attachGameHost } from './host-lifecycle';
 import { readBestScore, recordBestScore } from './best-score';
 import type { GameOverCause } from './practice-rules';
 /** `blade` must already be verified as owned on-chain; the default trail needs no ownership. */
-export interface GameResult { score: number; bestCombo: number; fruits: number; cause: GameOverCause; difficulty: Difficulty }
-export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: { glow: number; core: number }; /** When set, every round must be paid before it starts. */ payGate?: (start: () => void) => ReactNode; /** Rendered on the game-over screen, e.g. saving the result on-chain. */ afterGame?: (result: GameResult) => ReactNode; /** Called as each round begins, e.g. to claim a score ticket (ADR-0015). */ onRoundStart?: () => void } = {}) {
+export interface GameResult { score: number; bestCombo: number; fruits: number; cause: GameOverCause; difficulty: Difficulty; /** Purchased extra lives used to continue this round (ADR-0016). */ extraLivesUsed: number }
+export function GameHost({ blade, fruitSkin, board: boardLook, payGate, afterGame, onRoundStart, extraLives }: { /** Purchased extra lives: how many are left and how to spend one on this round. */ extraLives?: { available: number | undefined; use: () => Promise<boolean> }; blade?: BladeLook; /** Owned shop fruit skin, already verified on-chain. */ fruitSkin?: FruitSkin; /** Owned shop board, already verified on-chain. */ board?: BoardLook; /** When set, every round must be paid before it starts. */ payGate?: (start: () => void) => ReactNode; /** Rendered on the game-over screen, e.g. saving the result on-chain. */ afterGame?: (result: GameResult) => ReactNode; /** Called as each round begins, e.g. to claim a score ticket (ADR-0015). */ onRoundStart?: () => void } = {}) {
   const [pendingStart, setPendingStart] = useState<(() => void) | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [previewSettings, setPreviewSettings] = useState(defaultPreviewSettings);
@@ -39,9 +40,37 @@ export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: 
   const [attempt, setAttempt] = useState(0);
   const [combo, setCombo] = useState<{ count: number; bonus: number } | null>(null);
   const [best, setBest] = useState<number | null>(null);
-  const [gameOver, setGameOver] = useState<{ score: number; cause: GameOverCause; bestCombo: number; fruits: number; difficulty: Difficulty; best: number; improved: boolean; round: number } | null>(null);
+  const [gameOver, setGameOver] = useState<{ score: number; cause: GameOverCause; bestCombo: number; fruits: number; difficulty: Difficulty; best: number; improved: boolean; round: number; extraLivesUsed: number } | null>(null);
+  const [outOfLives, setOutOfLives] = useState<'choose' | 'using' | null>(null);
+  const livesUsed = useRef(0);
+  const canContinue = (extraLives?.available ?? 0) > 0;
+  const offersLives = !!extraLives;
+  useEffect(() => { if (ready && offersLives) bridgeRef.current?.send({ type: 'set-continue', available: canContinue }); }, [ready, offersLives, canContinue]);
+  // Offer the extra life for a few seconds, then end the round so play never stalls.
+  useEffect(() => {
+    if (outOfLives !== 'choose') return;
+    const timer = setTimeout(() => { setOutOfLives(null); bridgeRef.current?.send({ type: 'end-round' }); }, 8_000);
+    return () => clearTimeout(timer);
+  }, [outOfLives]);
+  async function continueWithExtraLife() {
+    if (!extraLives) return;
+    setOutOfLives('using');
+    const ok = await extraLives.use().catch(() => false);
+    setOutOfLives(null);
+    if (ok) { livesUsed.current += 1; bridgeRef.current?.send({ type: 'continue' }); }
+    else bridgeRef.current?.send({ type: 'end-round' });
+  }
   useEffect(() => { setBest(readBestScore(previewSettings.difficulty)); }, [previewSettings.difficulty]);
-  useEffect(() => { if (ready && blade) bridgeRef.current?.send({ type: 'set-blade', colors: blade }); }, [ready, blade?.glow, blade?.core]);
+  // Cosmetics are sent only when equipped, or once more to restore the default after they are removed.
+  const bladeSent = useRef(false), skinSent = useRef(false);
+  useEffect(() => {
+    if (!ready || (!blade && !bladeSent.current)) return;
+    bridgeRef.current?.send({ type: 'set-blade', colors: blade ?? defaultBlade }); bladeSent.current = !!blade;
+  }, [ready, blade?.glow, blade?.core, blade?.effect]);
+  useEffect(() => {
+    if (!ready || (!fruitSkin && !skinSent.current)) return;
+    bridgeRef.current?.send({ type: 'set-fruit-skin', skin: fruitSkin?.skin ?? null }); skinSent.current = !!fruitSkin;
+  }, [ready, fruitSkin?.skin.join()]);
   useEffect(() => {
     const parent = container.current;
     if (!parent) return;
@@ -53,10 +82,11 @@ export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: 
       if (event.type === 'ready') { bridge.send({ type: 'configure-preview', settings: settingsRef.current }); setReady(true); setStatus('Canvas ready. Practice scores stay on this device.'); }
       if (event.type === 'score-changed') setScore(event.score);
       if (event.type === 'lives-changed') setLives(event.lives);
+      if (event.type === 'out-of-lives') setOutOfLives('choose');
       if (event.type === 'combo') setCombo({ count: event.count, bonus: event.bonus });
       if (event.type === 'game-over') {
         const record = recordBestScore(settingsRef.current.difficulty, event.score);
-        setBest(record.best || null); setGameOver({ score: event.score, cause: event.cause, bestCombo: event.bestCombo, fruits: event.fruits, difficulty: settingsRef.current.difficulty, round: Date.now(), ...record });
+        setBest(record.best || null); setGameOver({ score: event.score, cause: event.cause, bestCombo: event.bestCombo, fruits: event.fruits, difficulty: settingsRef.current.difficulty, round: Date.now(), extraLivesUsed: livesUsed.current, ...record });
       }
       if (event.type === 'error') { setStatus(event.message); setFailed(true); setReady(false); setPaused(false); }
     });
@@ -130,6 +160,7 @@ export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: 
     audioRef.current?.stop();
     bridgeRef.current?.send({ type: 'resume' }); setPaused(false);
     bridgeRef.current?.send({ type: 'preview', enabled: !effectsPreview });
+    livesUsed.current = 0; setOutOfLives(null);
     if (!effectsPreview) onRoundStart?.();
     setSettingsOpen(false); setCombo(null); setGameOver(null);
     if (effectsPreview) { setScore(null); setLives(null); }
@@ -142,23 +173,30 @@ export function GameHost({ blade, payGate, afterGame, onRoundStart }: { blade?: 
   function restartRound() {
     setPendingStart(null);
     bridgeRef.current?.send({ type: 'preview', enabled: true });
+    livesUsed.current = 0; setOutOfLives(null);
     onRoundStart?.();
     setCombo(null); setGameOver(null);
   }
   return <section onClickCapture={event => { if (event.target instanceof Element && event.target.closest('button:not([data-sound-preview])')) audioRef.current?.play('click'); }} ref={session} className="game-session" aria-label="Slyyce game session">
-    <div className="session-hud" aria-label="Round readings"><div className="hud-brand"><Link href="/play" aria-label="Slyyce lobby"><Icon name="back" /><span>SLYYCE</span></Link><div className="hud-title"><strong>The cutting floor</strong><span>Practice round</span></div></div>
+    <div className="session-hud" aria-label="Round readings"><div className="hud-brand"><Link href="/play" aria-label="Slyyce lobby"><Icon name="back" /><span>SLYYCE</span></Link><div className="hud-title"><strong>The cutting floor</strong>{!afterGame && <span>Practice round</span>}</div></div>
       <div className="hud-reading score-reading"><Icon name="chart" /><span>SCORE<strong>{score === null ? '—' : score.toLocaleString()}</strong></span></div>
       <div className="hud-reading"><Icon name="heart" /><span>LIVES<strong>{lives === null ? '—' : lives}</strong></span></div>
       <div className="hud-reading combo-reading"><span>COMBO<strong>{combo ? 'x' + combo.count + ' +' + combo.bonus : '—'}</strong></span><span className="combo-track" aria-hidden="true" /></div>
       <div className="hud-reading"><Icon name="timer" /><span>BEST<strong>{best === null ? '—' : best.toLocaleString()}</strong></span></div>
     </div>
-    <div ref={board} className={effectsPreview ? 'chopping-board effects-active' : 'chopping-board'} aria-label="Game canvas">
+    <div ref={board} className={effectsPreview ? 'chopping-board effects-active' : 'chopping-board'} aria-label="Game canvas"
+      style={boardLook ? { '--wood-base': boardLook.base, '--wood-light': boardLook.light, '--wood-dark': boardLook.dark, '--wood-grain': boardLook.grain } as CSSProperties : undefined}>
       <div ref={container} className="game-canvas" aria-hidden="true" />
 
       {!ready && !failed && <div className="board-loading"><LoadingScreen message="Preparing your board" detail="Getting everything ready for your first cut." compact /></div>}
+      {outOfLives && !gameOver && !failed && <div className="board-center game-over" role="dialog" aria-label="Out of lives">
+        <span className="board-symbol"><Icon name="heart" /></span><p className="eyebrow">OUT OF LIVES</p><h2>Keep going?</h2>
+        <button className="button" disabled={outOfLives === 'using'} onClick={() => void continueWithExtraLife()}><Icon name="heart" /> {outOfLives === 'using' ? 'Using…' : `Use an extra life (${extraLives?.available ?? 0} left)`}</button>
+        <button className="text-button" disabled={outOfLives === 'using'} onClick={() => { setOutOfLives(null); bridgeRef.current?.send({ type: 'end-round' }); }}>End round</button>
+        <p className="board-boundary">Rounds continued with an extra life don't count for tournaments.</p></div>}
       {gameOver && !failed && <div className="board-center game-over"><span className="board-symbol"><Icon name={gameOver.cause === 'bomb' ? 'sparkles' : 'heart'} /></span><p className="eyebrow">{gameOver.cause === 'bomb' ? 'YOU HIT A BOMB' : 'OUT OF LIVES'}</p><h2>Game over</h2>
         <p role="status">Final score <strong className="final-score">{gameOver.score.toLocaleString()}</strong> · {gameOver.improved ? 'New best!' : 'Best ' + gameOver.best.toLocaleString()}</p>
-        {afterGame && <div className="after-game" key={gameOver.round}>{afterGame({ score: gameOver.score, bestCombo: gameOver.bestCombo, fruits: gameOver.fruits, cause: gameOver.cause, difficulty: gameOver.difficulty })}</div>}
+        {afterGame && <div className="after-game" key={gameOver.round}>{afterGame({ score: gameOver.score, bestCombo: gameOver.bestCombo, fruits: gameOver.fruits, cause: gameOver.cause, difficulty: gameOver.difficulty, extraLivesUsed: gameOver.extraLivesUsed })}</div>}
         <button className="button" onClick={playAgain}><Icon name="reset" /> Play again</button>
         {!afterGame && <p className="board-boundary">Practice score saved on this device only · Not verified</p>}</div>}
       {(ready || failed) && !gameOver && (!effectsPreview || paused || failed) && <div className={paused || failed ? 'board-center' : 'board-center board-ready'}>{!paused && !failed && <Image className="ready-fruit-art" src="/game/fruit-splash-v1.webp" alt="" width={1672} height={941} priority unoptimized />}<span className="board-symbol"><Icon name={paused ? 'pause' : 'scissors'} /></span><p className="eyebrow">{paused ? 'TAKE A BREATHER' : 'SLICE INTO SOMETHING GOOD'}</p><h2>{failed ? 'Canvas unavailable' : paused ? 'Your board is paused.' : 'Ready to slice?'}</h2><p className={!paused && !failed ? 'sr-only' : undefined} role={failed ? 'alert' : 'status'}>{paused ? 'Resume the canvas whenever you are ready.' : status}</p>

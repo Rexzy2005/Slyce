@@ -1,4 +1,5 @@
 'use client';
+import { useCallback, useEffect, useState } from 'react';
 import { useReadContract } from 'wagmi';
 import { zeroAddress } from 'viem';
 import { apiFetch } from '../api/http';
@@ -14,12 +15,12 @@ export interface RoundTicket { token: string; ticket: string; issuedAt: number }
 export interface SignedRound { ticket: bigint; deadline: bigint; gameSignature: `0x${string}`; tournamentSignature?: `0x${string}` }
 export class ScoreNotVerified extends Error {}
 
-/** Tickets older than this are replaced before a round starts (the backend accepts them for 30 minutes). */
-const freshForMs = 20 * 60_000;
+/** Tickets older than this are replaced when a round starts, so the round's ticket is recent (the backend accepts 2 hours). */
+const freshForMs = 3 * 60_000;
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body?: unknown): Promise<T> {
   if (!publicConfig.backendUrl) throw new ScoreNotVerified('Score checks are not available right now.');
-  const response = await apiFetch(`${publicConfig.backendUrl}/api/v1${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const response = await apiFetch(`${publicConfig.backendUrl}/api/v1${path}`, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const value = await response.json().catch(() => ({})) as { data?: T; error?: { code?: string; message?: string } };
   if (response.status === 422) throw new ScoreNotVerified(value.error?.message ?? 'This score could not be verified.');
   if (!response.ok || !value.data) throw new Error(value.error?.message ?? 'The score check is unavailable. Try again.');
@@ -68,4 +69,20 @@ export function useScoreSigning(contract: `0x${string}` | undefined): boolean | 
   const read = useReadContract({ address: contract, abi: arcadeAbi, functionName: 'scoreSigner', ...(chain ? { chainId: chain.id } : {}), query: { enabled: !!contract } });
   if (read.isError) return false;
   return read.data === undefined ? undefined : read.data !== zeroAddress;
+}
+
+/** Extra lives (ADR-0016): owned packs are read on-chain by the backend, which also records each life used. */
+export interface ExtraLives { owned: number; used: number; available: number }
+export const extraLivesBalance = (address: string) => post<ExtraLives>(`/extra-lives?address=${address}`);
+export const spendExtraLife = (address: string, ticket: RoundTicket) => post<ExtraLives>('/extra-lives/use', { address, token: ticket.token });
+
+/** A player's extra lives; `available` is undefined until loaded (or when the backend can't be reached). */
+export function useExtraLives(address: string | undefined) {
+  const [balance, setBalance] = useState<ExtraLives>();
+  const refresh = useCallback(async () => {
+    if (!address) return undefined;
+    try { const next = await extraLivesBalance(address); setBalance(next); return next; } catch { return undefined; }
+  }, [address]);
+  useEffect(() => { void refresh(); }, [refresh]);
+  return { available: balance?.available, refresh, set: setBalance };
 }

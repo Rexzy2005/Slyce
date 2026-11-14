@@ -421,7 +421,9 @@ export const ModelName = {
   AdminSession: 'AdminSession',
   AuditLog: 'AuditLog',
   ChallengeEvent: 'ChallengeEvent',
-  IdempotencyKey: 'IdempotencyKey'
+  IdempotencyKey: 'IdempotencyKey',
+  ExtraLifeUse: 'ExtraLifeUse',
+  PlayerNickname: 'PlayerNickname'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -437,7 +439,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "player" | "wallet" | "walletAuthChallenge" | "goodDollarVerification" | "goodDollarVerificationRecord" | "gameSession" | "scoreRecord" | "leaderboardSnapshot" | "leaderboardEntry" | "challenge" | "challengeVersion" | "challengeRule" | "challengeParticipation" | "bounty" | "bountyVersion" | "bountyParticipation" | "bountySubmission" | "reward" | "rewardApproval" | "rewardDistribution" | "adminAccount" | "adminSession" | "auditLog" | "challengeEvent" | "idempotencyKey"
+    modelProps: "player" | "wallet" | "walletAuthChallenge" | "goodDollarVerification" | "goodDollarVerificationRecord" | "gameSession" | "scoreRecord" | "leaderboardSnapshot" | "leaderboardEntry" | "challenge" | "challengeVersion" | "challengeRule" | "challengeParticipation" | "bounty" | "bountyVersion" | "bountyParticipation" | "bountySubmission" | "reward" | "rewardApproval" | "rewardDistribution" | "adminAccount" | "adminSession" | "auditLog" | "challengeEvent" | "idempotencyKey" | "extraLifeUse" | "playerNickname"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2291,6 +2293,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ExtraLifeUse: {
+      payload: Prisma.$ExtraLifeUsePayload<ExtArgs>
+      fields: Prisma.ExtraLifeUseFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExtraLifeUseFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExtraLifeUseFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>
+        }
+        findFirst: {
+          args: Prisma.ExtraLifeUseFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExtraLifeUseFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>
+        }
+        findMany: {
+          args: Prisma.ExtraLifeUseFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>[]
+        }
+        create: {
+          args: Prisma.ExtraLifeUseCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>
+        }
+        createMany: {
+          args: Prisma.ExtraLifeUseCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ExtraLifeUseCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>[]
+        }
+        delete: {
+          args: Prisma.ExtraLifeUseDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>
+        }
+        update: {
+          args: Prisma.ExtraLifeUseUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>
+        }
+        deleteMany: {
+          args: Prisma.ExtraLifeUseDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExtraLifeUseUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ExtraLifeUseUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>[]
+        }
+        upsert: {
+          args: Prisma.ExtraLifeUseUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExtraLifeUsePayload>
+        }
+        aggregate: {
+          args: Prisma.ExtraLifeUseAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExtraLifeUse>
+        }
+        groupBy: {
+          args: Prisma.ExtraLifeUseGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExtraLifeUseGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExtraLifeUseCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExtraLifeUseCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlayerNickname: {
+      payload: Prisma.$PlayerNicknamePayload<ExtArgs>
+      fields: Prisma.PlayerNicknameFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlayerNicknameFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlayerNicknameFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>
+        }
+        findFirst: {
+          args: Prisma.PlayerNicknameFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlayerNicknameFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>
+        }
+        findMany: {
+          args: Prisma.PlayerNicknameFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>[]
+        }
+        create: {
+          args: Prisma.PlayerNicknameCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>
+        }
+        createMany: {
+          args: Prisma.PlayerNicknameCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlayerNicknameCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>[]
+        }
+        delete: {
+          args: Prisma.PlayerNicknameDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>
+        }
+        update: {
+          args: Prisma.PlayerNicknameUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>
+        }
+        deleteMany: {
+          args: Prisma.PlayerNicknameDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlayerNicknameUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlayerNicknameUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>[]
+        }
+        upsert: {
+          args: Prisma.PlayerNicknameUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlayerNicknamePayload>
+        }
+        aggregate: {
+          args: Prisma.PlayerNicknameAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlayerNickname>
+        }
+        groupBy: {
+          args: Prisma.PlayerNicknameGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlayerNicknameGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlayerNicknameCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlayerNicknameCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2709,6 +2859,27 @@ export const IdempotencyKeyScalarFieldEnum = {
 } as const
 
 export type IdempotencyKeyScalarFieldEnum = (typeof IdempotencyKeyScalarFieldEnum)[keyof typeof IdempotencyKeyScalarFieldEnum]
+
+
+export const ExtraLifeUseScalarFieldEnum = {
+  id: 'id',
+  address: 'address',
+  useNumber: 'useNumber',
+  ticket: 'ticket',
+  usedAt: 'usedAt'
+} as const
+
+export type ExtraLifeUseScalarFieldEnum = (typeof ExtraLifeUseScalarFieldEnum)[keyof typeof ExtraLifeUseScalarFieldEnum]
+
+
+export const PlayerNicknameScalarFieldEnum = {
+  address: 'address',
+  nickname: 'nickname',
+  nicknameKey: 'nicknameKey',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PlayerNicknameScalarFieldEnum = (typeof PlayerNicknameScalarFieldEnum)[keyof typeof PlayerNicknameScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -3283,6 +3454,8 @@ export type GlobalOmitConfig = {
   auditLog?: Prisma.AuditLogOmit
   challengeEvent?: Prisma.ChallengeEventOmit
   idempotencyKey?: Prisma.IdempotencyKeyOmit
+  extraLifeUse?: Prisma.ExtraLifeUseOmit
+  playerNickname?: Prisma.PlayerNicknameOmit
 }
 
 /* Types for Logging */

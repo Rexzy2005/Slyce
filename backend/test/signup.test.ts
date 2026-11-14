@@ -84,5 +84,9 @@ await it('serves sign-up growth to administrators only', async () => {
     assert.equal((await fetch(`${url}?days=999`, auth)).status, 400);
     principal = { kind: 'player', subject: 'p', playerId: '00000000-0000-4000-8000-000000000002', roles: [] };
     assert.equal((await fetch(url, auth)).status, 403);
+    // The public stats page gets totals only, without signing in and without the sign-in method breakdown.
+    const pub = await fetch(url.replace('/admin/players/growth', '/stats/sign-ups'));
+    assert.equal(pub.status, 200);
+    assert.deepEqual(((await pub.json()) as { data: unknown }).data, { total: 15, last24h: 3, last7d: 5, last30d: 15 });
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });
